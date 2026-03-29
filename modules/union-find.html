@@ -1,0 +1,356 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>并查集模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+<header><div class="container header-inner"><div><h1>并查集模块</h1><p><a href="../index.html">返回主页面</a></p></div><div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div></div></header>
+<main class="container">
+<section class="card">
+    <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 核心定义</h3>
+        <p><strong>并查集完整实现（路径压缩 + 按秩合并）：</strong></p>
+<pre><code class="language-python">class UnionFind:
+    def __init__(self, n):
+        self.parent = list(range(n))   # 初始每个节点是自己的根
+        self.rank   = [0] * n          # 树的高度估计（按秩合并用）
+        self.count  = n                # 连通分量数量
+
+    def find(self, x):
+        # 路径压缩：递归找根，并将沿途所有节点直接连到根
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])  # 关键：压缩路径
+        return self.parent[x]
+
+    def union(self, x, y):
+        rx, ry = self.find(x), self.find(y)
+        if rx == ry: return False       # 已在同一集合
+        # 按秩合并：把秩小的树接到秩大的树下面
+        if self.rank[rx] < self.rank[ry]:
+            rx, ry = ry, rx
+        self.parent[ry] = rx            # ry的根挂到rx下
+        if self.rank[rx] == self.rank[ry]:
+            self.rank[rx] += 1          # 只有两树等高时，新树高度+1
+        self.count -= 1
+        return True
+
+    def connected(self, x, y):
+        return self.find(x) == self.find(y)
+</code></pre>
+        <p><strong>摊销时间复杂度：</strong> 路径压缩 + 按秩合并后，每次 find/union 操作的摊销时间为 <strong>O(α(n))</strong>（Ackermann逆函数），实际上极接近 O(1)。</p>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查</h3>
+        <table>
+            <tr><th>操作</th><th>朴素实现</th><th>路径压缩</th><th>路径压缩+按秩合并</th></tr>
+            <tr><td>find</td><td>O(n)</td><td>O(log n) 摊销</td><td>O(α(n)) ≈ O(1)</td></tr>
+            <tr><td>union</td><td>O(n)</td><td>O(log n) 摊销</td><td>O(α(n)) ≈ O(1)</td></tr>
+            <tr><td>connected</td><td>O(n)</td><td>O(log n) 摊销</td><td>O(α(n)) ≈ O(1)</td></tr>
+            <tr><td>初始化</td><td>O(n)</td><td>O(n)</td><td>O(n)</td></tr>
+            <tr><td>m次操作总计</td><td>O(mn)</td><td>O(m log n)</td><td>O(mα(n))</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🖼 结构图示：路径压缩过程</h3>
+<pre class="ascii-art">
+【未压缩的深层树】
+  0←1←2←3←4    find(4): 0←1←2←3←4 需要遍历5步
+
+【路径压缩后】
+  parent[4]=find(3)=find(2)=find(1)=find(0)=0
+  所有节点直接指向根：
+       0
+     / | \ \
+    1  2  3  4   下次find任意节点只需1步！
+
+【按秩合并示意】
+  集合A: 0←1←2 (rank=2)
+  集合B:    3   (rank=0)
+  union(2,3): rank[A]>rank[B], 将B接到A:
+       0←1←2←3   rank不变
+  
+  如果rank相等:
+  集合A: 0←1 (rank=1)
+  集合B: 2←3 (rank=1)
+  union: 3接到1下，新rank=2
+       0←1←3←2
+</pre>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题详解</h3>
+        <details>
+            <summary>例题1：朋友圈数量（LeetCode 547）</summary>
+            <p><strong>题意：</strong> n个学生，isConnected[i][j]=1表示i和j是朋友（传递），求朋友圈总数。</p>
+<pre><code class="language-python">def findCircleNum(isConnected):
+    n = len(isConnected)
+    uf = UnionFind(n)
+    for i in range(n):
+        for j in range(i+1, n):
+            if isConnected[i][j]:
+                uf.union(i, j)     # 合并为同一朋友圈
+    return uf.count                # 剩余连通分量数即为朋友圈数
+</code></pre>
+            <p><strong>时间：</strong> O(n² α(n))；<strong>空间：</strong> O(n)</p>
+        </details>
+
+        <details>
+            <summary>例题2：冗余连接（LeetCode 684）— 找成环的边</summary>
+            <p><strong>题意：</strong> 无向图中有n个节点和n条边（树+1条多余边），找出多余的边。</p>
+<pre><code class="language-python">def findRedundantConnection(edges):
+    n = len(edges)
+    uf = UnionFind(n + 1)          # 节点从1开始
+    for u, v in edges:
+        if not uf.union(u, v):     # union返回False = 已连通 = 成环
+            return [u, v]          # 这条边就是冗余边
+    return []
+</code></pre>
+            <p><strong>时间：</strong> O(n α(n))；<strong>空间：</strong> O(n)</p>
+        </details>
+
+        <details>
+            <summary>例题3：账户合并（LeetCode 721）— 多键并查集</summary>
+            <p><strong>题意：</strong> 多个账户，每个有邮箱列表，合并相同邮箱账户。</p>
+<pre><code class="language-python">from collections import defaultdict
+
+def accountsMerge(accounts):
+    email_to_id = {}        # 邮箱→代表账户ID
+    uf_parent = {}
+
+    def find(x):
+        if uf_parent.setdefault(x, x) != x:
+            uf_parent[x] = find(uf_parent[x])
+        return uf_parent[x]
+
+    def union(x, y):
+        uf_parent[find(x)] = find(y)
+
+    # 将同账户下所有邮箱union在一起
+    for account in accounts:
+        name = account[0]
+        first_email = account[1]
+        for email in account[1:]:
+            if email not in email_to_id:
+                email_to_id[email] = first_email    # 用第一个邮箱代表
+            union(email, first_email)               # 合并到第一个邮箱
+
+    # 收集每个根代表的邮箱集合
+    root_to_emails = defaultdict(list)
+    for email in email_to_id:
+        root_to_emails[find(email)].append(email)
+
+    # 组合结果（邮箱对应账户名）
+    result = []
+    email_to_name = {e: accounts[i][0] for i, acc in enumerate(accounts) for e in acc[1:]}
+    for root, emails in root_to_emails.items():
+        result.append([email_to_name[root]] + sorted(emails))
+    return result
+</code></pre>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+        <p><strong>① find未路径压缩导致树退化</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（无压缩）</p>
+<pre><code class="language-python">def find(x):
+    while parent[x] != x:
+        x = parent[x]    # 每次都遍历整条链，O(n)
+    return x
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（路径压缩）</p>
+<pre><code class="language-python">def find(x):
+    if parent[x] != x:
+        parent[x] = find(parent[x])  # 递归压缩
+    return parent[x]
+</code></pre>
+            </div>
+        </div>
+        <p><strong>② union方向混乱（不按秩）</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（总是ry→rx，不管高度）</p>
+<pre><code class="language-python">def union(x, y):
+    rx, ry = find(x), find(y)
+    parent[ry] = rx    # 可能把高树接到矮树下
+    # 导致树退化，压缩效果差
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（矮挂高）</p>
+<pre><code class="language-python">def union(x, y):
+    rx, ry = find(x), find(y)
+    if rank[rx] < rank[ry]: rx, ry = ry, rx
+    parent[ry] = rx    # 秩小的挂到秩大的下面
+    if rank[rx] == rank[ry]: rank[rx] += 1
+</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>带权并查集：</strong> 在 parent 数组基础上维护 weight 数组，记录节点到根的权值关系。用于区间相等/比例关系维护。</p>
+<pre><code class="language-python">class WeightedUF:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.weight = [1.0] * n    # weight[i] = i到parent[i]的比值
+
+    def find(self, x):
+        if self.parent[x] != x:
+            root = self.find(self.parent[x])
+            self.weight[x] *= self.weight[self.parent[x]]  # 更新权值
+            self.parent[x] = root
+        return self.parent[x]
+
+    def union(self, x, y, val):    # val = x/y
+        rx, ry = self.find(x), self.find(y)
+        if rx == ry: return
+        self.parent[rx] = ry
+        self.weight[rx] = val * self.weight[y] / self.weight[x]
+</code></pre>
+        <p><strong>离线查询（Kruskal重构树）：</strong> 处理"最小瓶颈路径"问题，将边按权值排序后建树，点对的LCA即为最小瓶颈。</p>
+        <p><strong>并查集 + 时间回退（可撤销并查集）：</strong> 按秩合并（不路径压缩），用栈记录每次操作前的状态，支持O(log n)回滚。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="union-find">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 UF3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="UF1" data-answer="B" data-difficulty="basic" data-explanation="并查集核心 API：find(x) 返回 x 所在集合的代表（根），union(x,y) 将两个集合合并。常用于连通性判断。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> UF1. 并查集最基本的两个操作是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF1" value="A"> A. insert 和 delete</label><label class="option"><input type="radio" name="UF1" value="B"> B. find（查根）和 union（合并集合）</label><label class="option"><input type="radio" name="UF1" value="C"> C. search 和 merge</label><label class="option"><input type="radio" name="UF1" value="D"> D. push 和 pop</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF2" data-answer="A" data-difficulty="basic" data-explanation="路径压缩：find 时，将路径上所有节点的 parent 直接设置为根节点，下次 find 时直接 O(1)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> UF2. 路径压缩在 find 操作中做什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF2" value="A"> A. 将路径上所有节点的父节点直接指向根</label><label class="option"><input type="radio" name="UF2" value="B"> B. 将树旋转为平衡树</label><label class="option"><input type="radio" name="UF2" value="C"> C. 按秩合并</label><label class="option"><input type="radio" name="UF2" value="D"> D. 删除路径上的节点</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF3" data-answer="B" data-difficulty="basic" data-explanation="按秩合并：将 rank（高度上界）小的树的根挂到 rank 大的树根下，防止树退化为链表，保持 O(log n) 高度。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> UF3. 按秩合并（union by rank）的目的是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF3" value="A"> A. 让树更高</label><label class="option"><input type="radio" name="UF3" value="B"> B. 将小树挂到大树下，控制树高</label><label class="option"><input type="radio" name="UF3" value="C"> C. 按字母顺序</label><label class="option"><input type="radio" name="UF3" value="D"> D. 随机合并</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF4" data-answer="B" data-difficulty="basic" data-explanation="初始化：parent[i] = i，每个节点自成一个集合（代表自己）。union 操作合并集合，最终连通分量数 = 独立集合数。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> UF4. 检查图的连通分量个数，并查集的初始状态是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF4" value="A"> A. 所有节点在同一集合</label><label class="option"><input type="radio" name="UF4" value="B"> B. 每个节点各为一个独立集合（parent[i]=i）</label><label class="option"><input type="radio" name="UF4" value="C"> C. 随机分组</label><label class="option"><input type="radio" name="UF4" value="D"> D. 所有 parent 为 0</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF5" data-answer="B" data-difficulty="basic" data-explanation="union(x,y)：先 find 两者的根，若根相同则已在同一集合，无需操作。这也是判断两点是否连通的方式（union 返回 False）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> UF5. 并查集 union 两个已经在同一集合中的元素会怎样？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF5" value="A"> A. 报错</label><label class="option"><input type="radio" name="UF5" value="B"> B. 什么都不发生（find(x)==find(y) 则跳过）</label><label class="option"><input type="radio" name="UF5" value="C"> C. 创建新集合</label><label class="option"><input type="radio" name="UF5" value="D"> D. 断开连接</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="UF6" data-answer="B" data-difficulty="mid" data-explanation="路径压缩+按秩合并：均摊复杂度 O(α(n))，α(n) 对任何实际可能的 n 都 <=4，实际上是常数。是并查集的理论最优。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> UF6. 路径压缩+按秩合并后，find 操作的均摊时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF6" value="A"> A. O(1)</label><label class="option"><input type="radio" name="UF6" value="B"> B. O(α(n))（其中 α 为反阿克曼函数，近似常数）</label><label class="option"><input type="radio" name="UF6" value="C"> C. O(log n)</label><label class="option"><input type="radio" name="UF6" value="D"> D. O(n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF7" data-answer="B" data-difficulty="mid" data-explanation="带权并查集：维护每个节点到其父节点的额外权值（如差值 d[x]）。路径压缩时同时更新 d[x] = d[x] + d[parent[x]]，可解如食物链、等式/不等式等问题。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> UF7. 带权并查集可以做什么额外的事？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF7" value="A"> A. 判断连通性</label><label class="option"><input type="radio" name="UF7" value="B"> B. 存储节点到根的某种关系（如边权和、差值）</label><label class="option"><input type="radio" name="UF7" value="C"> C. 自动排序节点</label><label class="option"><input type="radio" name="UF7" value="D"> D. 查找最短路</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF8" data-answer="D" data-difficulty="mid" data-explanation="并查集支持合并（增边）非常高效，但不支持分裂（删边）。删边需要可撤销并查集（按秩合并+offline LCT），且不能使用路径压缩。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> UF8. 以下哪个问题不适合用并查集？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF8" value="A"> A. 判断图中是否有环（无向图）</label><label class="option"><input type="radio" name="UF8" value="B"> B. 求图中连通分量数</label><label class="option"><input type="radio" name="UF8" value="C"> C. 图中边动态添加</label><label class="option"><input type="radio" name="UF8" value="D"> D. 图中边动态删除（支持撤销）</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF9" data-answer="B" data-difficulty="mid" data-explanation="若 find(u)==find(v) 说明 u 和 v 已在同一连通分量，当前这条边 (u,v) 形成环。Kruskal 最小生成树就用这个性质选边。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> UF9. 用并查集检测无向图中的环，当 union(u,v) 时如果 find(u)==find(v) 说明？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF9" value="A"> A. 找到了新的连通分量</label><label class="option"><input type="radio" name="UF9" value="B"> B. u 和 v 已经连通，再加这条边形成环</label><label class="option"><input type="radio" name="UF9" value="C"> C. u 和 v 不连通</label><label class="option"><input type="radio" name="UF9" value="D"> D. 需要扩展树</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF10" data-answer="B" data-difficulty="mid" data-explanation="每次 union(x,y) 且 find(x)!=find(y) 时，连通分量数 -1。初始 n 个分量，成功合并 k 次后剩 n-k。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> UF10. 朋友圈问题（LC 547）用并查集，初始 n 个独立节点，相互认识就 union，最终连通分量数 = ？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF10" value="A"> A. 边数</label><label class="option"><input type="radio" name="UF10" value="B"> B. 初始 n 减去执行 union 且两人之前不在同一集合的次数</label><label class="option"><input type="radio" name="UF10" value="C"> C. n</label><label class="option"><input type="radio" name="UF10" value="D"> D. 0</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="UF11" data-answer="B" data-difficulty="hard" data-explanation="可撤销并查集：只使用按秩合并（路径压缩改变结构，无法撤销），每次 union 记录修改了哪些 parent/rank，回滚时逆序还原。常用于离线 LCT 替代。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> UF11. 可撤销并查集（支持按时间回滚）的实现方式？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF11" value="A"> A. 使用路径压缩+按秩合并</label><label class="option"><input type="radio" name="UF11" value="B"> B. 只用按秩合并（不用路径压缩），合并时记录操作日志</label><label class="option"><input type="radio" name="UF11" value="C"> C. 使用哈希表</label><label class="option"><input type="radio" name="UF11" value="D"> D. 每次重建</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF12" data-answer="B" data-difficulty="hard" data-explanation="并查集带路径压缩+按秩合并：Q 次 find/union，每次 O(α(n)) 均摊，总 O(Q α(n)) ≈ O(Q)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> UF12. 按时间顺序扩展边的图中找连通块，并查集的时间复杂度（Q 次操作）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF12" value="A"> A. O(Q log Q)</label><label class="option"><input type="radio" name="UF12" value="B"> B. O(Q α(n))</label><label class="option"><input type="radio" name="UF12" value="C"> C. O(Q²)</label><label class="option"><input type="radio" name="UF12" value="D"> D. O(n Q)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF13" data-answer="C" data-difficulty="hard" data-explanation="LCT（链接-截断树）支持 O(log n) 的 link（加边）、cut（删边）、find_root（找各连通块根），可解决动态图的连通性，是可撤销并查集的强大替代。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> UF13. 并查集实现动态连通性（离线），可用哪个高级数据结构替代？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF13" value="A"> A. 线段树</label><label class="option"><input type="radio" name="UF13" value="B"> B. 树分治</label><label class="option"><input type="radio" name="UF13" value="C"> C. Link-Cut Tree（LCT）</label><label class="option"><input type="radio" name="UF13" value="D"> D. 稀疏表</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF14" data-answer="B" data-difficulty="hard" data-explanation="虚节点技巧：节点 x 和 x+n 代表两种颜色态。遇边 (u,v)：union(u,v+n) 且 union(u+n,v)。若 find(u)==find(u+n) 则 u 被迫与自身颜色对立，矛盾，即非二分图。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> UF14. 二分图染色可用 DFS，也可用并查集。并查集实现二分图判断的技巧？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF14" value="A"> A. 普通并查集直接判断</label><label class="option"><input type="radio" name="UF14" value="B"> B. 扩展为虚节点：每个节点 x 对应 x 和 x+n 两个节点，union 时将对立集合合并</label><label class="option"><input type="radio" name="UF14" value="C"> C. 带权并查集存颜色</label><label class="option"><input type="radio" name="UF14" value="D"> D. 无法用并查集</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="UF15" data-answer="B" data-difficulty="hard" data-explanation="Kruskal：将边按权排序，逐条加边，用并查集判断两端点是否已连通（形成环）。若不连通则加入 MST 并 union，总共 E log E（排序）+ E·α(n)（并查集） = O(E log E)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> UF15. 最小生成树 Kruskal 算法中，并查集的作用是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="UF15" value="A"> A. 排序边</label><label class="option"><input type="radio" name="UF15" value="B"> B. O(1) 判断加这条边是否在生成树中形成环</label><label class="option"><input type="radio" name="UF15" value="C"> C. 计算边权</label><label class="option"><input type="radio" name="UF15" value="D"> D. 广度优先遍历</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="UF15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+</main>
+<script src="../assets/js/app.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>

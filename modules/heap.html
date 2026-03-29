@@ -1,0 +1,392 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>堆与优先队列模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div><h1>堆与优先队列模块</h1><p><a href="../index.html">返回主页面</a></p></div>
+            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+        </div>
+    </header>
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <!-- 1. 核心定义 -->
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>大根堆性质：</strong> 对所有节点 i，满足 <code>A[parent(i)] &gt;= A[i]</code>（小根堆反之）。</p>
+                <p><strong>数组存储（0-indexed）：</strong></p>
+                <ul>
+                    <li>父节点：<code>parent(i) = (i-1) // 2</code></li>
+                    <li>左孩子：<code>left(i) = 2*i + 1</code></li>
+                    <li>右孩子：<code>right(i) = 2*i + 2</code></li>
+                </ul>
+                <p><strong>sift-up（上浮）伪代码：</strong></p>
+<pre><code class="language-python">def sift_up(heap, i):
+    # 新元素插入末尾后，向上找到合适位置
+    while i > 0:
+        p = (i - 1) // 2          # 父节点下标
+        if heap[p] < heap[i]:     # 大根堆：父 < 子，需要上浮
+            heap[p], heap[i] = heap[i], heap[p]
+            i = p
+        else:
+            break                 # 已满足堆性质，停止
+</code></pre>
+                <p><strong>sift-down（下沉）伪代码：</strong></p>
+<pre><code class="language-python">def sift_down(heap, i, n):
+    # 堆顶被替换后，向下恢复堆性质
+    while True:
+        largest = i
+        l, r = 2*i + 1, 2*i + 2
+        if l < n and heap[l] > heap[largest]:
+            largest = l
+        if r < n and heap[r] > heap[largest]:
+            largest = r
+        if largest == i:
+            break                 # 已是最大，停止
+        heap[i], heap[largest] = heap[largest], heap[i]
+        i = largest
+</code></pre>
+            </div>
+
+            <!-- 2. 复杂度速查 -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>操作</th><th>时间复杂度</th><th>说明</th></tr>
+                    <tr><td>insert（插入）</td><td>O(log n)</td><td>末尾插入 + sift-up</td></tr>
+                    <tr><td>extract-max/min（弹出堆顶）</td><td>O(log n)</td><td>末尾换顶 + sift-down</td></tr>
+                    <tr><td>peek（查看堆顶）</td><td>O(1)</td><td>直接返回 heap[0]</td></tr>
+                    <tr><td>build heap（建堆）</td><td>O(n)</td><td>从 n//2-1 向下 sift-down</td></tr>
+                    <tr><td>heap sort（堆排序）</td><td>O(n log n)</td><td>建堆 + n次 extract</td></tr>
+                    <tr><td>decrease-key</td><td>O(log n)</td><td>修改后 sift-up/down</td></tr>
+                </table>
+            </div>
+
+            <!-- 3. 结构图示 -->
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：完全二叉树 ↔ 数组映射</h3>
+<pre class="ascii-art">
+         大根堆示例：
+              100           ← 下标 0
+            /     \
+          19       36       ← 下标 1, 2
+         /  \     /  \
+        17   3   25   1     ← 下标 3, 4, 5, 6
+
+数组: [ 100, 19, 36, 17, 3, 25, 1 ]
+下标:    0    1   2   3  4   5  6
+
+父子关系（0-indexed）:
+  i=1: parent=(1-1)//2=0  left=3  right=4
+  i=2: parent=(2-1)//2=0  left=5  right=6
+  i=3: parent=(3-1)//2=1  left=7  right=8 (越界)
+</pre>
+            </div>
+
+            <!-- 4. 典型例题 -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+
+                <details>
+                    <summary>例题1：数据流中第K大元素（LeetCode 703）</summary>
+                    <p><strong>题意：</strong> 设计一个类，在数据流中不断加入数字，每次返回当前第K大的元素。</p>
+                    <p><strong>思路：</strong> 维护大小为K的小根堆，堆顶即为第K大。新元素若大于堆顶则替换。</p>
+<pre><code class="language-python">import heapq
+
+class KthLargest:
+    def __init__(self, k: int, nums: list):
+        self.k = k
+        self.heap = []                    # Python heapq 是小根堆
+        for n in nums:
+            self.add(n)
+
+    def add(self, val: int) -> int:
+        heapq.heappush(self.heap, val)    # 先推入
+        if len(self.heap) > self.k:
+            heapq.heappop(self.heap)      # 超过K个时弹出最小值
+        return self.heap[0]               # 堆顶 = 第K大
+</code></pre>
+                    <p><strong>时间：</strong> 每次 add O(log K)；<strong>空间：</strong> O(K)</p>
+                </details>
+
+                <details>
+                    <summary>例题2：合并K个有序链表（LeetCode 23）</summary>
+                    <p><strong>题意：</strong> 合并K个已排序的链表，返回一个排序链表。</p>
+                    <p><strong>思路：</strong> 将每个链表头节点加入小根堆，每次弹出最小节点，并将其下一个节点再推入堆。</p>
+<pre><code class="language-python">import heapq
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def mergeKLists(lists):
+    heap = []
+    # 将所有链表头节点加入堆（用id避免ListNode比较报错）
+    for i, node in enumerate(lists):
+        if node:
+            heapq.heappush(heap, (node.val, i, node))
+
+    dummy = ListNode(0)
+    cur = dummy
+    while heap:
+        val, i, node = heapq.heappop(heap)  # 弹出当前最小
+        cur.next = node
+        cur = cur.next
+        if node.next:                        # 推入该链表的下一个节点
+            heapq.heappush(heap, (node.next.val, i, node.next))
+    return dummy.next
+</code></pre>
+                    <p><strong>时间：</strong> O(N log K)，N为总节点数；<strong>空间：</strong> O(K)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：查找和最小的K对数字（LeetCode 373）</summary>
+                    <p><strong>题意：</strong> 给两个升序数组，找和最小的K对 (u,v)。</p>
+                    <p><strong>思路：</strong> 初始将 (nums1[i], nums2[0]) 加入小根堆，每次弹出后推入 (nums1[i], nums2[j+1])。</p>
+<pre><code class="language-python">import heapq
+
+def kSmallestPairs(nums1, nums2, k):
+    result = []
+    if not nums1 or not nums2:
+        return result
+    # 堆中存 (和, i, j)
+    heap = [(nums1[i] + nums2[0], i, 0) for i in range(min(len(nums1), k))]
+    heapq.heapify(heap)                     # O(k) 建堆
+
+    while heap and len(result) < k:
+        s, i, j = heapq.heappop(heap)
+        result.append([nums1[i], nums2[j]])
+        if j + 1 < len(nums2):             # 枚举 nums2 下一个
+            heapq.heappush(heap, (nums1[i] + nums2[j+1], i, j+1))
+    return result
+</code></pre>
+                    <p><strong>时间：</strong> O(k log k)；<strong>空间：</strong> O(k)</p>
+                </details>
+            </div>
+
+            <!-- 5. 易错点 -->
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+
+                <p><strong>① 数组下标从0/1引起的父子计算错误</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（混用1-indexed）</p>
+<pre><code class="language-python"># 0-indexed数组却用1-indexed公式
+parent = i // 2        # 错！
+left   = 2 * i        # 错！
+right  = 2 * i + 1   # 错！
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（0-indexed）</p>
+<pre><code class="language-python">parent = (i - 1) // 2  # 正确
+left   = 2 * i + 1    # 正确
+right  = 2 * i + 2    # 正确
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>② 维护固定大小堆时忘记弹出</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（只推不弹）</p>
+<pre><code class="language-python">for n in nums:
+    heapq.heappush(heap, n)
+    # 忘记维护大小 → 堆无限增长
+return heap[0]
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（超K即弹）</p>
+<pre><code class="language-python">for n in nums:
+    heapq.heappush(heap, n)
+    if len(heap) > k:
+        heapq.heappop(heap)  # 保持大小为K
+return heap[0]
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>③ Python实现大根堆忘记取负</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（直接push）</p>
+<pre><code class="language-python"># Python heapq 只有小根堆
+heapq.heappush(heap, val)
+# heap[0] 是最小值，不是最大值
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（取负模拟大根堆）</p>
+<pre><code class="language-python">heapq.heappush(heap, -val)   # 存负数
+max_val = -heapq.heappop(heap)  # 取出时再取负
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 竞赛拓展 -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>对顶堆维护中位数：</strong> 使用大根堆（存较小一半）+ 小根堆（存较大一半），保持两堆大小差 ≤ 1，中位数为堆顶之一或平均值。时间：每次插入 O(log n)。</p>
+<pre><code class="language-python">import heapq
+
+class MedianFinder:
+    def __init__(self):
+        self.lo = []   # 大根堆（存负数），维护较小一半
+        self.hi = []   # 小根堆，维护较大一半
+
+    def addNum(self, num):
+        heapq.heappush(self.lo, -num)         # 先进大根堆
+        heapq.heappush(self.hi, -heapq.heappop(self.lo))  # 平衡
+        if len(self.lo) < len(self.hi):       # 保持lo不少于hi
+            heapq.heappush(self.lo, -heapq.heappop(self.hi))
+
+    def findMedian(self):
+        if len(self.lo) > len(self.hi):
+            return -self.lo[0]
+        return (-self.lo[0] + self.hi[0]) / 2
+</code></pre>
+                <p><strong>K路归并：</strong> 将K个有序序列的首元素放入小根堆，每次弹出最小并补充该序列下一个元素，时间复杂度 O(N log K)。</p>
+                <p><strong>Fibonacci堆：</strong> 支持 decrease-key 在 O(1) 摊销时间（普通堆为 O(log n)），使 Dijkstra 总时间降至 O(E + V log V)，但实现复杂，竞赛少用。</p>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="heap">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 H3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题（概念·操作·追踪）</h3>
+<div class="quiz-item" data-question-id="H1" data-answer="B" data-difficulty="basic" data-explanation="大根堆性质 A[parent]>=A[child]，根节点 A[0] 是所有元素最大值。小根堆相反，根存最小值。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> H1. 大根堆的根节点存放的是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H1" value="A"> A. 最后插入的元素</label><label class="option"><input type="radio" name="H1" value="B"> B. 所有节点中最大的值</label><label class="option"><input type="radio" name="H1" value="C"> C. 所有节点中最小的值</label><label class="option"><input type="radio" name="H1" value="D"> D. 中位数</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H2" data-answer="B" data-difficulty="basic" data-explanation="0-indexed 堆：左子=2i+1，右子=2i+2，父=(i-1)//2。1-indexed 时左子=2i，右子=2i+1，父=i//2。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> H2. 完全二叉树节点 i（0-indexed）的左子节点下标？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H2" value="A"> A. 2i</label><label class="option"><input type="radio" name="H2" value="B"> B. 2i+1</label><label class="option"><input type="radio" name="H2" value="C"> C. 2i-1</label><label class="option"><input type="radio" name="H2" value="D"> D. (i+1)*2</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H3" data-answer="B" data-difficulty="basic" data-explanation="最常见做法：存入 -x，取出时 -heappop(h) 还原原值。选项A的nlargest每次O(n log k)，不适合动态维护。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> H3. Python heapq 是最小堆，要实现最大堆应对元素 x 怎么处理？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H3" value="A"> A. 使用 heapq.nlargest</label><label class="option"><input type="radio" name="H3" value="B"> B. 插入 -x，取出后再取负</label><label class="option"><input type="radio" name="H3" value="C"> C. 使用 heapq.merge</label><label class="option"><input type="radio" name="H3" value="D"> D. 只能用 SortedList</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H4" data-answer="B" data-difficulty="basic" data-explanation="从最后一个非叶节点向前逐一 sift-down，各层代价之和为 O(n)，比逐个 insert 的 O(n log n) 快。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> H4. Floyd 建堆（heapify）的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H4" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="H4" value="B"> B. O(n)</label><label class="option"><input type="radio" name="H4" value="C"> C. O(n²)</label><label class="option"><input type="radio" name="H4" value="D"> D. O(log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H5" data-answer="C" data-difficulty="basic" data-explanation="堆顶就是数组 index 0，直接读取 O(1)。只有 insert/extract 需要 sift-up/sift-down，才是 O(log n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> H5. 堆的 peek（查看堆顶不删除）时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H5" value="A"> A. O(log n)</label><label class="option"><input type="radio" name="H5" value="B"> B. O(n)</label><label class="option"><input type="radio" name="H5" value="C"> C. O(1)</label><label class="option"><input type="radio" name="H5" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题（代码·复杂度·变形）</h3>
+<div class="quiz-item" data-question-id="H6" data-answer="B" data-difficulty="mid" data-explanation="提取后将末尾元素移到堆顶，再 sift-down。树高 log n，故最坏 O(log n) 步。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> H6. 从 n 个元素的堆中提取堆顶元素的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H6" value="A"> A. O(1)</label><label class="option"><input type="radio" name="H6" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="H6" value="C"> C. O(n)</label><label class="option"><input type="radio" name="H6" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H7" data-answer="C" data-difficulty="mid" data-explanation="维护大小为 K 的最小堆：遍历 n 个元素维护堆，O(n log K)。比全排序 O(n log n) 在 K<<n 时更优。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> H7. 用堆在 n 个数中找第 K 大元素，最优时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H7" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="H7" value="B"> B. O(K log n)</label><label class="option"><input type="radio" name="H7" value="C"> C. O(n log K)</label><label class="option"><input type="radio" name="H7" value="D"> D. O(n+K)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H8" data-answer="A" data-difficulty="mid" data-explanation="堆排序原地进行，仅需 O(1) 辅助空间（交换变量等），比归并排序的 O(n) 省空间。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> H8. 堆排序的额外空间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H8" value="A"> A. O(1)</label><label class="option"><input type="radio" name="H8" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="H8" value="C"> C. O(n)</label><label class="option"><input type="radio" name="H8" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H9" data-answer="C" data-difficulty="mid" data-explanation="[3,1,2] 中 parent=3，左子=1，3>1 违反最小堆 parent<=child 的性质。其余选项均满足堆条件。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> H9. 下列哪个数组不是合法的最小堆？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H9" value="A"> A. [1,2,3,4,5]</label><label class="option"><input type="radio" name="H9" value="B"> B. [2,3,4,5,6]</label><label class="option"><input type="radio" name="H9" value="C"> C. [3,1,2]</label><label class="option"><input type="radio" name="H9" value="D"> D. [1,3,2,4,5]</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H10" data-answer="B" data-difficulty="mid" data-explanation="大小 K 的最小堆中，每次提取最小节点并插入后继：共 n 次操作，每次 O(log K)，总 O(n log K)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> H10. 合并 K 个有序链表（总元素 n），堆方案的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H10" value="A"> A. O(nK)</label><label class="option"><input type="radio" name="H10" value="B"> B. O(n log K)</label><label class="option"><input type="radio" name="H10" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="H10" value="D"> D. O(K²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题（竞赛·证明·综合）</h3>
+<div class="quiz-item" data-question-id="H11" data-answer="B" data-difficulty="hard" data-explanation="斐波那契堆设计目标之一就是 O(1) 摊销 decrease-key，使 Dijkstra 理论复杂度降至 O((V+E))，优于二叉堆的 O((V+E) log V)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> H11. 斐波那契堆 decrease-key 的摊销时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H11" value="A"> A. O(log n)</label><label class="option"><input type="radio" name="H11" value="B"> B. O(1)</label><label class="option"><input type="radio" name="H11" value="C"> C. O(n)</label><label class="option"><input type="radio" name="H11" value="D"> D. O(log² n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H12" data-answer="B" data-difficulty="hard" data-explanation="大根堆（小半）+ 小根堆（大半），每次插入后最多 2 次堆操作保持平衡，O(log n) per insert，查中位数 O(1)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> H12. 双堆法维护数据流中位数，插入操作时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H12" value="A"> A. O(1)</label><label class="option"><input type="radio" name="H12" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="H12" value="C"> C. O(n)</label><label class="option"><input type="radio" name="H12" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H13" data-answer="C" data-difficulty="hard" data-explanation="V 次 extract-min O(V log V) + E 次 decrease-key O(E log V)，合计 O((V+E) log V)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> H13. 二叉堆实现 Dijkstra（V 顶点 E 边），总时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H13" value="A"> A. O(V²)</label><label class="option"><input type="radio" name="H13" value="B"> B. O(E log V)</label><label class="option"><input type="radio" name="H13" value="C"> C. O((V+E) log V)</label><label class="option"><input type="radio" name="H13" value="D"> D. O(VE)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H14" data-answer="B" data-difficulty="hard" data-explanation="大根堆根节点即最大值，O(1) 访问。堆无法 O(1) 查任意元素（需 O(n) 扫描），中序遍历有序是 BST 的性质，堆子树只保证父>=子，不是全序。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> H14. 关于堆，哪条说法正确？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H14" value="A"> A. 堆可以在 O(1) 内查找任意元素</label><label class="option"><input type="radio" name="H14" value="B"> B. 大根堆中最大元素一定在根</label><label class="option"><input type="radio" name="H14" value="C"> C. 堆的中序遍历是有序的</label><label class="option"><input type="radio" name="H14" value="D"> D. 堆的任意子树也是排好序的</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="H15" data-answer="B" data-difficulty="hard" data-explanation="每层：将 i 与左右两个子节点比较，选最大/小子节点判断是否交换，共 2 次比较。走 log n 层，总 O(log n) 次比较，每次 2 次。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> H15. sift-down（下沉）从节点 i 开始，每层最多比较几次？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="H15" value="A"> A. 1 次</label><label class="option"><input type="radio" name="H15" value="B"> B. 2 次（与两个子节点比较）</label><label class="option"><input type="radio" name="H15" value="C"> C. 3 次</label><label class="option"><input type="radio" name="H15" value="D"> D. log n 次</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="H15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

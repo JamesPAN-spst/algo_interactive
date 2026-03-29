@@ -1,0 +1,439 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>链表基础模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div>
+                <h1>链表基础模块</h1>
+                <p><a href="../index.html">返回主页面</a></p>
+            </div>
+            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+        </div>
+    </header>
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>链表节点定义：</strong></p>
+<pre><code class="language-python">class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+</code></pre>
+                <p><strong>哨兵节点（Dummy Node）技巧：</strong> 在链表头部加一个虚拟节点，统一处理头节点的特殊情况。</p>
+<pre><code class="language-python">dummy = ListNode(0)   # 哨兵节点
+dummy.next = head
+cur = dummy
+# 操作完成后返回 dummy.next（新的头节点）
+return dummy.next
+</code></pre>
+                <p><strong>链表反转（三指针迭代）：</strong></p>
+<pre><code class="language-python">def reverseList(head):
+    prev = None
+    cur = head
+    while cur:
+        nxt = cur.next       # 先保存下一个节点
+        cur.next = prev      # 反转当前节点的指针
+        prev = cur           # prev前移
+        cur = nxt            # cur前移
+    return prev              # prev就是新的头节点
+</code></pre>
+            </div>
+
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>操作</th><th>单链表</th><th>双链表</th><th>备注</th></tr>
+                    <tr><td>头部插入/删除</td><td>O(1)</td><td>O(1)</td><td>有dummy更方便</td></tr>
+                    <tr><td>尾部插入（有tail指针）</td><td>O(1)</td><td>O(1)</td><td>无tail则O(n)</td></tr>
+                    <tr><td>中间插入/删除（已有前驱）</td><td>O(1)</td><td>O(1)</td><td>需要前驱节点</td></tr>
+                    <tr><td>查找第k个节点</td><td>O(n)</td><td>O(n)</td><td>顺序遍历</td></tr>
+                    <tr><td>反转整个链表</td><td>O(n)</td><td>O(n)</td><td>三指针/递归</td></tr>
+                    <tr><td>检测环</td><td>O(n)</td><td>O(n)</td><td>快慢指针Floyd</td></tr>
+                    <tr><td>找链表中点</td><td>O(n)</td><td>O(n)</td><td>快慢指针</td></tr>
+                </table>
+            </div>
+
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：链表操作可视化</h3>
+<pre class="ascii-art">
+【链表反转过程】
+初始: dummy→1→2→3→4→None
+      prev=None  cur=1
+
+step1: nxt=2, 1→None, prev=1, cur=2
+       None←1  2→3→4
+
+step2: nxt=3, 2→1, prev=2, cur=3
+       None←1←2  3→4
+
+step3: nxt=4, 3→2, prev=3, cur=4
+step4: nxt=None, 4→3, prev=4, cur=None
+       None←1←2←3←4   返回prev=4 ✓
+
+【快慢指针找中点】
+1→2→3→4→5
+s  f         step1: slow=2, fast=3
+   s     f   step2: slow=3, fast=5
+             fast到末，slow在中间=3 ✓
+
+【Floyd环检测】
+若有环，fast终将追上slow
+相遇点到环起点的距离 = 头节点到环起点的距离
+→ 双指针分别从头和相遇点出发，再次相遇即环起点
+</pre>
+            </div>
+
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+                <details>
+                    <summary>例题1：链表中环的入口（LeetCode 142）— Floyd算法</summary>
+                    <p><strong>题意：</strong> 找到链表环的入口节点，若无环返回None。</p>
+<pre><code class="language-python">def detectCycle(head):
+    slow = fast = head
+    # 第一阶段：找相遇点
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow == fast:                 # 相遇
+            break
+    else:
+        return None                      # 无环
+
+    # 第二阶段：找环入口
+    # 数学证明：头到入口的距离 = 相遇点到入口的距离
+    fast = head
+    while fast != slow:
+        fast = fast.next
+        slow = slow.next
+    return slow                          # 环入口节点
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
+                </details>
+
+                <details>
+                    <summary>例题2：K个一组翻转链表（LeetCode 25）</summary>
+                    <p><strong>题意：</strong> 每K个节点一组进行翻转，不足K的保持原样。</p>
+<pre><code class="language-python">def reverseKGroup(head, k):
+    dummy = ListNode(0)
+    dummy.next = head
+    pre = dummy
+
+    def reverse(start, end):         # 翻转 start 到 end 之间的节点
+        prev, cur = None, start
+        while cur != end:
+            nxt = cur.next
+            cur.next = prev
+            prev, cur = cur, nxt
+        return prev                  # 返回翻转后的头（原来的end前一节点）
+
+    while True:
+        # 检查是否有k个节点
+        tail = pre
+        for _ in range(k):
+            tail = tail.next
+            if not tail: return dummy.next  # 不足k个，结束
+        nxt = tail.next              # 保存下一组的头
+        # 翻转 [pre.next, tail]
+        head = reverse(pre.next, tail.next)
+        pre.next.next = nxt          # 原头现在是尾，连接下一组
+        pre.next = head              # pre连接新的头
+        pre = pre.next.next if pre.next else pre  # pre移到翻转段末
+        # 简化：
+        pre = pre.next               # 错了要纠正
+</code></pre>
+<pre><code class="language-python"># 更清晰的实现
+def reverseKGroup(head, k):
+    dummy = ListNode(0, head)
+    group_prev = dummy
+
+    while True:
+        kth = getKth(group_prev, k)
+        if not kth: break
+        group_next = kth.next
+
+        # 翻转本组
+        prev, curr = kth.next, group_prev.next
+        while curr != group_next:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
+
+        tmp = group_prev.next          # 原头（翻转后变尾）
+        group_prev.next = kth          # 接新头
+        tmp.next = group_next          # 原头接下一组
+        group_prev = tmp               # group_prev移到翻转段末尾
+    return dummy.next
+
+def getKth(curr, k):
+    while curr and k > 0:
+        curr = curr.next; k -= 1
+    return curr
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：LRU缓存（LeetCode 146）— 哈希表+双链表</summary>
+                    <p><strong>题意：</strong> 实现LRU缓存，get和put操作均为O(1)。</p>
+<pre><code class="language-python">class LRUCache:
+    def __init__(self, capacity):
+        self.cap = capacity
+        self.cache = {}              # key → node
+        self.head = ListNode(0)      # 哨兵（最近使用）
+        self.tail = ListNode(0)      # 哨兵（最久未使用）
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node):         # 从双链表删除节点
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def _insert(self, node):         # 插入到head之后（最近使用位置）
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key):
+        if key in self.cache:
+            self._remove(self.cache[key])
+            self._insert(self.cache[key])    # 移到最近使用位置
+            return self.cache[key].val
+        return -1
+
+    def put(self, key, value):
+        if key in self.cache:
+            self._remove(self.cache[key])
+        node = ListNode(value)
+        node.key = key
+        self.cache[key] = node
+        self._insert(node)
+        if len(self.cache) > self.cap:       # 超容量，删最久未使用
+            lru = self.tail.prev
+            self._remove(lru)
+            del self.cache[lru.key]
+</code></pre>
+                    <p><strong>时间：</strong> O(1) get/put；<strong>空间：</strong> O(capacity)</p>
+                </details>
+            </div>
+
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+                <p><strong>① 修改指针顺序错误导致链表断裂</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（先移cur导致丢失nxt）</p>
+<pre><code class="language-python">cur.next = prev    # 先断开
+prev = cur
+cur = cur.next     # cur.next已改变，丢失原next！
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（先保存nxt）</p>
+<pre><code class="language-python">nxt = cur.next     # 第一步：保存下一节点
+cur.next = prev    # 第二步：反转指针
+prev = cur         # 第三步：前移prev
+cur = nxt          # 第四步：前移cur
+</code></pre>
+                    </div>
+                </div>
+                <p><strong>② 环链表快慢指针漏判空</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（无空指针保护）</p>
+<pre><code class="language-python">while slow != fast:
+    slow = slow.next
+    fast = fast.next.next  # 若fast为None则报错！
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（先判空）</p>
+<pre><code class="language-python">while fast and fast.next:
+    slow = slow.next
+    fast = fast.next.next
+    if slow == fast: break
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>跳表（Skip List）：</strong> 多层索引链表，支持O(log n)查找/插入/删除，Redis中SortedSet的底层实现。</p>
+                <p><strong>XOR链表：</strong> 每个节点存 prev XOR next，节省一半指针空间，实现双链表。但Python不支持裸指针操作。</p>
+                <p><strong>链表排序（O(n log n) + O(1)空间）：</strong> 自底向上归并排序链表，避免递归栈空间。</p>
+<pre><code class="language-python">def sortList(head):
+    # 自底向上归并，避免递归O(n)空间
+    if not head or not head.next: return head
+    length = 0
+    node = head
+    while node: length += 1; node = node.next
+
+    dummy = ListNode(0, head)
+    sub_len = 1
+    while sub_len < length:
+        prev, cur = dummy, dummy.next
+        while cur:
+            # 取第一段 sub_len 个
+            head1 = cur
+            for _ in range(sub_len - 1):
+                if cur.next: cur = cur.next
+                else: break
+            head2 = cur.next; cur.next = None
+            cur = head2
+            # 取第二段 sub_len 个
+            for _ in range(sub_len - 1):
+                if cur and cur.next: cur = cur.next
+                else: break
+            nxt = cur.next if cur else None
+            if cur: cur.next = None
+            cur = nxt
+            # 合并两段
+            merged = merge2(head1, head2)
+            prev.next = merged
+            while prev.next: prev = prev.next
+        sub_len <<= 1   # 每次翻倍
+    return dummy.next
+</code></pre>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="linked-list">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 LL3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="LL1" data-answer="B" data-difficulty="basic" data-explanation="链表头插：只需修改新节点的 next 指向旧头节点，更新头指针，O(1)。中间插入需先遍历到目标位置 O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> LL1. 链表插入到头部的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL1" value="A"> A. O(n)</label><label class="option"><input type="radio" name="LL1" value="B"> B. O(1)</label><label class="option"><input type="radio" name="LL1" value="C"> C. O(log n)</label><label class="option"><input type="radio" name="LL1" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL2" data-answer="B" data-difficulty="basic" data-explanation="单链表每个节点只有 next 指针，只能从 head 向后遍历。随机访问 O(n)。双向链表有 prev/next，可双向遍历。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> LL2. 单链表只能向哪个方向遍历？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL2" value="A"> A. 双向</label><label class="option"><input type="radio" name="LL2" value="B"> B. 只能向后（从头到尾）</label><label class="option"><input type="radio" name="LL2" value="C"> C. 只能向前（从尾到头）</label><label class="option"><input type="radio" name="LL2" value="D"> D. 随机跳跃</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL3" data-answer="B" data-difficulty="basic" data-explanation="Floyd 龟兔赛跑：fast 走两步 slow 走一步，若有环则必相遇。相遇后一指针回头部，再同速走，再次相遇点即环入口。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> LL3. 快慢指针（Floyd）常用于链表哪类问题？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL3" value="A"> A. 排序</label><label class="option"><input type="radio" name="LL3" value="B"> B. 检测环和找环入口</label><label class="option"><input type="radio" name="LL3" value="C"> C. 合并链表</label><label class="option"><input type="radio" name="LL3" value="D"> D. 查找最大值</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL4" data-answer="B" data-difficulty="basic" data-explanation="链表节点不连续，无法通过下标 O(1) 定位。每次访问需从头遍历，O(n)。这是链表和数组最本质的差异。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> LL4. 链表相比数组的最大劣势是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL4" value="A"> A. 插入效率低</label><label class="option"><input type="radio" name="LL4" value="B"> B. 不支持随机访问（O(n) 寻址）</label><label class="option"><input type="radio" name="LL4" value="C"> C. 空间占用大</label><label class="option"><input type="radio" name="LL4" value="D"> D. 不可删除</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL5" data-answer="B" data-difficulty="basic" data-explanation="dummy.next = head，head 变化时只需更新 dummy.next，避免对头节点为空/被删等情况的特殊判断，代码更简洁。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> LL5. 哨兵节点（dummy head）的作用是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL5" value="A"> A. 加速遍历</label><label class="option"><input type="radio" name="LL5" value="B"> B. 统一边界条件处理（无需特判头节点为空）</label><label class="option"><input type="radio" name="LL5" value="C"> C. 节省内存</label><label class="option"><input type="radio" name="LL5" value="D"> D. 排序用</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="LL6" data-answer="A" data-difficulty="mid" data-explanation="标准四步：①保存 next ②反转 cur.next 指向 prev ③prev 移到 cur ④cur 移到 next。顺序不能颠倒，否则会丢失后继节点。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> LL6. 反转链表（迭代法），三个指针的操作顺序？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL6" value="A"> A. next = cur.next; cur.next = prev; prev = cur; cur = next</label><label class="option"><input type="radio" name="LL6" value="B"> B. cur.next = prev; prev = cur; cur = cur.next</label><label class="option"><input type="radio" name="LL6" value="C"> C. prev = cur; cur.next = prev; cur = cur.next; (next丢失)</label><label class="option"><input type="radio" name="LL6" value="D"> D. 直接交换值</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL7" data-answer="B" data-difficulty="mid" data-explanation="fast 先走 K 步，然后 fast/slow 同速前进；fast 到尾时，slow 正好在倒数第 K 个节点。O(n) 一次遍历。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> LL7. 找链表倒数第 K 个节点，双指针法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL7" value="A"> A. 先遍历到尾，再回退 K 步</label><label class="option"><input type="radio" name="LL7" value="B"> B. fast 先走 K 步，然后 fast/slow 同步，fast 到尾时 slow 在倒 K</label><label class="option"><input type="radio" name="LL7" value="C"> C. sort 后取 index n-K</label><label class="option"><input type="radio" name="LL7" value="D"> D. 用哈希表记录所有地址</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL8" data-answer="B" data-difficulty="mid" data-explanation="双指针分别指向两表，每次选较小节点接到结果，O(m+n) 时间 O(1) 空间（迭代法，递归法栈深 O(m+n)）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> LL8. 合并两个有序链表（LeetCode 21），迭代法时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL8" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="LL8" value="B"> B. O(m+n)</label><label class="option"><input type="radio" name="LL8" value="C"> C. O(n²)</label><label class="option"><input type="radio" name="LL8" value="D"> D. O(1)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL9" data-answer="B" data-difficulty="mid" data-explanation="三步：①快慢指针找中点 ②反转后半链表 ③对比前后两半。可选第四步恢复链表结构。O(n) O(1)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> LL9. 判断链表是否回文（LeetCode 234），O(n) O(1) 空间解法步骤？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL9" value="A"> A. 复制到数组</label><label class="option"><input type="radio" name="LL9" value="B"> B. 找中点→反转后半→比较→恢复（可选）</label><label class="option"><input type="radio" name="LL9" value="C"> C. 哈希表存值</label><label class="option"><input type="radio" name="LL9" value="D"> D. 双指针从头尾</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL10" data-answer="B" data-difficulty="mid" data-explanation="跳表多层索引层，每层约 n/2^k 个节点，查找从顶层开始逐层向下，平均 O(log n)，与 BST 相当但实现更简单（易于并发）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> LL10. 跳表（Skip List）查找的平均时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL10" value="A"> A. O(n)</label><label class="option"><input type="radio" name="LL10" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="LL10" value="C"> C. O(1)</label><label class="option"><input type="radio" name="LL10" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="LL11" data-answer="B" data-difficulty="hard" data-explanation="哈希表提供 O(1) 访问，双向链表维护使用顺序（最近使用移动到头）并 O(1) 删除任意节点（需要双向）。这是 LRU 的经典实现。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> LL11. LRU Cache（LC 146）实现要求 O(1) get/put，数据结构是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL11" value="A"> A. 数组+排序</label><label class="option"><input type="radio" name="LL11" value="B"> B. 哈希表+双向链表</label><label class="option"><input type="radio" name="LL11" value="C"> C. 红黑树</label><label class="option"><input type="radio" name="LL11" value="D"> D. 单链表</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL12" data-answer="B" data-difficulty="hard" data-explanation="设 D=head 到环入口距离，C=环长，相遇时 slow 走了 D+k（k<C）步，fast 走了 2(D+k)。可推导出 head 到环入口的距离 ≡ 相遇点到环入口的距离（mod C），两者同步出发再次相遇在入口。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> LL12. 链表有环：后续从 head 和相遇点出发同速走，相遇处为环入口，证明依据？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL12" value="A"> A. 链表长度性质</label><label class="option"><input type="radio" name="LL12" value="B"> B. 环长 = head 到环入口距离 + 相遇点到环入口距离</label><label class="option"><input type="radio" name="LL12" value="C"> C. 相遇时 fast=2×slow</label><label class="option"><input type="radio" name="LL12" value="D"> D. 数学巧合</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL13" data-answer="B" data-difficulty="hard" data-explanation="每个节点只被翻转一次（在其所在组内），总 O(n)。需要注意最后不足 K 个的组不翻转（或翻转取决于题意）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> LL13. K 个一组翻转链表（LC 25），时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL13" value="A"> A. O(n²)</label><label class="option"><input type="radio" name="LL13" value="B"> B. O(n)</label><label class="option"><input type="radio" name="LL13" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="LL13" value="D"> D. O(Kn)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL14" data-answer="C" data-difficulty="hard" data-explanation="自底向上（迭代式）归并排序：从 step=1 开始，每次合并 step 长度的相邻对，step 翻倍直到 n。O(n log n) O(1) 空间（无递归栈），是链表排序的最优解。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> LL14. 排序链表（O(n log n) O(1) 空间），最适合哪个算法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL14" value="A"> A. 快速排序</label><label class="option"><input type="radio" name="LL14" value="B"> B. 堆排序</label><label class="option"><input type="radio" name="LL14" value="C"> C. 自底向上归并排序</label><label class="option"><input type="radio" name="LL14" value="D"> D. 插入排序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="LL15" data-answer="B" data-difficulty="hard" data-explanation="XOR 链表：每个节点只存 prev XOR next，遍历时通过已知 prev 可恢复 next = (prev XOR npx)，节省一半指针空间，但只能顺序遍历，Python 不支持（GC 会移动对象地址）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> LL15. XOR 链表用什么代替 prev/next 两个指针？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="LL15" value="A"> A. node.value XOR node.address</label><label class="option"><input type="radio" name="LL15" value="B"> B. node.prev XOR node.next（存储两个邻居地址的异或）</label><label class="option"><input type="radio" name="LL15" value="C"> C. node.next XOR node.value</label><label class="option"><input type="radio" name="LL15" value="D"> D. 不可能实现</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="LL15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#f7f9fc"/>
+  <circle cx="520" cy="80" r="45" fill="#ffd166"/>
+  <g fill="#90caf9">
+    <rect x="40" y="220" width="130" height="100" rx="10"/>
+    <rect x="190" y="180" width="130" height="140" rx="10"/>
+    <rect x="340" y="140" width="130" height="180" rx="10"/>
+  </g>
+  <path d="M70 240 C150 170, 250 230, 390 130" stroke="#ef476f" stroke-width="8" fill="none"/>
+  <text x="28" y="48" font-size="28" fill="#1f2937" font-family="Arial, sans-serif">白天模式示例 Day Mode</text>
+</svg>

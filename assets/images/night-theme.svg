@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0f172a"/>
+  <circle cx="530" cy="82" r="42" fill="#f8fafc" opacity="0.9"/>
+  <g fill="#334155">
+    <rect x="40" y="220" width="130" height="100" rx="10"/>
+    <rect x="190" y="180" width="130" height="140" rx="10"/>
+    <rect x="340" y="140" width="130" height="180" rx="10"/>
+  </g>
+  <path d="M70 255 C140 210, 250 250, 390 160" stroke="#22d3ee" stroke-width="8" fill="none"/>
+  <text x="28" y="48" font-size="28" fill="#e2e8f0" font-family="Arial, sans-serif">夜晚模式示例 Night Mode</text>
+</svg>

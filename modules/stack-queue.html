@@ -1,0 +1,349 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>栈与队列模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div><h1>栈与队列模块</h1><p><a href="../index.html">返回主页面</a></p></div>
+            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+        </div>
+    </header>
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>单调栈模板（求下一个更大元素）：</strong></p>
+<pre><code class="language-python">def nextGreaterElement(nums):
+    n = len(nums)
+    result = [-1] * n
+    stack = []                         # 单调递减栈（存下标）
+
+    for i in range(n):
+        # 当前元素比栈顶大 → 栈顶元素的"下一个更大"就是当前元素
+        while stack and nums[i] > nums[stack[-1]]:
+            idx = stack.pop()
+            result[idx] = nums[i]      # 找到了idx的下一个更大元素
+        stack.append(i)
+    return result
+</code></pre>
+                <p><strong>最小栈（O(1)获取最小值）：</strong></p>
+<pre><code class="language-python">class MinStack:
+    def __init__(self):
+        self.stack = []
+        self.min_stack = []            # 辅助栈：存当前最小值
+
+    def push(self, val):
+        self.stack.append(val)
+        # 辅助栈记录当前最小值（只有更小时才更新）
+        min_val = min(val, self.min_stack[-1] if self.min_stack else val)
+        self.min_stack.append(min_val)
+
+    def pop(self):
+        self.stack.pop()
+        self.min_stack.pop()           # 同步弹出
+
+    def getMin(self):
+        return self.min_stack[-1]      # O(1) 取最小
+</code></pre>
+            </div>
+
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>操作</th><th>栈（list）</th><th>队列（deque）</th><th>双端队列（deque）</th></tr>
+                    <tr><td>push/appendleft</td><td>O(1) 均摊</td><td>—</td><td>O(1)</td></tr>
+                    <tr><td>pop(右端)</td><td>O(1) 均摊</td><td>—</td><td>O(1)</td></tr>
+                    <tr><td>popleft（左端）</td><td>O(n)！</td><td>O(1)</td><td>O(1)</td></tr>
+                    <tr><td>peek（查看顶/头）</td><td>O(1)</td><td>O(1)</td><td>O(1)</td></tr>
+                    <tr><td>单调栈（n个元素）</td><td>O(n) 总计</td><td>—</td><td>—</td></tr>
+                </table>
+            </div>
+
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：单调栈处理过程</h3>
+<pre class="ascii-art">
+数组: [2, 1, 5, 6, 2, 3]  求每个元素的下一个更大元素
+
+i=0: 栈空, push(0)         stack=[0]   nums=[2,...]
+i=1: 1<2, push(1)          stack=[0,1]
+i=2: 5>1 → result[1]=5, pop; 5>2 → result[0]=5, pop; push(2)
+     stack=[2]             result:[5,5,-1,-1,-1,-1]
+i=3: 6>5 → result[2]=6, pop; push(3)
+     stack=[3]             result:[5,5,6,-1,-1,-1]
+i=4: 2<6, push(4)          stack=[3,4]
+i=5: 3>2 → result[4]=3, pop; 3<6, push(5)
+     stack=[3,5]           result:[5,5,6,-1,3,-1]
+结束: 栈中剩余[3,5]对应result=-1（默认值）
+
+最终: [5, 5, 6, -1, 3, -1]  ✓
+</pre>
+            </div>
+
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+                <details>
+                    <summary>例题1：有效的括号（LeetCode 20）</summary>
+                    <p><strong>题意：</strong> 判断括号字符串是否有效（括号匹配且顺序正确）。</p>
+<pre><code class="language-python">def isValid(s):
+    stack = []
+    mapping = {')': '(', '}': '{', ']': '['}  # 右括号→对应左括号
+
+    for char in s:
+        if char in mapping:           # 遇到右括号
+            top = stack.pop() if stack else '#'  # 栈空则用'#'占位
+            if mapping[char] != top:
+                return False          # 不匹配
+        else:
+            stack.append(char)        # 左括号入栈
+    return not stack                  # 栈空说明全部匹配
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
+                </details>
+
+                <details>
+                    <summary>例题2：柱状图中最大矩形（LeetCode 84）— 单调栈</summary>
+                    <p><strong>题意：</strong> 给柱状图高度数组，找能构成的最大矩形面积。</p>
+<pre><code class="language-python">def largestRectangleArea(heights):
+    heights = heights + [0]            # 末尾加0，强制清空栈
+    stack = [-1]                       # 初始放哨兵
+    result = 0
+
+    for i, h in enumerate(heights):
+        while stack[-1] != -1 and heights[stack[-1]] >= h:
+            height = heights[stack.pop()]      # 弹出作为矩形高度
+            width = i - stack[-1] - 1          # 宽度 = 当前位置 - 新栈顶 - 1
+            result = max(result, height * width)
+        stack.append(i)
+    return result
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：用两个栈实现队列（LeetCode 232）</summary>
+<pre><code class="language-python">class MyQueue:
+    def __init__(self):
+        self.stack_in  = []   # 输入栈：接收push
+        self.stack_out = []   # 输出栈：提供pop/peek
+
+    def push(self, x):
+        self.stack_in.append(x)
+
+    def _transfer(self):
+        if not self.stack_out:                 # 输出栈空才转移
+            while self.stack_in:
+                self.stack_out.append(self.stack_in.pop())
+
+    def pop(self):
+        self._transfer()
+        return self.stack_out.pop()
+
+    def peek(self):
+        self._transfer()
+        return self.stack_out[-1]
+
+    def empty(self):
+        return not self.stack_in and not self.stack_out
+</code></pre>
+                    <p><strong>摊销：</strong> push O(1)，pop O(1) 摊销（每个元素最多转一次）；<strong>空间：</strong> O(n)</p>
+                </details>
+            </div>
+
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+                <p><strong>① 用list的pop(0)而不是deque实现队列</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（O(n)操作）</p>
+<pre><code class="language-python">queue = []
+queue.append(x)      # 入队 O(1)
+queue.pop(0)         # 出队 O(n)！列表头部删除需移动所有元素
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（deque，O(1)）</p>
+<pre><code class="language-python">from collections import deque
+queue = deque()
+queue.append(x)      # 入队 O(1)
+queue.popleft()      # 出队 O(1)
+</code></pre>
+                    </div>
+                </div>
+                <p><strong>② 单调栈比较条件写错（&gt;= vs &gt;）</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（求下一个更大用&gt;=）</p>
+<pre><code class="language-python">while stack and nums[i] >= nums[stack[-1]]:
+    # >= 会把相等元素也弹出
+    # 对于重复元素会产生错误答案
+    result[stack.pop()] = nums[i]
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（严格大于用&gt;）</p>
+<pre><code class="language-python">while stack and nums[i] > nums[stack[-1]]:
+    # 严格大于，相等的留在栈里
+    result[stack.pop()] = nums[i]
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>单调队列优化DP：</strong> 当状态转移 dp[i] = min/max(dp[j]) for j in [i-k, i-1] 时，用单调队列代替线性查找，将O(nk)降至O(n)。</p>
+<pre><code class="language-python">from collections import deque
+
+def maxSlidingWindow(nums, k):
+    dq = deque()           # 存下标，维护单调递减
+    result = []
+    for i, num in enumerate(nums):
+        if dq and dq[0] < i - k + 1:  # 移除超出窗口的旧下标
+            dq.popleft()
+        while dq and nums[dq[-1]] < num:  # 保持队列单调递减
+            dq.pop()
+        dq.append(i)
+        if i >= k - 1:
+            result.append(nums[dq[0]])    # 队首是窗口最大值下标
+    return result
+</code></pre>
+                <p><strong>表达式求值（中缀→后缀）：</strong> 双栈法（操作符栈+操作数栈）或逆波兰表达式法，支持优先级和括号处理。</p>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="stack-queue">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="SQ3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="SQ1" data-answer="B" data-difficulty="basic" data-explanation="栈 LIFO：最后入栈的元素最先出栈。类比叠碗，只能从顶部取放。push 和 pop 均 O(1)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SQ1. 栈的访问规则是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ1" value="A"> A. 先进先出（FIFO）</label><label class="option"><input type="radio" name="SQ1" value="B"> B. 后进先出（LIFO）</label><label class="option"><input type="radio" name="SQ1" value="C"> C. 随机访问</label><label class="option"><input type="radio" name="SQ1" value="D"> D. 优先级出队</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ2" data-answer="B" data-difficulty="basic" data-explanation="队列 FIFO：最先入队的元素最先出队。类比排队，从队尾进、队头出。enqueue 和 dequeue 均 O(1)（链表实现）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SQ2. 队列的访问规则是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ2" value="A"> A. 后进先出（LIFO）</label><label class="option"><input type="radio" name="SQ2" value="B"> B. 先进先出（FIFO）</label><label class="option"><input type="radio" name="SQ2" value="C"> C. 随机访问</label><label class="option"><input type="radio" name="SQ2" value="D"> D. 优先级出队</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ3" data-answer="C" data-difficulty="basic" data-explanation="栈解括号：遇到左括号入栈，遇到右括号检查栈顶是否匹配，不匹配/栈空则非法，最终栈为空表示合法。经典 O(n) O(n) 解法。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SQ3. 判断括号合法性（如 () [] {}），用哪种数据结构？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ3" value="A"> A. 队列</label><label class="option"><input type="radio" name="SQ3" value="B"> B. 哈希表</label><label class="option"><input type="radio" name="SQ3" value="C"> C. 栈</label><label class="option"><input type="radio" name="SQ3" value="D"> D. 链表</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ4" data-answer="B" data-difficulty="basic" data-explanation="单调栈维护元素的单调性（递增或递减）。插入新元素时弹出所有不满足单调性的旧元素。O(n) 内处理所有元素（每个元素最多入出栈各1次）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SQ4. 单调栈中元素保持什么性质？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ4" value="A"> A. 完全有序</label><label class="option"><input type="radio" name="SQ4" value="B"> B. 从栈底到栈顶单调递增或单调递减</label><label class="option"><input type="radio" name="SQ4" value="C"> C. 所有元素相同</label><label class="option"><input type="radio" name="SQ4" value="D"> D. 按插入顺序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ5" data-answer="B" data-difficulty="basic" data-explanation="Deque（Double-Ended Queue）：头尾均支持 O(1) push/pop。Python 的 collections.deque 和 C++ 的 deque 都是。可同时模拟栈和队列。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SQ5. 双端队列（Deque）相比普通队列多了什么能力？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ5" value="A"> A. O(1) 随机访问</label><label class="option"><input type="radio" name="SQ5" value="B"> B. 两端都可以 O(1) 入队和出队</label><label class="option"><input type="radio" name="SQ5" value="C"> C. 自动排序</label><label class="option"><input type="radio" name="SQ5" value="D"> D. 更小的空间</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="SQ6" data-answer="B" data-difficulty="mid" data-explanation="辅助栈法：主栈正常操作，辅助栈只在新最小值时入栈（或同步入栈）。push/pop/min 均 O(1)，额外 O(n) 空间。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SQ6. 最小栈（LC 155，O(1) 查最小值），经典实现方法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ6" value="A"> A. 每次排序</label><label class="option"><input type="radio" name="SQ6" value="B"> B. 用辅助栈同步记录当前最小值</label><label class="option"><input type="radio" name="SQ6" value="C"> C. 哈希表</label><label class="option"><input type="radio" name="SQ6" value="D"> D. 二叉堆</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ7" data-answer="C" data-difficulty="mid" data-explanation="单调递减双端队列：队头始终是窗口内最大值下标，新元素入队前弹出所有 <= 它的队尾元素，过期下标出队，O(n) 总时间，每个元素最多入出队1次。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SQ7. 滑动窗口最大值（LC 239，k 大小的窗口）的最优解时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ7" value="A"> A. O(nk)</label><label class="option"><input type="radio" name="SQ7" value="B"> B. O(n log k)</label><label class="option"><input type="radio" name="SQ7" value="C"> C. O(n)</label><label class="option"><input type="radio" name="SQ7" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ8" data-answer="B" data-difficulty="mid" data-explanation="单调递增栈存下标：新柱比栈顶矮时，弹出栈顶计算以该柱为高的矩形面积（宽 = 当前-栈顶-1）。O(n) O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SQ8. 柱状图中最大矩形（LC 84）单调栈解法，栈中存什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ8" value="A"> A. 矩形面积</label><label class="option"><input type="radio" name="SQ8" value="B"> B. 柱子下标（维护单调递增栈）</label><label class="option"><input type="radio" name="SQ8" value="C"> C. 柱子高度</label><label class="option"><input type="radio" name="SQ8" value="D"> D. 左边界</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ9" data-answer="B" data-difficulty="mid" data-explanation="in_stack 负责入队（push O(1)），out_stack 负责出/查队头。out_stack 为空时从 in_stack 全部转移（O(n) 但摊到每个元素是 O(1) 均摊）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SQ9. 用两个栈实现队列（LC 232），均摊时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ9" value="A"> A. O(n) push O(n) pop</label><label class="option"><input type="radio" name="SQ9" value="B"> B. O(1) push，O(1) 均摊 pop</label><label class="option"><input type="radio" name="SQ9" value="C"> C. O(log n) push</label><label class="option"><input type="radio" name="SQ9" value="D"> D. O(n) push O(1) pop</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ10" data-answer="B" data-difficulty="mid" data-explanation="单调递减栈（从栈底到顶，温度递减）存下标：遇到更高温度时，弹出栈顶并记录间隔天数，O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SQ10. 每日温度（LC 739），找下一个更高温度日，单调栈方向和存储内容？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ10" value="A"> A. 单调递增栈，存温度值</label><label class="option"><input type="radio" name="SQ10" value="B"> B. 单调递减栈，存日期下标</label><label class="option"><input type="radio" name="SQ10" value="C"> C. 单调递增栈，存日期下标</label><label class="option"><input type="radio" name="SQ10" value="D"> D. BFS 层序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="SQ11" data-answer="B" data-difficulty="hard" data-explanation="单调栈（维护递减）：以水坑底为基准，弹栈时计算当前水坑宽×高的水量（横向计算）。双指针按列纵向计算。两者均 O(n) O(1)，只是视角不同。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SQ11. 接雨水（LC 42）的单调栈解法，相比双指针的区别？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ11" value="A"> A. 单调栈空间 O(1)</label><label class="option"><input type="radio" name="SQ11" value="B"> B. 单调栈按水坑层次计算，双指针按列计算；两者时间相同但思路不同</label><label class="option"><input type="radio" name="SQ11" value="C"> C. 单调栈更慢</label><label class="option"><input type="radio" name="SQ11" value="D"> D. 双指针不可行</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ12" data-answer="B" data-difficulty="hard" data-explanation="每次函数调用都在调用栈上分配栈帧（局部变量、返回地址等）。递归过深（如深度 10000+）会耗尽栈空间导致 StackOverflow。可改用显式栈+循环避免。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SQ12. 函数调用栈（call stack）溢出（StackOverflow）的常见原因？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ12" value="A"> A. 队列太长</label><label class="option"><input type="radio" name="SQ12" value="B"> B. 无限递归或递归过深（超过系统栈帧限制）</label><label class="option"><input type="radio" name="SQ12" value="C"> C. 数组越界</label><label class="option"><input type="radio" name="SQ12" value="D"> D. 堆内存不足</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ13" data-answer="B" data-difficulty="hard" data-explanation="双栈法（Shunting-yard）：遇数字压数字栈，遇运算符比较优先级，将栈中高优先级运算符弹出计算，最后计算剩余运算符，O(n)。或先转后缀再用栈求值。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SQ13. 基于栈实现中缀表达式求值（如 3+4*2）的正确顺序？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ13" value="A"> A. 直接从左到右计算</label><label class="option"><input type="radio" name="SQ13" value="B"> B. 维护运算符栈和数字栈，按优先级弹出计算</label><label class="option"><input type="radio" name="SQ13" value="C"> C. 先转后缀再求值</label><label class="option"><input type="radio" name="SQ13" value="D"> D. 只用队列</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ14" data-answer="B" data-difficulty="hard" data-explanation="查找左侧第一个更小值：维护单调递增栈。处理 nums[i] 时，弹出所有 >= nums[i] 的栈顶，剩余栈顶即为左侧第一个更小值（弹空则无）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SQ14. 单调栈找左侧第一个比当前元素小的位置，正确的单调栈类型？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ14" value="A"> A. 单调递减栈（由栈底到顶递减）</label><label class="option"><input type="radio" name="SQ14" value="B"> B. 单调递增栈（由栈底到顶递增，新元素前弹出所有>=它的）</label><label class="option"><input type="radio" name="SQ14" value="C"> C. 双端队列</label><label class="option"><input type="radio" name="SQ14" value="D"> D. 优先队列</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SQ15" data-answer="B" data-difficulty="hard" data-explanation="贪心+单调栈：若当前字母小于栈顶字母，且栈顶字母在后续还会出现（right_more），则弹出栈顶（可以靠后的位置再选）。in_stack 防止重复入栈，O(n) O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SQ15. 去除重复字母（LC 316），要求去重后字典序最小且保持相对顺序，用何方法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SQ15" value="A"> A. 排序</label><label class="option"><input type="radio" name="SQ15" value="B"> B. 单调递增栈+in_stack 集合+right_more 集合</label><label class="option"><input type="radio" name="SQ15" value="C"> C. 只用哈希</label><label class="option"><input type="radio" name="SQ15" value="D"> D. BFS</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SQ15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>数组与双指针模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div>
+                <h1>数组与双指针模块</h1>
+                <p><a href="../index.html">返回主页面</a></p>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="primary">切换模式</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <!-- 1. 核心定义 -->
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>左闭右开区间：</strong> <code>[left, right)</code>，即 <code>left</code> 包含，<code>right</code> 不包含。初始化 <code>left=0, right=n</code>，循环条件 <code>left &lt; right</code>。</p>
+                <p><strong>前缀和定义：</strong></p>
+<pre><code class="language-python">pre[0] = 0
+pre[i] = pre[i-1] + nums[i-1]   # pre[i] 表示前i个元素之和
+# 区间和 [l, r)（0-indexed）: sum = pre[r] - pre[l]
+</code></pre>
+                <p><strong>滑动窗口模板：</strong></p>
+<pre><code class="language-python">def sliding_window(s, k):
+    left = 0
+    window = {}                       # 记录窗口内状态
+    result = 0
+    for right in range(len(s)):
+        # 1. 扩展窗口，加入 s[right]
+        window[s[right]] = window.get(s[right], 0) + 1
+        # 2. 当窗口不满足条件时收缩
+        while 不满足条件:
+            window[s[left]] -= 1
+            if window[s[left]] == 0:
+                del window[s[left]]
+            left += 1
+        # 3. 更新答案
+        result = max(result, right - left + 1)
+    return result
+</code></pre>
+            </div>
+
+            <!-- 2. 复杂度速查 -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>技巧</th><th>时间复杂度</th><th>空间复杂度</th><th>典型用途</th></tr>
+                    <tr><td>对撞双指针</td><td>O(n)</td><td>O(1)</td><td>有序数组两数之和</td></tr>
+                    <tr><td>同向双指针</td><td>O(n)</td><td>O(1)</td><td>移除元素、快慢指针</td></tr>
+                    <tr><td>滑动窗口</td><td>O(n)</td><td>O(k)</td><td>最长无重复子串</td></tr>
+                    <tr><td>前缀和</td><td>O(1)查询/O(n)建表</td><td>O(n)</td><td>区间和、子数组求和</td></tr>
+                    <tr><td>差分数组</td><td>O(1)更新/O(n)还原</td><td>O(n)</td><td>区间批量加法</td></tr>
+                </table>
+            </div>
+
+            <!-- 3. 结构图示 -->
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：滑动窗口与前缀和</h3>
+<pre class="ascii-art">
+【滑动窗口示意】 (无重复字符最长子串)
+  a b c b b c b
+  ↑           ↑
+ left       right   窗口移动：left追right
+
+  step1: [a]          right=0  window={a:1}
+  step2: [a,b]        right=1  window={a:1,b:1}
+  step3: [a,b,c]      right=2  window={a:1,b:1,c:1}
+  step4: [b,c,b]?→收缩 right=3  发现b重复，left移到1
+         [b,c]→[b,c,b] 合法，长度=3
+
+【前缀和示意】
+  nums:  [3, 1, 4, 1, 5]
+  pre:   [0, 3, 4, 8, 9, 14]
+         pre[0]=0
+  区间和[1,3](含) = pre[4]-pre[1] = 9-3 = 6
+</pre>
+            </div>
+
+            <!-- 4. 典型例题 -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+
+                <details>
+                    <summary>例题1：移动零（LeetCode 283）— 同向双指针</summary>
+                    <p><strong>题意：</strong> 将数组中所有0移到末尾，保持非0元素相对顺序，原地操作。</p>
+                    <p><strong>思路：</strong> slow 指向下一个非0元素该放的位置，fast 扫描所有非0元素。</p>
+<pre><code class="language-python">def moveZeroes(nums):
+    slow = 0                         # 慢指针：非0元素填充位
+    for fast in range(len(nums)):    # 快指针：扫描整个数组
+        if nums[fast] != 0:
+            nums[slow] = nums[fast]  # 将非0元素前移
+            slow += 1
+    # slow之后全部填0
+    for i in range(slow, len(nums)):
+        nums[i] = 0
+    # 时间O(n)，空间O(1)
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
+                </details>
+
+                <details>
+                    <summary>例题2：无重复字符的最长子串（LeetCode 3）— 滑动窗口</summary>
+                    <p><strong>题意：</strong> 找字符串中无重复字符的最长子串长度。</p>
+                    <p><strong>思路：</strong> 哈希表记录每个字符的最新位置，right扩展，发现重复时left跳过。</p>
+<pre><code class="language-python">def lengthOfLongestSubstring(s):
+    char_pos = {}                    # 记录字符最新出现位置
+    left = 0
+    ans = 0
+    for right, ch in enumerate(s):
+        if ch in char_pos and char_pos[ch] >= left:
+            left = char_pos[ch] + 1  # left跳过重复字符
+        char_pos[ch] = right         # 更新最新位置
+        ans = max(ans, right - left + 1)
+    return ans
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(字符集大小)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：子数组和为K（LeetCode 560）— 前缀和+哈希</summary>
+                    <p><strong>题意：</strong> 找和为k的子数组的个数。</p>
+                    <p><strong>思路：</strong> 前缀和 pre[j]-pre[i]=k，即 pre[i]=pre[j]-k，哈希表统计前缀和出现次数。</p>
+<pre><code class="language-python">def subarraySum(nums, k):
+    count = 0
+    pre_sum = 0
+    freq = {0: 1}                    # pre[0]=0 出现1次
+    for num in nums:
+        pre_sum += num               # 累加前缀和
+        # 找有多少个之前的前缀和 = pre_sum - k
+        count += freq.get(pre_sum - k, 0)
+        freq[pre_sum] = freq.get(pre_sum, 0) + 1
+    return count
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
+                </details>
+            </div>
+
+            <!-- 5. 易错点 -->
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+
+                <p><strong>① 窗口收缩条件写反导致死循环</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（条件方向反）</p>
+<pre><code class="language-python">while len(window) <= k:  # 条件反了
+    # 永远不会收缩，死循环
+    left += 1
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确</p>
+<pre><code class="language-python">while len(window) > k:   # 超出k时才收缩
+    window[s[left]] -= 1
+    left += 1
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>② 前缀和下标偏移混淆</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（下标不统一）</p>
+<pre><code class="language-python">pre = [0] * n            # 长度n，缺少pre[0]
+for i in range(n):
+    pre[i] = pre[i-1] + nums[i]
+# pre[-1] 在Python里是最后元素，引发逻辑错误
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（长度n+1）</p>
+<pre><code class="language-python">pre = [0] * (n + 1)      # 多一位存pre[0]=0
+for i in range(1, n+1):
+    pre[i] = pre[i-1] + nums[i-1]
+# 区间[l,r]之和 = pre[r+1] - pre[l]
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>③ 对撞双指针移动时机错误</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（两个都移动）</p>
+<pre><code class="language-python">if nums[l] + nums[r] < target:
+    l += 1
+    r -= 1   # 错误！不该同时移动
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（只移一个）</p>
+<pre><code class="language-python">if nums[l] + nums[r] < target:
+    l += 1   # 和小了，左指针右移
+elif nums[l] + nums[r] > target:
+    r -= 1   # 和大了，右指针左移
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 竞赛拓展 -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>单调队列解决滑窗最值：</strong> 用双端队列维护窗口内单调递减序列，O(n) 求固定窗口大小k的最大值。</p>
+<pre><code class="language-python">from collections import deque
+
+def maxSlidingWindow(nums, k):
+    dq = deque()           # 存下标，队首始终是当前窗口最大值下标
+    result = []
+    for i, num in enumerate(nums):
+        # 移除超出窗口的下标
+        while dq and dq[0] < i - k + 1:
+            dq.popleft()
+        # 维护单调递减：移除所有比当前小的下标
+        while dq and nums[dq[-1]] < num:
+            dq.pop()
+        dq.append(i)
+        if i >= k - 1:
+            result.append(nums[dq[0]])   # 窗口最大值
+    return result
+</code></pre>
+                <p><strong>差分数组区间更新：</strong> diff[l] += val; diff[r+1] -= val，最后前缀和还原，O(1) 批量区间操作。</p>
+                <p><strong>离散化：</strong> 数据范围大但个数少时，将值映射到连续下标，配合前缀和或线段树使用。</p>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="arrays">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 A3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题（概念·操作·追踪）</h3>
+<div class="quiz-item" data-question-id="A1" data-answer="B" data-difficulty="basic" data-explanation="数组元素连续存储，地址 = base + i*element_size，直接计算无需遍历，O(1)。这是数组相比链表的核心优势。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> A1. 数组随机访问 arr[i] 的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A1" value="A"> A. O(n)</label><label class="option"><input type="radio" name="A1" value="B"> B. O(1)</label><label class="option"><input type="radio" name="A1" value="C"> C. O(log n)</label><label class="option"><input type="radio" name="A1" value="D"> D. O(i)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A2" data-answer="B" data-difficulty="basic" data-explanation="回文判断：头尾指针向中间靠拢，O(n) O(1)。子数组最大和用 Kadane，字符频率用哈希表，无序中位数用快速选择或双堆。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> A2. 双指针中，对撞指针最适合哪种场景？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A2" value="A"> A. 寻找子数组最大和</label><label class="option"><input type="radio" name="A2" value="B"> B. 判断字符串是否回文</label><label class="option"><input type="radio" name="A2" value="C"> C. 统计字符频率</label><label class="option"><input type="radio" name="A2" value="D"> D. 寻找无序数组中位数</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A3" data-answer="B" data-difficulty="basic" data-explanation="区间和 = pre[r+1] - pre[l]，其中 pre[0]=0。注意边界：l=0 时 pre[l]=pre[0]=0，不会越界。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> A3. 前缀和数组 pre[i] = arr[0]+...+arr[i-1]，区间 [l,r] 的和是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A3" value="A"> A. pre[r] - pre[l]</label><label class="option"><input type="radio" name="A3" value="B"> B. pre[r+1] - pre[l]</label><label class="option"><input type="radio" name="A3" value="C"> C. pre[r] - pre[l-1]</label><label class="option"><input type="radio" name="A3" value="D"> D. pre[r+1] + pre[l]</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A4" data-answer="B" data-difficulty="basic" data-explanation="right 先扩展纳入新元素，当窗口不满足条件时 left 右移收缩，保证每个元素最多进出一次，O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> A4. 滑动窗口的两个指针分别起什么作用？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A4" value="A"> A. left 扩展，right 收缩</label><label class="option"><input type="radio" name="A4" value="B"> B. right 扩展，left 在违规时收缩</label><label class="option"><input type="radio" name="A4" value="C"> C. 两者同向移动</label><label class="option"><input type="radio" name="A4" value="D"> D. 两者对向移动</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A5" data-answer="B" data-difficulty="basic" data-explanation="二分查找：每次与中点比较，排除一半，递推 T(n)=T(n/2)+O(1)，解为 O(log n)。未排序只能 O(n) 扫描。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> A5. 在有序数组中查找目标值的最优时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A5" value="A"> A. O(n)</label><label class="option"><input type="radio" name="A5" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="A5" value="C"> C. O(1)</label><label class="option"><input type="radio" name="A5" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题（代码·复杂度·变形）</h3>
+<div class="quiz-item" data-question-id="A6" data-answer="A" data-difficulty="mid" data-explanation="动态数组末尾插入均摊 O(1)：偶尔扩容 O(n) 但均摊下来每次 O(1)。中间或开头插入需移动后续元素 O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> A6. 在 n 个元素数组的末尾插入元素，时间复杂度（动态数组均摊）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A6" value="A"> A. O(1)</label><label class="option"><input type="radio" name="A6" value="B"> B. O(n)</label><label class="option"><input type="radio" name="A6" value="C"> C. O(log n)</label><label class="option"><input type="radio" name="A6" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A7" data-answer="B" data-difficulty="mid" data-explanation="patience sorting + 二分：维护 tails[] 数组，每个元素用 bisect_left 找插入位置，O(n log n)。朴素 DP O(n²)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> A7. 最长递增子序列（LIS）的最优时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A7" value="A"> A. O(n²)</label><label class="option"><input type="radio" name="A7" value="B"> B. O(n log n)</label><label class="option"><input type="radio" name="A7" value="C"> C. O(n)</label><label class="option"><input type="radio" name="A7" value="D"> D. O(n³)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A8" data-answer="B" data-difficulty="mid" data-explanation="diff[l]+=v 表示从 l 开始增加 v，diff[r+1]-=v 表示从 r+1 开始恢复，前缀和还原后 [l,r] 内每个元素都增加了 v。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> A8. 差分数组 diff[i]=arr[i]-arr[i-1]，对区间 [l,r] 加 v 的操作？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A8" value="A"> A. diff[l]+=v，diff[r]-=v</label><label class="option"><input type="radio" name="A8" value="B"> B. diff[l]+=v，diff[r+1]-=v</label><label class="option"><input type="radio" name="A8" value="C"> C. diff[l-1]+=v，diff[r]+=v</label><label class="option"><input type="radio" name="A8" value="D"> D. diff[l]+=v，diff[r+1]+=v</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A9" data-answer="C" data-difficulty="mid" data-explanation="三次翻转：①翻转全部 ②翻转前 k 个 ③翻转后 n-k 个，O(n) 时间 O(1) 空间，是面试高频算法。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> A9. 旋转数组 k 步的 O(n) O(1) 原地算法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A9" value="A"> A. 逐步移位 k 次</label><label class="option"><input type="radio" name="A9" value="B"> B. 用额外数组拷贝</label><label class="option"><input type="radio" name="A9" value="C"> C. 三次翻转</label><label class="option"><input type="radio" name="A9" value="D"> D. 二分查找插入点</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A10" data-answer="C" data-difficulty="mid" data-explanation="在开头删除需将后续 n-1 个元素都向前移动一位，O(n)。末尾插入/删除是O(1)，随机读取 O(1)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> A10. 下列哪个操作在数组中是 O(n)？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A10" value="A"> A. 读取第 i 个元素</label><label class="option"><input type="radio" name="A10" value="B"> B. 在末尾插入（有空间时）</label><label class="option"><input type="radio" name="A10" value="C"> C. 在开头删除</label><label class="option"><input type="radio" name="A10" value="D"> D. 在末尾删除</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题（竞赛·证明·综合）</h3>
+<div class="quiz-item" data-question-id="A11" data-answer="C" data-difficulty="hard" data-explanation="维护 candidate + count：遍历一次 O(n)，O(1) 空间。核心：多数元素票数超过其余所有元素之和，两两抵消后仍胜出。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> A11. Boyer-Moore 多数投票法找众数（>n/2），时间空间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A11" value="A"> A. O(n) O(n)</label><label class="option"><input type="radio" name="A11" value="B"> B. O(n log n) O(1)</label><label class="option"><input type="radio" name="A11" value="C"> C. O(n) O(1)</label><label class="option"><input type="radio" name="A11" value="D"> D. O(n²) O(1)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A12" data-answer="B" data-difficulty="hard" data-explanation="双指针法：left/right 各维护自己这侧的最大高度，向中间靠拢，O(n) 时间 O(1) 空间（比预计算左右最大值数组省 O(n) 空间）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> A12. 接雨水（LeetCode 42），双指针解法的空间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A12" value="A"> A. O(n)</label><label class="option"><input type="radio" name="A12" value="B"> B. O(1)</label><label class="option"><input type="radio" name="A12" value="C"> C. O(log n)</label><label class="option"><input type="radio" name="A12" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A13" data-answer="C" data-difficulty="hard" data-explanation="low/mid/high 三指针：mid 遍历数组，遇0与low交换，遇2与high交换，一次扫描 O(n)，原地 O(1)。是快排三路分区的基础。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> A13. 荷兰国旗问题（三色排序），三指针法的时间空间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A13" value="A"> A. O(n log n) O(1)</label><label class="option"><input type="radio" name="A13" value="B"> B. O(n) O(n)</label><label class="option"><input type="radio" name="A13" value="C"> C. O(n) O(1)</label><label class="option"><input type="radio" name="A13" value="D"> D. O(n²) O(1)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A14" data-answer="B" data-difficulty="hard" data-explanation="dp[i] 代表以 nums[i] 结尾的最大子数组和：要么从当前元素重新开始（抛弃负前缀），要么继续之前的子数组，取最大，O(n) O(1)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> A14. Kadane 算法求最大子数组和，状态转移方程？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A14" value="A"> A. dp[i] = dp[i-1] + nums[i]</label><label class="option"><input type="radio" name="A14" value="B"> B. dp[i] = max(nums[i], dp[i-1] + nums[i])</label><label class="option"><input type="radio" name="A14" value="C"> C. dp[i] = max(dp[i-1], nums[i])</label><label class="option"><input type="radio" name="A14" value="D"> D. dp[i] = nums[i] + max(dp[0..i-1])</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="A15" data-answer="C" data-difficulty="hard" data-explanation="流式数据无法全存，大小 K 的最大堆：若新点距离更小则替换堆顶，O(n log K) 总时间，O(K) 空间，适合数据量未知的流。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> A15. K 个最近的点（LC 973），以下哪种方法对'流式数据'最优？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="A15" value="A"> A. 全排序</label><label class="option"><input type="radio" name="A15" value="B"> B. 二分+全扫描</label><label class="option"><input type="radio" name="A15" value="C"> C. 大小 K 的最大堆，维护 K 个最近点</label><label class="option"><input type="radio" name="A15" value="D"> D. 快速选择</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="A15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

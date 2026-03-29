@@ -1,0 +1,360 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>数学算法模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+<header><div class="container header-inner"><div><h1>数学算法模块</h1><p><a href="../index.html">返回主页面</a></p></div><div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div></div></header>
+<main class="container">
+<section class="card">
+    <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 核心定义</h3>
+        <p><strong>常用数学公式与算法：</strong></p>
+<pre><code class="language-python">import math
+
+# ===== GCD / LCM =====
+def gcd(a, b):
+    return a if b == 0 else gcd(b, a % b)   # 欧几里得递推
+    # Python: math.gcd(a, b)
+
+def lcm(a, b):
+    return a * b // gcd(a, b)               # lcm = a*b / gcd(a,b)
+
+# ===== 快速幂（二分幂）=====
+def power(base, exp, mod):
+    result = 1
+    base %= mod
+    while exp > 0:
+        if exp & 1:                          # 指数为奇数
+            result = result * base % mod
+        base = base * base % mod            # base平方
+        exp >>= 1                           # 指数右移（÷2）
+    return result
+    # Python内置: pow(base, exp, mod)  # 同样O(log exp)，更快
+
+# ===== 线性素数筛（欧拉筛）=====
+def sieve(n):
+    is_prime = [True] * (n + 1)
+    primes = []
+    is_prime[0] = is_prime[1] = False
+    for i in range(2, n + 1):
+        if is_prime[i]:
+            primes.append(i)
+        for p in primes:
+            if i * p > n: break
+            is_prime[i * p] = False         # 用i的最小质因子筛掉
+            if i % p == 0: break            # 关键：保证每个合数只被筛一次
+    return primes
+
+# ===== 质因数分解（试除法）=====
+def factorize(n):
+    factors = []
+    d = 2
+    while d * d <= n:
+        while n % d == 0:
+            factors.append(d)
+            n //= d
+        d += 1
+    if n > 1:
+        factors.append(n)                   # 剩余的n是质数
+    return factors
+</code></pre>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查</h3>
+        <table>
+            <tr><th>算法</th><th>时间复杂度</th><th>空间复杂度</th><th>备注</th></tr>
+            <tr><td>欧几里得GCD</td><td>O(log min(a,b))</td><td>O(log n) 递归栈</td><td>迭代版O(1)空间</td></tr>
+            <tr><td>快速幂</td><td>O(log exp)</td><td>O(1)</td><td>Python用pow()更快</td></tr>
+            <tr><td>埃拉托色尼筛</td><td>O(n log log n)</td><td>O(n)</td><td>简单但有重复筛</td></tr>
+            <tr><td>欧拉线性筛</td><td>O(n)</td><td>O(n)</td><td>每个合数只筛一次</td></tr>
+            <tr><td>质因数分解</td><td>O(√n)</td><td>O(log n)</td><td>因子数量</td></tr>
+            <tr><td>组合数C(n,k)</td><td>O(k)</td><td>O(1)</td><td>递推或杨辉三角</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🖼 结构图示：快速幂计算过程</h3>
+<pre class="ascii-art">
+计算 3^11 mod 1000
+
+11 = 1011₂ (二进制)
+
+步骤:          exp   base        result
+初始:          11    3           1
+exp&1=1,result×base: 10    9       3
+exp&1=0:       5     81          3
+exp&1=1,result×base: 4    6561    3×81=243
+exp&1=0:       2     6561²%1000  243
+exp&1=0:       1     ...         243
+exp&1=1:       0     ...         243 × ...
+
+最终 3^11 = 177147，177147 % 1000 = 147
+
+欧拉线性筛核心思想 (n=10):
+2: prime, 筛掉 4(2×2), 6(2×3), 10(2×5)
+3: prime, 筛掉 9(3×3)
+4: 已筛
+5: prime, 筛掉 5×2=10(已筛)... 遇到5%2≠0继续
+每个合数只被"最小质因子"筛一次 → O(n)
+</pre>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题详解</h3>
+        <details>
+            <summary>例题1：计数质数（LeetCode 204）— 埃拉托色尼筛</summary>
+<pre><code class="language-python">def countPrimes(n):
+    if n < 2: return 0
+    is_prime = [True] * n
+    is_prime[0] = is_prime[1] = False
+    # 只需筛到√n（大于√n的合数必有 ≤√n 的质因子）
+    for i in range(2, int(n**0.5) + 1):
+        if is_prime[i]:
+            # 从 i² 开始筛（i×2,...,i×(i-1)已被更小的质数筛过）
+            for j in range(i*i, n, i):
+                is_prime[j] = False
+    return sum(is_prime)
+</code></pre>
+            <p><strong>时间：</strong> O(n log log n)；<strong>空间：</strong> O(n)</p>
+        </details>
+
+        <details>
+            <summary>例题2：数字 1 的个数（LeetCode 233）— 数位DP</summary>
+            <p><strong>题意：</strong> 给整数n，计算[1,n]所有数字中1出现的总次数。</p>
+<pre><code class="language-python">def countDigitOne(n):
+    count = 0
+    factor = 1                   # 当前考虑的位（个位、十位、百位...）
+    while factor <= n:
+        # 将n分成三部分：高位 higher、当前位 current、低位 lower
+        higher  = n // (factor * 10)
+        current = (n // factor) % 10
+        lower   = n % factor
+
+        if current == 0:
+            count += higher * factor            # 当前位为0：1出现次数=高位×factor
+        elif current == 1:
+            count += higher * factor + lower + 1  # 当前位为1：高位×factor+低位+1
+        else:
+            count += (higher + 1) * factor    # 当前位>1：(高位+1)×factor
+        factor *= 10
+    return count
+</code></pre>
+            <p><strong>时间：</strong> O(log n)；<strong>空间：</strong> O(1)</p>
+        </details>
+
+        <details>
+            <summary>例题3：丑数 II（LeetCode 264）— 三指针</summary>
+            <p><strong>题意：</strong> 只含2、3、5质因子的数称为丑数，找第n个丑数。</p>
+<pre><code class="language-python">def nthUglyNumber(n):
+    dp = [1] * n                 # dp[i] = 第i+1个丑数
+    p2 = p3 = p5 = 0            # 分别指向下一个乘以2/3/5的候选
+
+    for i in range(1, n):
+        next2 = dp[p2] * 2
+        next3 = dp[p3] * 3
+        next5 = dp[p5] * 5
+        dp[i] = min(next2, next3, next5)   # 取最小的下一个丑数
+        # 指针前进（可能有多个同时前进，避免重复）
+        if dp[i] == next2: p2 += 1
+        if dp[i] == next3: p3 += 1
+        if dp[i] == next5: p5 += 1
+    return dp[n-1]
+</code></pre>
+            <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+        <p><strong>① 快速幂取模时乘法溢出（Python不会溢出，但其他语言需注意）</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（先乘后取模，中间可能溢出）</p>
+<pre><code class="language-python"># C++/Java中：
+result = result * base % mod  # base*result可能溢出64位
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（Python自动大整数，但竞赛注意）</p>
+<pre><code class="language-python"># Python pow(base, exp, mod) 内部处理好了
+result = pow(base, exp, mod)
+# 或：Python整数无溢出，直接 (a * b) % mod 安全
+</code></pre>
+            </div>
+        </div>
+        <p><strong>② 筛法下标范围错误</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（从i×2开始筛）</p>
+<pre><code class="language-python">for i in range(2, n):
+    if is_prime[i]:
+        for j in range(2*i, n, i):  # 从2i开始，效率低
+            is_prime[j] = False     # 2i,...,i²-i都被更小的筛过了
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（从i²开始筛）</p>
+<pre><code class="language-python">for i in range(2, int(n**0.5)+1):
+    if is_prime[i]:
+        for j in range(i*i, n, i):  # 从i²开始，小的已被筛
+            is_prime[j] = False
+</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>扩展欧几里得（exgcd）：</strong> 求 ax + by = gcd(a,b) 的整数解。用于求模逆元（当gcd=1时）。</p>
+<pre><code class="language-python">def exgcd(a, b):
+    if b == 0:
+        return a, 1, 0                      # gcd, x, y
+    g, x, y = exgcd(b, a % b)
+    return g, y, x - (a // b) * y          # 辗转递推
+
+def mod_inverse(a, mod):
+    g, x, _ = exgcd(a, mod)
+    if g != 1: return None                  # 无模逆元
+    return x % mod                          # 确保正整数
+</code></pre>
+        <p><strong>中国剩余定理（CRT）：</strong> 求满足多个同余方程组的最小正整数解，要求模数两两互质。可合并多个分组的约束。</p>
+        <p><strong>Lucas定理：</strong> 大模数下组合数取模 C(n,k) % p（p为质数）：分解n,k为p进制，逐位计算小组合数之积，O(p + log_p(n))。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="math">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="MT3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="MT1" data-answer="B" data-difficulty="basic" data-explanation="欧几里得算法：gcd(a,b)=gcd(b,a%b)，每次运算余数严格减小，O(log min(a,b)) 步。Python: math.gcd(a,b)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> MT1. 欧几里得求 gcd(a,b) 的原理是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT1" value="A"> A. 辗转相减</label><label class="option"><input type="radio" name="MT1" value="B"> B. 辗转相除：gcd(a,b)=gcd(b, a mod b)，直到余数为0</label><label class="option"><input type="radio" name="MT1" value="C"> C. 质因数分解后取公因子</label><label class="option"><input type="radio" name="MT1" value="D"> D. 暴力枚举</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT2" data-answer="B" data-difficulty="basic" data-explanation="二进制快速幂：将 b 写成二进制，按位处理 O(log b) 步，每步 O(1)（取模乘法）。Python 内置 pow(a,b,m) 也是 O(log b)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> MT2. 快速幂算法计算 a^b mod m，时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT2" value="A"> A. O(b)</label><label class="option"><input type="radio" name="MT2" value="B"> B. O(log b)</label><label class="option"><input type="radio" name="MT2" value="C"> C. O(b log b)</label><label class="option"><input type="radio" name="MT2" value="D"> D. O(sqrt b)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT3" data-answer="B" data-difficulty="basic" data-explanation="埃氏筛：时间 O(n log log n) = O(n·Σ1/p)（p为质数），近似 O(n)。欧拉线性筛严格 O(n)（每个合数只被最小质因子筛一次）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> MT3. 埃拉托色尼筛（Sieve of Eratosthenes）的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT3" value="A"> A. O(n)</label><label class="option"><input type="radio" name="MT3" value="B"> B. O(n log log n)</label><label class="option"><input type="radio" name="MT3" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="MT3" value="D"> D. O(sqrt n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT4" data-answer="B" data-difficulty="basic" data-explanation="lcm(a,b) = a * b / gcd(a,b)，先除后乘避免溢出：lcm = a // gcd(a,b) * b。注意 Python 的 math.lcm(a,b) 直接可用（3.9+）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> MT4. 最小公倍数 lcm(a,b) 和 gcd(a,b) 的关系？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT4" value="A"> A. lcm = a + b</label><label class="option"><input type="radio" name="MT4" value="B"> B. lcm = a * b / gcd(a,b)</label><label class="option"><input type="radio" name="MT4" value="C"> C. lcm = gcd(a,b) * 2</label><label class="option"><input type="radio" name="MT4" value="D"> D. lcm = a - b</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT5" data-answer="B" data-difficulty="basic" data-explanation="快速幂：若 b 是奇数，result *= base（当前 base 值）；然后 base *= base，b >>= 1。奇偶判断用 b & 1。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> MT5. 快速幂中，当指数 b 为奇数时，额外乘什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT5" value="A"> A. a²</label><label class="option"><input type="radio" name="MT5" value="B"> B. 当前的 base</label><label class="option"><input type="radio" name="MT5" value="C"> C. 1</label><label class="option"><input type="radio" name="MT5" value="D"> D. a^(b-1)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="MT6" data-answer="B" data-difficulty="mid" data-explanation="欧拉筛：当 i % p == 0 时立即 break（确保 i*p 的最小质因子是 p），每个合数恰好被筛一次，O(n) 时间。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> MT6. 欧拉筛（线性筛）相比埃氏筛的核心改进？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT6" value="A"> A. 使用更少内存</label><label class="option"><input type="radio" name="MT6" value="B"> B. 每个合数只被其最小质因子筛掉，保证线性 O(n)</label><label class="option"><input type="radio" name="MT6" value="C"> C. 更快的除法</label><label class="option"><input type="radio" name="MT6" value="D"> D. 使用位数组</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT7" data-answer="B" data-difficulty="mid" data-explanation="若 n 有大于 sqrt(n) 的质因子，则只有一个（否则乘积超过 n）。所以试除到 sqrt(n) 即可，剩余 n>1 的部分是最大质因子。时间 O(sqrt n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> MT7. 质因数分解 n 的试除法，最多需要试除到几？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT7" value="A"> A. n</label><label class="option"><input type="radio" name="MT7" value="B"> B. sqrt(n)</label><label class="option"><input type="radio" name="MT7" value="C"> C. n/2</label><label class="option"><input type="radio" name="MT7" value="D"> D. log(n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT8" data-answer="B" data-difficulty="mid" data-explanation="模运算乘法：(a * b) % m = (a%m) * (b%m) % m（数学等价）。C++中为防止溢出，用 __int128 或拆成加法（龟速乘/快速乘法）。Python 整数不溢出。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> MT8. 模运算中 (a*b) mod m，乘法溢出的安全写法（Python 无溢出，C++ 需要）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT8" value="A"> A. 直接相乘</label><label class="option"><input type="radio" name="MT8" value="B"> B. a % m * (b % m) % m</label><label class="option"><input type="radio" name="MT8" value="C"> C. (a + b) % m</label><label class="option"><input type="radio" name="MT8" value="D"> D. a * b</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT9" data-answer="B" data-difficulty="mid" data-explanation="O(1) 查询 C(n,k) mod p：预处理 fact[i] = i! mod p，inv_fact[i] = modular_inverse(fact[i])，C(n,k) = fact[n] * inv_fact[k] * inv_fact[n-k] % p。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> MT9. 组合数 C(n,k) 在竞赛中常用哪种方法快速计算（大 n/k，取模）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT9" value="A"> A. 直接等公式</label><label class="option"><input type="radio" name="MT9" value="B"> B. 预处理阶乘和逆元，O(n) 预处理 O(1) 查询</label><label class="option"><input type="radio" name="MT9" value="C"> C. 帕斯卡三角</label><label class="option"><input type="radio" name="MT9" value="D"> D. 逐项暴力</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT10" data-answer="B" data-difficulty="mid" data-explanation="数位 DP：对每一位分析高位、当前位、低位，O(log₁₀ n) 步，每步 O(1)。比暴力 O(n) 快很多（n=10^9 时暴力不可能）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> MT10. 数字1在 [1,n] 中出现的总次数，时间复杂度最优解？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT10" value="A"> A. O(n)</label><label class="option"><input type="radio" name="MT10" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="MT10" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="MT10" value="D"> D. O(sqrt n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="MT11" data-answer="B" data-difficulty="hard" data-explanation="exgcd(a,m) 得到 ax + my = 1（gcd=1时），则 x mod m 即 a 的模逆元 a^(-1) mod m。用于模除法中的分母取模（科学计算）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> MT11. 扩展欧几里得（exgcd）求 ax + by = gcd(a,b) 中 x 和 y 的用途？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT11" value="A"> A. 判断整除</label><label class="option"><input type="radio" name="MT11" value="B"> B. 求模逆元：当 gcd(a,m)=1 时，x 即 a 关于 m 的模逆元</label><label class="option"><input type="radio" name="MT11" value="C"> C. 因式分解</label><label class="option"><input type="radio" name="MT11" value="D"> D. 检测素数</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT12" data-answer="B" data-difficulty="hard" data-explanation="CRT：x ≡ r_i (mod m_i) 有唯一解当且仅当 m_i 两两互质。可合并：x = r_1 + m_1 * ((r_2-r_1) * inv(m_1, m_2) % m_2)，逐步合并方程组。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> MT12. 中国剩余定理（CRT）的适用条件是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT12" value="A"> A. 模数任意</label><label class="option"><input type="radio" name="MT12" value="B"> B. 模数两两互质</label><label class="option"><input type="radio" name="MT12" value="C"> C. 方程组有唯一解</label><label class="option"><input type="radio" name="MT12" value="D"> D. 所有模数相同</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT13" data-answer="B" data-difficulty="hard" data-explanation="Lucas：C(n,k) mod p = C(n%p, k%p) * C(n//p, k//p) mod p，递归 O(log_p(n)) 层，每层 O(p) 预处理（若未预处理）或 O(1) 查预计算表。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> MT13. Lucas 定理用于计算 C(n,k) mod p（p 为质数），当 n, k 很大时它的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT13" value="A"> A. O(p)</label><label class="option"><input type="radio" name="MT13" value="B"> B. O(log_p(n))</label><label class="option"><input type="radio" name="MT13" value="C"> C. O(n)</label><label class="option"><input type="radio" name="MT13" value="D"> D. O(p log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT14" data-answer="B" data-difficulty="hard" data-explanation="Miller-Rabin 是概率算法：对 a 个基做测试，误判概率 <= 4^(-a)。固定选取特定底（如2,3,5,7,11,13,17,19,23,29,31,37）对 2^64 以内整数完全精确。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> MT14. Miller-Rabin 素性测试是什么类型的算法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT14" value="A"> A. 精确算法（确定性）</label><label class="option"><input type="radio" name="MT14" value="B"> B. 概率算法（可能误判，但误判率可控）</label><label class="option"><input type="radio" name="MT14" value="C"> C. 贪心</label><label class="option"><input type="radio" name="MT14" value="D"> D. DP</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="MT15" data-answer="B" data-difficulty="hard" data-explanation="FFT 将多项式乘法（即卷积）从 O(n²) 降到 O(n log n)：时域乘 = 频域点积，配合逆 FFT 还原。用于高精度乘法、字符串匹配等场景。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> MT15. FFT（快速傅里叶变换）在算法竞赛中的主要用途？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="MT15" value="A"> A. 矩阵乘法</label><label class="option"><input type="radio" name="MT15" value="B"> B. 大整数乘法 / 多项式乘法，O(n log n) 代替 O(n²) 卷积</label><label class="option"><input type="radio" name="MT15" value="C"> C. 排序</label><label class="option"><input type="radio" name="MT15" value="D"> D. 图的最短路</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="MT15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+</main>
+<script src="../assets/js/app.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>

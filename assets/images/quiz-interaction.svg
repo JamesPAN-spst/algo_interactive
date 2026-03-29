@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#f8fafc"/>
+  <rect x="40" y="40" width="560" height="280" rx="16" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="70" y="90" font-size="24" fill="#0f172a" font-family="Arial, sans-serif">互动练习示例 Interactive Quiz</text>
+  <text x="70" y="130" font-size="18" fill="#334155" font-family="Arial, sans-serif">Q2: 双指针在有序数组中的时间复杂度是？</text>
+  <rect x="70" y="155" width="220" height="42" rx="8" fill="#e2e8f0"/>
+  <text x="88" y="183" font-size="18" fill="#0f172a" font-family="Arial, sans-serif">A. O(n log n)</text>
+  <rect x="310" y="155" width="220" height="42" rx="8" fill="#bbf7d0"/>
+  <text x="328" y="183" font-size="18" fill="#14532d" font-family="Arial, sans-serif">B. O(n) ✓</text>
+  <rect x="70" y="210" width="220" height="42" rx="8" fill="#fee2e2"/>
+  <text x="88" y="238" font-size="18" fill="#991b1b" font-family="Arial, sans-serif">C. O(n²)</text>
+</svg>

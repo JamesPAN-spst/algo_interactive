@@ -1,0 +1,428 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>图与搜索模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div>
+                <h1>图与搜索模块</h1>
+                <p><a href="../index.html">返回主页面</a></p>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="primary">切换模式</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <!-- 1. 核心定义 -->
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>邻接表建图（推荐）：</strong></p>
+<pre><code class="language-python">from collections import defaultdict
+
+graph = defaultdict(list)
+# 无向图
+graph[u].append(v)
+graph[v].append(u)
+# 有权有向图
+graph[u].append((v, weight))
+</code></pre>
+                <p><strong>BFS 模板（无权最短路）：</strong></p>
+<pre><code class="language-python">from collections import deque
+
+def bfs(graph, start, end):
+    queue = deque([(start, 0)])       # (当前节点, 距离)
+    visited = {start}
+    while queue:
+        node, dist = queue.popleft()
+        if node == end:
+            return dist
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor) # 入队时即标记，防重复
+                queue.append((neighbor, dist + 1))
+    return -1
+</code></pre>
+                <p><strong>Dijkstra 模板（非负权最短路）：</strong></p>
+<pre><code class="language-python">import heapq
+
+def dijkstra(graph, start, n):
+    dist = [float('inf')] * n
+    dist[start] = 0
+    heap = [(0, start)]              # (距离, 节点)
+
+    while heap:
+        d, u = heapq.heappop(heap)
+        if d > dist[u]: continue     # 已找到更短路，跳过
+        for v, w in graph[u]:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                heapq.heappush(heap, (dist[v], v))
+    return dist
+</code></pre>
+            </div>
+
+            <!-- 2. 复杂度速查 -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>算法</th><th>时间复杂度</th><th>适用场景</th><th>备注</th></tr>
+                    <tr><td>BFS</td><td>O(V+E)</td><td>无权图最短路、层序遍历</td><td>队列实现</td></tr>
+                    <tr><td>DFS</td><td>O(V+E)</td><td>连通性、拓扑排序、环检测</td><td>栈/递归</td></tr>
+                    <tr><td>Dijkstra（堆）</td><td>O((V+E) log V)</td><td>非负权单源最短路</td><td>不能处理负权</td></tr>
+                    <tr><td>Bellman-Ford</td><td>O(VE)</td><td>含负权单源最短路</td><td>可检测负权环</td></tr>
+                    <tr><td>Floyd-Warshall</td><td>O(V³)</td><td>全源最短路</td><td>节点数 ≤ 500</td></tr>
+                    <tr><td>Prim / Kruskal</td><td>O(E log E)</td><td>最小生成树</td><td>Kruskal用并查集</td></tr>
+                    <tr><td>拓扑排序</td><td>O(V+E)</td><td>有向无环图排序</td><td>Kahn算法：BFS</td></tr>
+                </table>
+            </div>
+
+            <!-- 3. 结构图示 -->
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：BFS vs DFS 遍历顺序</h3>
+<pre class="ascii-art">
+图结构:
+    1
+   / \
+  2   3
+ / \   \
+4   5   6
+
+BFS（层序）: 1 → 2 → 3 → 4 → 5 → 6
+             队列: [1] → [2,3] → [3,4,5] → [4,5,6]
+
+DFS（深度优先）: 1 → 2 → 4 → 5 → 3 → 6
+                 栈/递归: 1进→2进→4进→4出→5进→5出→2出→3进→6进
+
+Dijkstra示例：
+  0 --1-- 1 --3-- 3
+  |               |
+  4      2 --1-- 2
+  |
+  (权重)
+
+起点0的最短路: dist[0]=0, dist[1]=1, dist[2]=3, dist[3]=4
+</pre>
+            </div>
+
+            <!-- 4. 典型例题 -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+
+                <details>
+                    <summary>例题1：岛屿数量（LeetCode 200）— DFS/BFS</summary>
+                    <p><strong>题意：</strong> 给二维网格，'1'为陆地'0'为水，求岛屿数量（相连'1'的连通块数）。</p>
+                    <p><strong>思路：</strong> 遍历每个格子，遇到'1'进行DFS/BFS标记所有相连陆地，每次触发=一个岛屿。</p>
+<pre><code class="language-python">def numIslands(grid):
+    if not grid: return 0
+    rows, cols = len(grid), len(grid[0])
+    count = 0
+
+    def dfs(r, c):
+        # 越界或是水，停止
+        if r < 0 or r >= rows or c < 0 or c >= cols or grid[r][c] != '1':
+            return
+        grid[r][c] = '0'        # 标记已访问（原地修改）
+        dfs(r+1,c); dfs(r-1,c); dfs(r,c+1); dfs(r,c-1)
+
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == '1':
+                count += 1       # 发现新岛屿
+                dfs(r, c)        # 淹没整个岛屿
+    return count
+</code></pre>
+                    <p><strong>时间：</strong> O(m×n)；<strong>空间：</strong> O(m×n)（递归栈）</p>
+                </details>
+
+                <details>
+                    <summary>例题2：课程表（LeetCode 207）— 拓扑排序（Kahn算法）</summary>
+                    <p><strong>题意：</strong> n门课程，有前置要求，判断能否完成所有课程。</p>
+                    <p><strong>思路：</strong> 建有向图，BFS拓扑排序，若存在环则无法完成。</p>
+<pre><code class="language-python">from collections import deque
+
+def canFinish(numCourses, prerequisites):
+    graph = [[] for _ in range(numCourses)]
+    in_degree = [0] * numCourses
+
+    for a, b in prerequisites:         # b → a（先修b才能学a）
+        graph[b].append(a)
+        in_degree[a] += 1
+
+    queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
+    completed = 0
+
+    while queue:
+        node = queue.popleft()
+        completed += 1                 # 完成该课程
+        for neighbor in graph[node]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor) # 前置都完成了，可学
+
+    return completed == numCourses     # 全部完成则无环
+</code></pre>
+                    <p><strong>时间：</strong> O(V+E)；<strong>空间：</strong> O(V+E)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：网络延迟时间（LeetCode 743）— Dijkstra</summary>
+                    <p><strong>题意：</strong> n个节点有向加权图，从k出发，求所有节点收到信号的最短时间。</p>
+<pre><code class="language-python">import heapq
+from collections import defaultdict
+
+def networkDelayTime(times, n, k):
+    graph = defaultdict(list)
+    for u, v, w in times:
+        graph[u].append((v, w))        # 有向带权图
+
+    dist = {i: float('inf') for i in range(1, n+1)}
+    dist[k] = 0
+    heap = [(0, k)]                    # (距离, 节点)
+
+    while heap:
+        d, u = heapq.heappop(heap)
+        if d > dist[u]: continue       # 旧路径，跳过
+        for v, w in graph[u]:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                heapq.heappush(heap, (dist[v], v))
+
+    max_dist = max(dist.values())
+    return max_dist if max_dist < float('inf') else -1
+</code></pre>
+                    <p><strong>时间：</strong> O(E log V)；<strong>空间：</strong> O(V+E)</p>
+                </details>
+            </div>
+
+            <!-- 5. 易错点 -->
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+
+                <p><strong>① visited 标记时机错误导致重复入队</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（出队时才标记）</p>
+<pre><code class="language-python">while queue:
+    node = queue.popleft()
+    visited.add(node)          # 出队才标记，太晚了！
+    for nb in graph[node]:
+        if nb not in visited:
+            queue.append(nb)   # 同一节点可能多次入队
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（入队时即标记）</p>
+<pre><code class="language-python">visited = {start}
+while queue:
+    node = queue.popleft()
+    for nb in graph[node]:
+        if nb not in visited:
+            visited.add(nb)    # 入队时立即标记
+            queue.append(nb)
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>② 无向图只添加单向边</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（单向）</p>
+<pre><code class="language-python">for u, v in edges:
+    graph[u].append(v)  # 只有u→v
+    # 忘记 graph[v].append(u)
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（双向）</p>
+<pre><code class="language-python">for u, v in edges:
+    graph[u].append(v)  # u→v
+    graph[v].append(u)  # v→u（无向图必须）
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>③ Dijkstra用于含负权边</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（负权用Dijkstra）</p>
+<pre><code class="language-python"># 存在边权 -5
+# Dijkstra贪心选最小，但负权边
+# 可能让后来的路径更短，得到错误答案
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（负权用Bellman-Ford）</p>
+<pre><code class="language-python"># Bellman-Ford: 松弛V-1次
+for _ in range(n - 1):
+    for u, v, w in edges:
+        if dist[u] + w < dist[v]:
+            dist[v] = dist[u] + w
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 竞赛拓展 -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>A* 搜索：</strong> Dijkstra + 启发式函数 h(n)（如曼哈顿距离），优先扩展 f(n)=g(n)+h(n) 最小的节点，比Dijkstra快但需要可接受启发式。</p>
+                <p><strong>强连通分量（SCC）：</strong> Kosaraju/Tarjan 算法，O(V+E)。用于缩点、DAG转化。</p>
+                <p><strong>欧拉路径：</strong> 一笔画问题。无向图：所有节点度数为偶数（欧拉回路）或恰好2个奇数度节点（欧拉路径）。</p>
+<pre><code class="language-python"># Hierholzer算法求欧拉路径（O(E)）
+from collections import defaultdict
+
+def findItinerary(tickets):
+    graph = defaultdict(list)
+    for src, dst in sorted(tickets, reverse=True):
+        graph[src].append(dst)   # 逆序排序，pop()取字典序最小
+    result = []
+    def dfs(node):
+        while graph[node]:
+            dfs(graph[node].pop())   # 深度优先
+        result.append(node)          # 后序加入即为逆序路径
+    dfs("JFK")
+    return result[::-1]
+</code></pre>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="graphs">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 G3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题（概念·操作·追踪）</h3>
+<div class="quiz-item" data-question-id="G1" data-answer="B" data-difficulty="basic" data-explanation="BFS 按层扩展，先到达的一定路径最短（无权图）。DFS 可能绕远路，不保证最短。Dijkstra 适合有权图。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> G1. BFS 和 DFS 哪个更适合找无权图中的最短路径？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G1" value="A"> A. DFS</label><label class="option"><input type="radio" name="G1" value="B"> B. BFS</label><label class="option"><input type="radio" name="G1" value="C"> C. 两者相同</label><label class="option"><input type="radio" name="G1" value="D"> D. Dijkstra</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G2" data-answer="B" data-difficulty="basic" data-explanation="邻接表：V 个列表，共存 E 条边（有向图）或 2E 条（无向图），总 O(V+E)。邻接矩阵 O(V²) 适合稠密图。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> G2. 用邻接表存储有 V 个顶点 E 条边的图，空间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G2" value="A"> A. O(V²)</label><label class="option"><input type="radio" name="G2" value="B"> B. O(V+E)</label><label class="option"><input type="radio" name="G2" value="C"> C. O(E²)</label><label class="option"><input type="radio" name="G2" value="D"> D. O(V·E)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G3" data-answer="C" data-difficulty="basic" data-explanation="拓扑排序要求 DAG：每条边从较早节点指向较晚节点，有环则无合法拓扑排序（存在循环依赖）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> G3. 拓扑排序适用于哪种图？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G3" value="A"> A. 无向图</label><label class="option"><input type="radio" name="G3" value="B"> B. 有环有向图</label><label class="option"><input type="radio" name="G3" value="C"> C. 有向无环图（DAG）</label><label class="option"><input type="radio" name="G3" value="D"> D. 有向图（任意）</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G4" data-answer="B" data-difficulty="basic" data-explanation="两者都是最小生成树（MST）算法。Prim 从点出发（适合稠密图），Kruskal 从边出发（适合稀疏图，需并查集）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> G4. Prim 算法和 Kruskal 算法都能解决什么问题？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G4" value="A"> A. 最短路径</label><label class="option"><input type="radio" name="G4" value="B"> B. 最小生成树</label><label class="option"><input type="radio" name="G4" value="C"> C. 强连通分量</label><label class="option"><input type="radio" name="G4" value="D"> D. 二分图判断</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G5" data-answer="B" data-difficulty="basic" data-explanation="无向图 DFS：如果访问到已经访问过的节点且该节点不是当前节点的父节点（来的方向的邻居），则有环。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> G5. 判断无向图中是否有环，用 DFS 的关键条件？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G5" value="A"> A. 发现邻居已在栈中</label><label class="option"><input type="radio" name="G5" value="B"> B. 发现邻居已访问且不是父节点</label><label class="option"><input type="radio" name="G5" value="C"> C. 发现孤立节点</label><label class="option"><input type="radio" name="G5" value="D"> D. DFS 栈深度超过 V</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题（代码·复杂度·变形）</h3>
+<div class="quiz-item" data-question-id="G6" data-answer="B" data-difficulty="mid" data-explanation="Dijkstra 的贪心策略依赖：从已知最短路径集合向外扩展时，不会因为负边使之前的距离需要更新。负权边需用 Bellman-Ford。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> G6. Dijkstra 算法要求边权满足什么条件？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G6" value="A"> A. 所有边权为整数</label><label class="option"><input type="radio" name="G6" value="B"> B. 所有边权非负</label><label class="option"><input type="radio" name="G6" value="C"> C. 所有边权相等</label><label class="option"><input type="radio" name="G6" value="D"> D. 边权可以为任意值</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G7" data-answer="B" data-difficulty="mid" data-explanation="Bellman-Ford：松弛所有边 V-1 轮，每轮 O(E)，总 O(VE)。比 Dijkstra 慢但能处理负权边，还能检测负权环。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> G7. Bellman-Ford 算法的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G7" value="A"> A. O(V+E)</label><label class="option"><input type="radio" name="G7" value="B"> B. O(V·E)</label><label class="option"><input type="radio" name="G7" value="C"> C. O(V log V)</label><label class="option"><input type="radio" name="G7" value="D"> D. O(E log E)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G8" data-answer="B" data-difficulty="mid" data-explanation="Kosaraju：①DFS 按后序时间记录 ②在转置图按后序时间逆序做 DFS，每次 DFS 的连通区域就是一个 SCC。总两次 DFS，O(V+E)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> G8. Kosaraju 找强连通分量（SCC）需要几次 DFS？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G8" value="A"> A. 1次</label><label class="option"><input type="radio" name="G8" value="B"> B. 2次</label><label class="option"><input type="radio" name="G8" value="C"> C. 3次</label><label class="option"><input type="radio" name="G8" value="D"> D. V次</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G9" data-answer="C" data-difficulty="mid" data-explanation="三重循环：枚举中间节点 k，枚举所有对 (i,j)，O(V³)。适合稠密图或需要所有对最短路径的场景。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> G9. Floyd-Warshall 全源最短路的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G9" value="A"> A. O(V²)</label><label class="option"><input type="radio" name="G9" value="B"> B. O(V·E)</label><label class="option"><input type="radio" name="G9" value="C"> C. O(V³)</label><label class="option"><input type="radio" name="G9" value="D"> D. O(V² log V)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G10" data-answer="B" data-difficulty="mid" data-explanation="Kahn 算法：如果最终出队的节点数小于总节点数，说明有节点入度始终 > 0（在环内），即图中有环，无合法拓扑排序。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> G10. 拓扑排序中入度为 0 的节点放在队列中处理，若最终处理节点数 < V，说明？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G10" value="A"> A. 图是树</label><label class="option"><input type="radio" name="G10" value="B"> B. 图中有环</label><label class="option"><input type="radio" name="G10" value="C"> C. 图不连通</label><label class="option"><input type="radio" name="G10" value="D"> D. 边权为负</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题（竞赛·证明·综合）</h3>
+<div class="quiz-item" data-question-id="G11" data-answer="B" data-difficulty="hard" data-explanation="有向图环检测：用 in_stack[] 标记当前 DFS 路径上的节点，若遇到 in_stack=True 的邻居则有环。仅 visited 不够：可能是不同路径访问，不是环。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> G11. 有向图中利用 DFS 栈（而非 visited）检测环，关键是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G11" value="A"> A. 发现已访问节点</label><label class="option"><input type="radio" name="G11" value="B"> B. 发现节点在当前 DFS 路径上（递归栈中）</label><label class="option"><input type="radio" name="G11" value="C"> C. 发现多个连通分量</label><label class="option"><input type="radio" name="G11" value="D"> D. 发现节点无出边</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G12" data-answer="B" data-difficulty="hard" data-explanation="可采纳启发式（admissible heuristic）：h(n) 不高估实际代价，保证 A* 找到最优解。如曼哈顿距离对棋盘是可采纳的。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> G12. A* 搜索算法中 f(n)=g(n)+h(n)，h(n) 满什么条件保证找到最优路径？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G12" value="A"> A. h(n) >= 实际代价</label><label class="option"><input type="radio" name="G12" value="B"> B. h(n) <= 实际剩余代价（可采纳性）</label><label class="option"><input type="radio" name="G12" value="C"> C. h(n) = 0</label><label class="option"><input type="radio" name="G12" value="D"> D. h(n) 为常数</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G13" data-answer="B" data-difficulty="hard" data-explanation="最大流最小割定理（Ford-Fulkerson）：从 s 到 t 的最大流 = 分离 s 与 t 的最小割容量。是网络流的核心定理。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> G13. 最小割对应最大流的定理叫什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G13" value="A"> A. 欧拉定理</label><label class="option"><input type="radio" name="G13" value="B"> B. 最大流最小割定理</label><label class="option"><input type="radio" name="G13" value="C"> C. 四色定理</label><label class="option"><input type="radio" name="G13" value="D"> D. 图着色定理</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G14" data-answer="B" data-difficulty="hard" data-explanation="二分图判断：用两种颜色 BFS/DFS 染色，若相邻节点同色则不是二分图。O(V+E) 时间。充要条件：图中无奇数长度的环。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> G14. 判断二分图最快用哪个方法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G14" value="A"> A. 拓扑排序</label><label class="option"><input type="radio" name="G14" value="B"> B. 两色染色（BFS/DFS）</label><label class="option"><input type="radio" name="G14" value="C"> C. 强连通分量</label><label class="option"><input type="radio" name="G14" value="D"> D. Dijkstra</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="G15" data-answer="B" data-difficulty="hard" data-explanation="BFS/DFS 两次：①从任意点 u 出发找最远点 v ②从 v 出发找最远点 w，uw 的距离即直径 O(V+E)。DFS 一次也可但写法更复杂，B 是教材标准答案。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> G15. 树的直径（两端点最远距离）最快求法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="G15" value="A"> A. Floyd-Warshall O(V³)</label><label class="option"><input type="radio" name="G15" value="B"> B. BFS 两次 O(V+E)</label><label class="option"><input type="radio" name="G15" value="C"> C. DFS 一次 O(V)</label><label class="option"><input type="radio" name="G15" value="D"> D. Dijkstra O(V log V)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="G15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

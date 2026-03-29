@@ -1,0 +1,332 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>位运算模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+<header><div class="container header-inner"><div><h1>位运算模块</h1><p><a href="../index.html">返回主页面</a></p></div><div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div></div></header>
+<main class="container">
+<section class="card">
+    <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 核心定义</h3>
+        <p><strong>基本位运算符与常用技巧汇总：</strong></p>
+<pre><code class="language-python"># ===== 基本操作 =====
+x & y    # 按位与：同为1才为1
+x | y    # 按位或：有1就为1
+x ^ y    # 按位异或：相同为0，不同为1
+~x       # 按位取反（Python中 ~x = -x-1）
+x << n   # 左移n位（×2^n）
+x >> n   # 右移n位（÷2^n，Python无符号）
+
+# ===== 常用技巧 =====
+x & (x-1)          # 消去最低位的1（判断2的幂：x>0 and not x&(x-1)）
+x & (-x)           # lowbit：取最低位的1（树状数组核心）
+x ^ x = 0         # 自身异或为0（去重神器）
+x ^ 0 = x         # 与0异或不变
+(x >> i) & 1       # 取第i位（0-indexed）
+x | (1 << i)       # 将第i位置1
+x & ~(1 << i)      # 将第i位清0
+x ^ (1 << i)       # 翻转第i位
+
+# ===== 子集枚举 =====
+n = 4
+for mask in range(1 << n):        # 枚举n位的所有子集
+    # mask是0到2^n-1的每个状态
+    bits = bin(mask).count('1')   # 统计1的个数
+    for i in range(n):
+        if mask >> i & 1:         # 第i位是否选中
+            pass
+
+# 枚举mask的所有子集（subset of subset）
+sub = mask
+while sub:
+    # sub是mask的一个子集
+    sub = (sub - 1) & mask        # Brian Kernighan技巧获取下一个子集
+</code></pre>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查</h3>
+        <table>
+            <tr><th>操作</th><th>时间复杂度</th><th>说明</th></tr>
+            <tr><td>基本位运算（&, |, ^, ~, <<, >>）</td><td>O(1)</td><td>单次操作</td></tr>
+            <tr><td>统计1的个数（bin().count）</td><td>O(log n)</td><td>Python内置</td></tr>
+            <tr><td>枚举n位所有子集</td><td>O(2ⁿ)</td><td>共2ⁿ个状态</td></tr>
+            <tr><td>枚举mask的所有子集</td><td>O(2^|mask|)</td><td>对所有mask总计3^n</td></tr>
+            <tr><td>状压DP（n个状态）</td><td>O(2ⁿ × n)</td><td>n≤20时可接受</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🖼 结构图示：位运算可视化</h3>
+<pre class="ascii-art">
+x = 12 = 0b 1 1 0 0
+                位: 3 2 1 0
+
+x & (x-1): 消去最低位的1
+  12 = 1100
+  11 = 1011
+  & →  1000 = 8  (最低位的1被消去)
+
+lowbit(x) = x & (-x):
+  12  = 0...01100
+  -12 = 1...10100   (补码)
+  &  = 0...00100 = 4  (最低位的1)
+
+子集枚举 mask=0b1010 的所有子集:
+  0b1010 → 选{1,3}
+  0b1000 → 选{3}
+  0b0010 → 选{1}
+  0b0000 → 空集
+  下一个子集: (sub-1)&mask
+
+异或去重:
+  a ^ b ^ b = a   (b自消除)
+  应用: 只出现一次的数字
+  [2,2,3,3,4] → 2^2^3^3^4 = 0^0^4 = 4 ✓
+</pre>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题详解</h3>
+        <details>
+            <summary>例题1：只出现一次的数字（LeetCode 136）— 异或</summary>
+            <p><strong>题意：</strong> 除一个数外其余都出现两次，找出只出现一次的数。</p>
+<pre><code class="language-python">def singleNumber(nums):
+    result = 0
+    for num in nums:
+        result ^= num    # 两次异或抵消为0，剩下的就是只出现一次的
+    return result
+    # 时间O(n)，空间O(1) — 比哈希表方法节省空间
+</code></pre>
+        </details>
+
+        <details>
+            <summary>例题2：两整数之和（不用+/-，LeetCode 371）— 位运算模拟加法</summary>
+            <p><strong>题意：</strong> 不使用+/-，用位运算计算两整数之和。</p>
+<pre><code class="language-python">def getSum(a, b):
+    # Python整数无固定位宽，需要掩码处理
+    MASK = 0xFFFFFFFF
+    MAX  = 0x7FFFFFFF
+    while b != 0:
+        carry = (a & b) << 1    # 进位 = 两数都为1的位，左移一位
+        a = (a ^ b) & MASK      # 无进位的和（XOR），截断32位
+        b = carry & MASK         # 新的进位
+    # 处理负数（32位补码转Python负数）
+    return a if a <= MAX else ~(a ^ MASK)
+</code></pre>
+            <p><strong>时间：</strong> O(1)（最多32次循环）；<strong>空间：</strong> O(1)</p>
+        </details>
+
+        <details>
+            <summary>例题3：数组中数字出现的次数（两个只出现一次的数）</summary>
+            <p><strong>题意：</strong> 数组中两个数只出现一次，其余都出现两次，找出这两个数。</p>
+<pre><code class="language-python">def singleNumbers(nums):
+    xor = 0
+    for n in nums: xor ^= n    # a ^ b（两个单数的异或）
+
+    # 找到xor中任意一个为1的位（a和b在该位不同）
+    mask = xor & (-xor)        # lowbit：取最低位的1
+
+    a = b = 0
+    for n in nums:
+        if n & mask:            # 根据该位将数组分成两组
+            a ^= n             # 每组内相同数消除，剩下a或b
+        else:
+            b ^= n
+    return [a, b]
+</code></pre>
+            <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+        <p><strong>① 位运算优先级低，忘加括号</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（& 比 == 优先级低）</p>
+<pre><code class="language-python">if x & 1 == 0:    # 等价于 x & (1==0) = x&False = x&0
+    pass          # 条件永远为False！
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（加括号）</p>
+<pre><code class="language-python">if (x & 1) == 0:  # 先算x&1，再与0比较
+    pass
+# 或更简洁：
+if not x & 1:     # x&1==0 即x为偶数
+    pass
+</code></pre>
+            </div>
+        </div>
+        <p><strong>② Python ~取反与C不同（结果为负数）</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 误解（~x不是无符号取反）</p>
+<pre><code class="language-python">x = 5             # 0b00000101
+~x                # Python: -6（无限精度补码）
+                  # 不是0b11111010
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（用掩码模拟32位）</p>
+<pre><code class="language-python">MASK = 0xFFFFFFFF
+result = (~x) & MASK   # 模拟32位无符号取反
+# 或：x ^ MASK         # 同等效果
+</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>按位DP：</strong> 枚举每一位的贡献，O(n log max_val) 计算所有对的AND/OR/XOR总和。</p>
+<pre><code class="language-python">def totalHammingDistance(nums):
+    # 所有对的汉明距离之和（各位独立计算）
+    total = 0
+    for bit in range(32):
+        ones = sum((n >> bit) & 1 for n in nums)  # 该位为1的个数
+        zeros = len(nums) - ones
+        total += ones * zeros   # 一个1与一个0构成一对汉明距离
+    return total
+</code></pre>
+        <p><strong>布隆过滤器（Bloom Filter）：</strong> 多个哈希函数 + 位数组，O(k)查询，有一定假阳性率但无假阴性。适合大数据集合的快速存在性判断。</p>
+        <p><strong>Gray码：</strong> 相邻数字只有一位不同，n位Gray码 = n XOR (n>>1)。用于减少状态切换次数。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="bit-manipulation">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="BM3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="BM1" data-answer="B" data-difficulty="basic" data-explanation="x & (x-1) 清除最低位的1。例：x=12=1100，x-1=1011，与运算=1000。用途：判断2的幂（x & (x-1)==0），统计1的个数（Brian Kernighan 法）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BM1. x & (x-1) 的作用是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM1" value="A"> A. x 加1</label><label class="option"><input type="radio" name="BM1" value="B"> B. 消去 x 的二进制中最低位的1</label><label class="option"><input type="radio" name="BM1" value="C"> C. x 减1</label><label class="option"><input type="radio" name="BM1" value="D"> D. x 乘2</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM2" data-answer="C" data-difficulty="basic" data-explanation="任何数与自身异或为0：相同位相消。x ^ 0 = x，x ^ x = 0。用于：在一组两两相同数中找单独的数（全部异或，相同的抵消）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BM2. x ^ x 的结果？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM2" value="A"> A. 2x</label><label class="option"><input type="radio" name="BM2" value="B"> B. x</label><label class="option"><input type="radio" name="BM2" value="C"> C. 0</label><label class="option"><input type="radio" name="BM2" value="D"> D. 1</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM3" data-answer="B" data-difficulty="basic" data-explanation="(x >> i) & 1：将 x 右移 i 位，最低位即为第 i 位。将第i位置1用 x | (1<<i)，清0用 x & ~(1<<i)，翻转用 x ^ (1<<i)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BM3. 取 x 的第 i 位（0-indexed），表达式是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM3" value="A"> A. x & i</label><label class="option"><input type="radio" name="BM3" value="B"> B. (x >> i) & 1</label><label class="option"><input type="radio" name="BM3" value="C"> C. x | (1 << i)</label><label class="option"><input type="radio" name="BM3" value="D"> D. x ^ (1 << i)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM4" data-answer="B" data-difficulty="basic" data-explanation="lowbit 利用补码性质：-x = ~x + 1，x & (-x) 保留最低位的1，其余清零。例：x=12=1100，lowbit=4=0100。树状数组的核心操作。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BM4. lowbit(x) = x & (-x) 返回什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM4" value="A"> A. x 的最高位</label><label class="option"><input type="radio" name="BM4" value="B"> B. x 的最低位的1及其对应的数值</label><label class="option"><input type="radio" name="BM4" value="C"> C. x 的位数</label><label class="option"><input type="radio" name="BM4" value="D"> D. x 除以2</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM5" data-answer="B" data-difficulty="basic" data-explanation="左移1位相当于乘2，左移n位相当于乘2^n。右移 >> 相当于除以2^n（整除，Python 保持符号）。位运算比乘除法快（在底层CPU直接操作）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BM5. 左移 x << n 等价于什么运算（无溢出时）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM5" value="A"> A. x + n</label><label class="option"><input type="radio" name="BM5" value="B"> B. x × 2^n</label><label class="option"><input type="radio" name="BM5" value="C"> C. x / 2^n</label><label class="option"><input type="radio" name="BM5" value="D"> D. x - n</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="BM6" data-answer="B" data-difficulty="mid" data-explanation="Brian Kernighan：while x: x &= x-1; count+=1。每次循环消去最低位的1，循环次数等于1的个数。Python 中可直接用 bin(x).count('1')。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BM6. 统计整数 x 的二进制中1的个数（popcount），Brian Kernighan 法的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM6" value="A"> A. O(32)</label><label class="option"><input type="radio" name="BM6" value="B"> B. O(popcount(x))</label><label class="option"><input type="radio" name="BM6" value="C"> C. O(1)</label><label class="option"><input type="radio" name="BM6" value="D"> D. O(log x)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM7" data-answer="B" data-difficulty="mid" data-explanation="标准枚举：sub=mask; while sub: process(sub); sub=(sub-1)&mask。(sub-1)&mask 是 sub 的下一个（更小的）子集，最终 sub=0 停止（0 是子集但空集通常单独处理）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BM7. 用位运算枚举整数 mask 的所有非空子集，终止条件？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM7" value="A"> A. mask == 0</label><label class="option"><input type="radio" name="BM7" value="B"> B. sub = 0 时终止（0 是子集，先处理再 sub=(sub-1)&mask）</label><label class="option"><input type="radio" name="BM7" value="C"> C. sub < 0</label><label class="option"><input type="radio" name="BM7" value="D"> D. sub == mask</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM8" data-answer="B" data-difficulty="mid" data-explanation="a ^ b = 无进位和（相同位消去），(a & b) << 1 = 进位（两者都是1的位左移一位）。迭代计算直到进位为0，即为完整的和。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BM8. 两整数之和（不用 + 运算符），a ^ b 和 (a & b) << 1 分别代表什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM8" value="A"> A. 和与进位</label><label class="option"><input type="radio" name="BM8" value="B"> B. 无进位和 与 进位</label><label class="option"><input type="radio" name="BM8" value="C"> C. 积与余</label><label class="option"><input type="radio" name="BM8" value="D"> D. 差与借位</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM9" data-answer="B" data-difficulty="mid" data-explanation="将第 i 位置1：mask | (1 << i)。对应的清零：mask & ~(1 << i)。检查第 i 位：(mask >> i) & 1 或 mask & (1 << i)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BM9. 状态压缩 DP 中，mask 的哪个操作可以将第 i 个物品标记为'已选'？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM9" value="A"> A. mask & i</label><label class="option"><input type="radio" name="BM9" value="B"> B. mask | (1 << i)</label><label class="option"><input type="radio" name="BM9" value="C"> C. mask ^ i</label><label class="option"><input type="radio" name="BM9" value="D"> D. mask - i</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM10" data-answer="B" data-difficulty="mid" data-explanation="2的幂的二进制恰好只有一个1，x & (x-1) 消去最低位的1后为0。需保证 x > 0（0本身不是2的幂但0 & (-1)=0 会误判）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BM10. 判断 x 是否是2的幂（x > 0），最简洁的位运算写法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM10" value="A"> A. x % 2 == 0</label><label class="option"><input type="radio" name="BM10" value="B"> B. x & (x-1) == 0</label><label class="option"><input type="radio" name="BM10" value="C"> C. bin(x).count('1') == 1</label><label class="option"><input type="radio" name="BM10" value="D"> D. x >> 1 == 1</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="BM11" data-answer="B" data-difficulty="hard" data-explanation="对每个 mask，其子集数 = 2^|mask|（|mask|为1的个数）。所有 mask 的子集总数 = Σ C(n,k)·2^k = 3^n（二项式定理，(1+2)^n=3^n）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BM11. n 个元素的所有子集枚举（状压），所有掩码的子集总数是多少？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM11" value="A"> A. O(2^n)</label><label class="option"><input type="radio" name="BM11" value="B"> B. O(3^n)</label><label class="option"><input type="radio" name="BM11" value="C"> C. O(n·2^n)</label><label class="option"><input type="radio" name="BM11" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM12" data-answer="B" data-difficulty="hard" data-explanation="按位独立计算：对每一位，统计1的个数 ones，0 的个数 zeros = n-ones，该位贡献 ones*zeros。32位共需32轮，总 O(32n)=O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BM12. 汉明距离总和（LC 477，所有对的汉明距离之和），最优时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM12" value="A"> A. O(n²)</label><label class="option"><input type="radio" name="BM12" value="B"> B. O(32n)</label><label class="option"><input type="radio" name="BM12" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="BM12" value="D"> D. O(n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM13" data-answer="C" data-difficulty="hard" data-explanation="01-Trie 高度固定为32（整数位数），查询时沿每一位贪心走（走与目标相反的方向），固定32步，O(32)=O(1)（常数时间，与 n 无关）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BM13. 01-Trie 查询使数组中两数 XOR 最大的值，时间复杂度（每次查询，整数为32位）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM13" value="A"> A. O(n)</label><label class="option"><input type="radio" name="BM13" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="BM13" value="C"> C. O(32)</label><label class="option"><input type="radio" name="BM13" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM14" data-answer="B" data-difficulty="hard" data-explanation="Gray 码：g(n) = n XOR (n >> 1)。相邻 Gray 码只差一位，从 n 转换 g(n) 的逆变换（Gray-to-binary）也只需 O(log n) 次异或。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BM14. Gray 码的第 n 个元素公式是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM14" value="A"> A. n</label><label class="option"><input type="radio" name="BM14" value="B"> B. n XOR (n >> 1)</label><label class="option"><input type="radio" name="BM14" value="C"> C. n AND (n-1)</label><label class="option"><input type="radio" name="BM14" value="D"> D. n OR (n+1)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BM15" data-answer="B" data-difficulty="hard" data-explanation="俄罗斯农民乘法：result=0; while b: if b&1: result+=a; a<<=1; b>>=1。O(log b) 次迭代，每次 O(1)，模拟 CPU 的乘法器工作原理。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BM15. 位运算实现快速乘法（俄罗斯农民乘法），a*b 计算过程？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BM15" value="A"> A. b次累加a</label><label class="option"><input type="radio" name="BM15" value="B"> B. 按 b 的每个1位累加 a*对应2的幂（a左移）</label><label class="option"><input type="radio" name="BM15" value="C"> C. 直接用位移</label><label class="option"><input type="radio" name="BM15" value="D"> D. 不可能</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BM15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+</main>
+<script src="../assets/js/app.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>排序算法模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div><h1>排序算法模块</h1><p><a href="../index.html">返回主页面</a></p></div>
+            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+        </div>
+    </header>
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>快速排序（Lomuto 分区）：</strong></p>
+<pre><code class="language-python">def quicksort(arr, lo, hi):
+    if lo >= hi: return
+    pivot = arr[hi]          # 选最后一个元素为pivot
+    i = lo - 1               # i指向小于pivot区域的末尾
+    for j in range(lo, hi):
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i+1], arr[hi] = arr[hi], arr[i+1]  # pivot就位
+    p = i + 1
+    quicksort(arr, lo, p - 1)
+    quicksort(arr, p + 1, hi)
+</code></pre>
+                <p><strong>归并排序：</strong></p>
+<pre><code class="language-python">def mergesort(arr, lo, hi):
+    if lo >= hi: return
+    mid = (lo + hi) // 2
+    mergesort(arr, lo, mid)
+    mergesort(arr, mid+1, hi)
+    # 合并两个有序子数组
+    left = arr[lo:mid+1]            # 拷贝左半部分
+    right = arr[mid+1:hi+1]         # 拷贝右半部分
+    i = j = 0
+    k = lo
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:     # 保持稳定性：等号取左边
+            arr[k] = left[i]; i += 1
+        else:
+            arr[k] = right[j]; j += 1
+        k += 1
+    while i < len(left): arr[k] = left[i]; i += 1; k += 1
+    while j < len(right): arr[k] = right[j]; j += 1; k += 1
+</code></pre>
+            </div>
+
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>排序算法</th><th>平均时间</th><th>最坏时间</th><th>空间</th><th>稳定性</th></tr>
+                    <tr><td>冒泡排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>✅ 稳定</td></tr>
+                    <tr><td>选择排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>❌ 不稳定</td></tr>
+                    <tr><td>插入排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>✅ 稳定</td></tr>
+                    <tr><td>归并排序</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n)</td><td>✅ 稳定</td></tr>
+                    <tr><td>快速排序</td><td>O(n log n)</td><td>O(n²)</td><td>O(log n)</td><td>❌ 不稳定</td></tr>
+                    <tr><td>堆排序</td><td>O(n log n)</td><td>O(n log n)</td><td>O(1)</td><td>❌ 不稳定</td></tr>
+                    <tr><td>计数排序</td><td>O(n+k)</td><td>O(n+k)</td><td>O(k)</td><td>✅ 稳定</td></tr>
+                    <tr><td>基数排序</td><td>O(nk)</td><td>O(nk)</td><td>O(n+k)</td><td>✅ 稳定</td></tr>
+                </table>
+            </div>
+
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：归并排序分治过程</h3>
+<pre class="ascii-art">
+归并排序示例: [5, 2, 8, 1, 9, 3]
+
+分解:
+  [5,2,8,1,9,3]
+  ↙           ↘
+[5,2,8]     [1,9,3]
+↙    ↘       ↙    ↘
+[5] [2,8]  [1] [9,3]
+     ↙ ↘        ↙ ↘
+    [2] [8]    [9] [3]
+
+合并（从底向上）:
+[2]&[8]→[2,8]        [9]&[3]→[3,9]
+[5]&[2,8]→[2,5,8]    [1]&[3,9]→[1,3,9]
+[2,5,8]&[1,3,9]→[1,2,3,5,8,9] ✓
+
+快排分区（Lomuto）示意:
+[5,2,8,1,9,3]  pivot=3
+ i=-1
+j=0: 5>3 不动     [5,2,8,1,9,3]
+j=1: 2<=3 i=0 swap→[2,5,8,1,9,3]
+j=2: 8>3 不动
+j=3: 1<=3 i=1 swap→[2,1,8,5,9,3]
+j=4: 9>3 不动
+最终 swap(i+1=2, hi=5)→[2,1,3,5,9,8]  3就位
+</pre>
+            </div>
+
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+                <details>
+                    <summary>例题1：数组中的第K个最大元素（LeetCode 215）— 快速选择</summary>
+                    <p><strong>题意：</strong> 找数组中第K大元素，要求时间优于O(n log n)。</p>
+                    <p><strong>思路：</strong> 快速选择（Quickselect）：分区后只递归一侧，平均O(n)。</p>
+<pre><code class="language-python">import random
+
+def findKthLargest(nums, k):
+    # 转化：第k大 = 排序后第 n-k 个（0-indexed）
+    target = len(nums) - k
+
+    def quickselect(lo, hi):
+        pivot_idx = random.randint(lo, hi)   # 随机化避免最坏情况
+        nums[pivot_idx], nums[hi] = nums[hi], nums[pivot_idx]
+        pivot = nums[hi]
+        i = lo - 1
+        for j in range(lo, hi):
+            if nums[j] <= pivot:
+                i += 1
+                nums[i], nums[j] = nums[j], nums[i]
+        nums[i+1], nums[hi] = nums[hi], nums[i+1]
+        p = i + 1
+        if p == target: return nums[p]       # 找到了
+        elif p < target: return quickselect(p+1, hi)
+        else: return quickselect(lo, p-1)
+
+    return quickselect(0, len(nums)-1)
+</code></pre>
+                    <p><strong>时间：</strong> 平均O(n)，最坏O(n²)；<strong>空间：</strong> O(log n)</p>
+                </details>
+
+                <details>
+                    <summary>例题2：合并区间（LeetCode 56）— 排序预处理</summary>
+                    <p><strong>题意：</strong> 给一组区间，合并所有重叠区间。</p>
+<pre><code class="language-python">def merge(intervals):
+    intervals.sort(key=lambda x: x[0])   # 按起点排序
+    result = [intervals[0]]
+
+    for start, end in intervals[1:]:
+        if start <= result[-1][1]:        # 与上一个区间重叠
+            result[-1][1] = max(result[-1][1], end)  # 扩展右端点
+        else:
+            result.append([start, end])  # 不重叠，新增区间
+    return result
+</code></pre>
+                    <p><strong>时间：</strong> O(n log n)（排序主导）；<strong>空间：</strong> O(n)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：计数排序（非比较）— 颜色分类（LeetCode 75）</summary>
+                    <p><strong>题意：</strong> 将只含0、1、2的数组排序（荷兰国旗问题）。</p>
+<pre><code class="language-python">def sortColors(nums):
+    lo, mid, hi = 0, 0, len(nums) - 1
+    while mid <= hi:
+        if nums[mid] == 0:
+            nums[lo], nums[mid] = nums[mid], nums[lo]
+            lo += 1; mid += 1          # 0和lo交换，两指针前进
+        elif nums[mid] == 1:
+            mid += 1                   # 1直接跳过
+        else:
+            nums[mid], nums[hi] = nums[hi], nums[mid]
+            hi -= 1                    # 2和hi交换，hi后退（mid不动，需检查换来的）
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1) — 一次遍历，三路分区</p>
+                </details>
+            </div>
+
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+                <p><strong>① 快排分区边界处理错误</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（pivot放中间但边界错）</p>
+<pre><code class="language-python">def partition(arr, lo, hi):
+    pivot = arr[lo]
+    i, j = lo, hi
+    while i < j:
+        while arr[j] >= pivot: j -= 1
+        while arr[i] <= pivot: i += 1  # 漏了 i<j 的检查
+        arr[i], arr[j] = arr[j], arr[i]
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（加i&lt;j保护）</p>
+<pre><code class="language-python">def partition(arr, lo, hi):
+    pivot = arr[lo]
+    i, j = lo, hi
+    while i < j:
+        while i < j and arr[j] >= pivot: j -= 1
+        while i < j and arr[i] <= pivot: i += 1
+        if i < j:
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[lo], arr[i] = arr[i], arr[lo]
+    return i
+</code></pre>
+                    </div>
+                </div>
+                <p><strong>② 归并时辅助数组拷贝顺序错误</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（直接原地修改）</p>
+<pre><code class="language-python"># 合并时直接操作原数组
+# 右指针移动会覆盖左半部分数据
+arr[k] = arr[i]  # arr[i]可能已被覆盖
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（先拷贝再合并）</p>
+<pre><code class="language-python">tmp = arr[lo:hi+1]  # 先拷贝整段
+i, j = 0, mid - lo + 1
+for k in range(lo, hi+1):
+    # 从tmp中读取，安全
+    if i > mid-lo: arr[k] = tmp[j]; j+=1
+    elif j > hi-lo: arr[k] = tmp[i]; i+=1
+    elif tmp[i] <= tmp[j]: arr[k] = tmp[i]; i+=1
+    else: arr[k] = tmp[j]; j+=1
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>外部排序：</strong> 数据量超出内存时，分块排序后多路归并，磁盘I/O为主要瓶颈。</p>
+                <p><strong>Timsort：</strong> Python内置排序算法，归并+插入排序混合。对部分有序数据接近O(n)，最坏O(n log n)。</p>
+                <p><strong>逆序对计数：</strong> 归并排序可在O(n log n)内统计逆序对，合并时右侧元素先被选中则左剩余元素都与其构成逆序对。</p>
+<pre><code class="language-python">def countInversions(arr):
+    count = 0
+    def mergesort(arr):
+        nonlocal count
+        if len(arr) <= 1: return arr
+        mid = len(arr) // 2
+        left = mergesort(arr[:mid])
+        right = mergesort(arr[mid:])
+        merged = []
+        i = j = 0
+        while i < len(left) and j < len(right):
+            if left[i] <= right[j]:
+                merged.append(left[i]); i += 1
+            else:
+                count += len(left) - i    # 左边剩余元素都比right[j]大
+                merged.append(right[j]); j += 1
+        return merged + left[i:] + right[j:]
+    mergesort(arr)
+    return count
+</code></pre>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="sorting">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 SO3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题（概念·操作·追踪）</h3>
+<div class="quiz-item" data-question-id="SO1" data-answer="C" data-difficulty="basic" data-explanation="冒泡：双层循环，外层 n-1 次，内层最多 n-1 次比较，总 O(n²)。已有序时可提前退出（最好 O(n)），但常数大不实用。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SO1. 冒泡排序的时间复杂度（最坏情况）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO1" value="A"> A. O(n)</label><label class="option"><input type="radio" name="SO1" value="B"> B. O(n log n)</label><label class="option"><input type="radio" name="SO1" value="C"> C. O(n²)</label><label class="option"><input type="radio" name="SO1" value="D"> D. O(n³)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO2" data-answer="B" data-difficulty="basic" data-explanation="每次 pivot 后，一边 0 个另一边 n-1 个，递推 T(n)=T(n-1)+O(n)，解为 O(n²)。随机化 pivot 期望 O(n log n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SO2. 快速排序最坏情况（每次选最小/最大作为 pivot）时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO2" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="SO2" value="B"> B. O(n²)</label><label class="option"><input type="radio" name="SO2" value="C"> C. O(n)</label><label class="option"><input type="radio" name="SO2" value="D"> D. O(n³)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO3" data-answer="B" data-difficulty="basic" data-explanation="归并排序需要 O(n) 辅助空间（合并步骤的临时数组），递归栈 O(log n)，主导是 O(n) 合并空间。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SO3. 归并排序的空间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO3" value="A"> A. O(1)</label><label class="option"><input type="radio" name="SO3" value="B"> B. O(n)</label><label class="option"><input type="radio" name="SO3" value="C"> C. O(log n)</label><label class="option"><input type="radio" name="SO3" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO4" data-answer="B" data-difficulty="basic" data-explanation="计数排序：O(n+k) 时间 O(k) 空间，k 为值域大小。若 k>>n 则空间浪费，最适合 k=O(n) 的整数。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SO4. 计数排序（Counting Sort）适合什么场景？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO4" value="A"> A. 任意整数</label><label class="option"><input type="radio" name="SO4" value="B"> B. 值域范围 k 远小于 n 的非负整数</label><label class="option"><input type="radio" name="SO4" value="C"> C. 浮点数</label><label class="option"><input type="radio" name="SO4" value="D"> D. 字符串</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO5" data-answer="C" data-difficulty="basic" data-explanation="稳定且最坏 O(n log n)：归并排序。快排不稳定，堆排不稳定。计数稳定但依赖值域。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SO5. 在所有稳定排序中，哪个最坏时间复杂度最优？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO5" value="A"> A. 冒泡（O(n²)）</label><label class="option"><input type="radio" name="SO5" value="B"> B. 插入（O(n²)）</label><label class="option"><input type="radio" name="SO5" value="C"> C. 归并（O(n log n)）</label><label class="option"><input type="radio" name="SO5" value="D"> D. 计数（O(n+k)，k 未知）</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题（代码·复杂度·变形）</h3>
+<div class="quiz-item" data-question-id="SO6" data-answer="D" data-difficulty="mid" data-explanation="快排平均 O(n log n)。重复元素多时可用三路分区改善，pivot 随机化是关键。数组有无重复不影响平均复杂度（影响的是三路分区的优化效果）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SO6. 快速排序的平均时间复杂度，以及哪个操作不影响它？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO6" value="A"> A. O(n log n)，pivot选择</label><label class="option"><input type="radio" name="SO6" value="B"> B. O(n log n)，三路分区</label><label class="option"><input type="radio" name="SO6" value="C"> C. O(n²)，partition</label><label class="option"><input type="radio" name="SO6" value="D"> D. O(n log n)，数组是否有重复元素（无影响）</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO7" data-answer="B" data-difficulty="mid" data-explanation="TimSort：利用插入排序对小段（run）排序，再用归并合并各 run，对近乎有序的数据极快，最好 O(n)，最坏 O(n log n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SO7. TimSort（Python/Java 默认排序）结合了哪两种算法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO7" value="A"> A. 快排 + 堆排</label><label class="option"><input type="radio" name="SO7" value="B"> B. 归并 + 插入排序</label><label class="option"><input type="radio" name="SO7" value="C"> C. 归并 + 冒泡</label><label class="option"><input type="radio" name="SO7" value="D"> D. 堆排 + 插入</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO8" data-answer="C" data-difficulty="mid" data-explanation="归并排序的合并步骤通过改变 next 指针完成，O(1) 辅助空间（不需要临时数组），稳定，O(n log n)。最适合链表。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SO8. 对链表排序，最适合哪个算法（稳定 O(n log n) O(1) 空间）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO8" value="A"> A. 快速排序</label><label class="option"><input type="radio" name="SO8" value="B"> B. 堆排序</label><label class="option"><input type="radio" name="SO8" value="C"> C. 归并排序</label><label class="option"><input type="radio" name="SO8" value="D"> D. 计数排序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO9" data-answer="B" data-difficulty="mid" data-explanation="维护大小 K 的最小堆：n 次 extract-min + 插入，每次 O(log K)，总 O(n log K)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SO9. K 路归并排序（合并 K 个有序数组），使用堆的时间复杂度（总 n 个元素）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO9" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="SO9" value="B"> B. O(n log K)</label><label class="option"><input type="radio" name="SO9" value="C"> C. O(nK)</label><label class="option"><input type="radio" name="SO9" value="D"> D. O(K² n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO10" data-answer="B" data-difficulty="mid" data-explanation="基数排序：d 轮，每轮对每位做计数排序 O(n+k)，总 O(d(n+k))。当 d 和 k 是常数时接近 O(n)，突破比较排序 O(n log n) 下界。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SO10. 基数排序（Radix Sort）的时间复杂度（d 位数字，每位 k 个值）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO10" value="A"> A. O(dn)</label><label class="option"><input type="radio" name="SO10" value="B"> B. O(d(n+k))</label><label class="option"><input type="radio" name="SO10" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="SO10" value="D"> D. O(dn log k)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题（竞赛·证明·综合）</h3>
+<div class="quiz-item" data-question-id="SO11" data-answer="A" data-difficulty="hard" data-explanation="决策树有 n! 个叶子，高度至少 log₂(n!) ≈ n log n（Stirling 近似），因此任何基于比较的排序最坏需 Ω(n log n) 次比较。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SO11. 比较排序的信息论下界是 O(n log n)，原因是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO11" value="A"> A. n! 种排列，区分需 log(n!) ≈ n log n 次比较</label><label class="option"><input type="radio" name="SO11" value="B"> B. 需要 n 次比较</label><label class="option"><input type="radio" name="SO11" value="C"> C. 每个元素需 log n 次比较</label><label class="option"><input type="radio" name="SO11" value="D"> D. 与算法无关</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO12" data-answer="C" data-difficulty="hard" data-explanation="三路分区把相等元素一次归位，若全部相同，每次分区后 equal 区覆盖所有元素，只需 O(n)。通常重复越多三路快排越快。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SO12. 荷兰国旗三路分区后，快排对含大量重复元素的数组效率如何？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO12" value="A"> A. 仍然 O(n²)</label><label class="option"><input type="radio" name="SO12" value="B"> B. 均摊 O(n log n)（与重复无关）</label><label class="option"><input type="radio" name="SO12" value="C"> C. O(n)（全相等时）</label><label class="option"><input type="radio" name="SO12" value="D"> D. O(n sqrt n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO13" data-answer="B" data-difficulty="hard" data-explanation="外部排序：①将大文件切分为内存可处理的块各自排序（run）②多路归并 run，只需 O(k) 内存缓冲（k 路归并）。是数据库排序的基础。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SO13. 外部排序（数据量超过内存）的经典方法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO13" value="A"> A. 快速排序（内存不够时用磁盘递归）</label><label class="option"><input type="radio" name="SO13" value="B"> B. 多路归并排序</label><label class="option"><input type="radio" name="SO13" value="C"> C. 计数排序（值域扩展）</label><label class="option"><input type="radio" name="SO13" value="D"> D. 堆排序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO14" data-answer="B" data-difficulty="hard" data-explanation="introsort：普通情况用快排，递归深度超过 2 log n 时切换堆排（避免 O(n²)），粒度小的子数组用插入排序（局部性好）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SO14. introsort（std::sort in C++）结合了哪三种算法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO14" value="A"> A. 快排+归并+计数</label><label class="option"><input type="radio" name="SO14" value="B"> B. 快排+堆排+插入排序（根据递归深度自适应切换）</label><label class="option"><input type="radio" name="SO14" value="C"> C. 归并+堆+计数</label><label class="option"><input type="radio" name="SO14" value="D"> D. 快排+冒泡+插入</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SO15" data-answer="B" data-difficulty="hard" data-explanation="堆排序：sift-down 可能改变相等元素的相对顺序，故不稳定。快排可以实现稳定版（但复杂）。归并排序合并时保持左边先，故稳定。计数排序反向遍历实现后也是稳定的。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SO15. 以下关于排序稳定性的说法，正确的是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SO15" value="A"> A. 快速排序一定不稳定</label><label class="option"><input type="radio" name="SO15" value="B"> B. 堆排序一定不稳定</label><label class="option"><input type="radio" name="SO15" value="C"> C. 归并排序总是稳定的</label><label class="option"><input type="radio" name="SO15" value="D"> D. 计数排序一定不稳定</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SO15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

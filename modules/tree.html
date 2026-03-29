@@ -1,0 +1,379 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>二叉树与遍历模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div><h1>二叉树与遍历模块</h1><p><a href="../index.html">返回主页面</a></p></div>
+            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+        </div>
+    </header>
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>树节点定义与三种DFS遍历：</strong></p>
+<pre><code class="language-python">class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def preorder(root, result=[]):    # 前序：根-左-右
+    if not root: return
+    result.append(root.val)       # 先处理根
+    preorder(root.left, result)
+    preorder(root.right, result)
+
+def inorder(root, result=[]):     # 中序：左-根-右
+    if not root: return
+    inorder(root.left, result)
+    result.append(root.val)       # 中间处理根（BST中序=升序）
+    inorder(root.right, result)
+
+def postorder(root, result=[]):   # 后序：左-右-根
+    if not root: return
+    postorder(root.left, result)
+    postorder(root.right, result)
+    result.append(root.val)       # 最后处理根（适合删除节点/计算高度）
+</code></pre>
+                <p><strong>BST核心性质：</strong> 对于任意节点，左子树所有节点 &lt; 当前节点 &lt; 右子树所有节点。中序遍历BST得到升序序列。</p>
+            </div>
+
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>操作</th><th>平衡BST</th><th>退化BST（链状）</th><th>完全二叉树</th></tr>
+                    <tr><td>查找</td><td>O(log n)</td><td>O(n)</td><td>O(log n)</td></tr>
+                    <tr><td>插入</td><td>O(log n)</td><td>O(n)</td><td>O(log n)</td></tr>
+                    <tr><td>删除</td><td>O(log n)</td><td>O(n)</td><td>O(log n)</td></tr>
+                    <tr><td>前/中/后序遍历</td><td>O(n)</td><td>O(n)</td><td>O(n)</td></tr>
+                    <tr><td>层序遍历(BFS)</td><td>O(n)</td><td>O(n)</td><td>O(n)</td></tr>
+                    <tr><td>树的高度</td><td>O(log n)</td><td>O(n)</td><td>O(log n)</td></tr>
+                </table>
+            </div>
+
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：BST结构与遍历</h3>
+<pre class="ascii-art">
+BST示例:
+         8
+        / \
+       3   10
+      / \    \
+     1   6    14
+        / \   /
+       4   7 13
+
+前序: 8,3,1,6,4,7,10,14,13
+中序: 1,3,4,6,7,8,10,13,14  ← 升序！
+后序: 1,4,7,6,3,13,14,10,8
+
+层序(BFS): 8, 3,10, 1,6,14, 4,7,13
+
+节点高度/深度:
+  根节点8: 高度=3, 深度=0
+  节点6:  高度=1, 深度=2
+  叶节点4: 高度=0, 深度=3
+
+BST插入规则: 新值 < 当前→走左子树; > 当前→走右子树
+BST删除规则:
+  叶节点→直接删
+  单子节点→子节点替代
+  双子节点→中序后继(右子树最小值)替代
+</pre>
+            </div>
+
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+                <details>
+                    <summary>例题1：二叉树的最大深度（LeetCode 104）</summary>
+                    <p><strong>题意：</strong> 求二叉树的最大深度。</p>
+<pre><code class="language-python">def maxDepth(root):
+    if not root: return 0              # 空节点深度为0
+    left_depth  = maxDepth(root.left)  # 左子树深度
+    right_depth = maxDepth(root.right) # 右子树深度
+    return 1 + max(left_depth, right_depth)  # 加上当前层
+
+# 迭代BFS版本
+from collections import deque
+def maxDepth_bfs(root):
+    if not root: return 0
+    depth = 0
+    queue = deque([root])
+    while queue:
+        depth += 1                     # 每处理完一层，深度+1
+        for _ in range(len(queue)):    # 处理当前层所有节点
+            node = queue.popleft()
+            if node.left:  queue.append(node.left)
+            if node.right: queue.append(node.right)
+    return depth
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(h)，h为树高</p>
+                </details>
+
+                <details>
+                    <summary>例题2：验证二叉搜索树（LeetCode 98）</summary>
+                    <p><strong>题意：</strong> 验证给定二叉树是否为有效的BST。</p>
+<pre><code class="language-python">def isValidBST(root):
+    def validate(node, min_val, max_val):
+        if not node: return True
+        # 当前节点必须在(min_val, max_val)范围内
+        if node.val <= min_val or node.val >= max_val:
+            return False
+        # 左子树上界更新为当前值，右子树下界更新为当前值
+        return (validate(node.left,  min_val, node.val) and
+                validate(node.right, node.val, max_val))
+
+    return validate(root, float('-inf'), float('inf'))
+
+# 或：利用中序遍历严格递增
+def isValidBST_inorder(root):
+    prev = float('-inf')
+    def inorder(node):
+        nonlocal prev
+        if not node: return True
+        if not inorder(node.left): return False
+        if node.val <= prev: return False   # 中序不严格递增→非BST
+        prev = node.val
+        return inorder(node.right)
+    return inorder(root)
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(h)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：二叉树的层序遍历（LeetCode 102）</summary>
+<pre><code class="language-python">from collections import deque
+
+def levelOrder(root):
+    if not root: return []
+    result = []
+    queue = deque([root])
+    while queue:
+        level = []
+        for _ in range(len(queue)):        # 逐层处理
+            node = queue.popleft()
+            level.append(node.val)
+            if node.left:  queue.append(node.left)
+            if node.right: queue.append(node.right)
+        result.append(level)               # 每层结果单独收集
+    return result
+</code></pre>
+                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)（最宽层的节点数）</p>
+                </details>
+            </div>
+
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+                <p><strong>① 递归终止条件遗漏</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（缺少空节点判断）</p>
+<pre><code class="language-python">def maxDepth(root):
+    # 忘记 if not root: return 0
+    left = maxDepth(root.left)   # root可能为None，报错
+    right = maxDepth(root.right)
+    return 1 + max(left, right)
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（先判空）</p>
+<pre><code class="language-python">def maxDepth(root):
+    if not root: return 0        # 空节点返回0
+    left = maxDepth(root.left)
+    right = maxDepth(root.right)
+    return 1 + max(left, right)
+</code></pre>
+                    </div>
+                </div>
+                <p><strong>② BST验证时只检查直接父子关系</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（只比较父子）</p>
+<pre><code class="language-python">def isValid(root):
+    if not root: return True
+    if root.left and root.left.val >= root.val: return False
+    if root.right and root.right.val <= root.val: return False
+    return isValid(root.left) and isValid(root.right)
+    # 反例: [5,4,6,null,null,3,7] 这个会通过但不是BST
+    # 因为3在右子树6的左边，3 < 5（根）违法
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（传递上下界）</p>
+<pre><code class="language-python">def isValid(node, lo, hi):
+    if not node: return True
+    if not (lo < node.val < hi): return False
+    return (isValid(node.left, lo, node.val) and
+            isValid(node.right, node.val, hi))
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>AVL树：</strong> 自平衡BST，每个节点左右子树高度差 ≤ 1。插入/删除后通过旋转保持平衡。4种旋转：LL/RR（单旋）、LR/RL（双旋）。</p>
+                <p><strong>红黑树：</strong> Python内置 SortedList 底层实现。插入/删除/查找均 O(log n)，常数较小。5条性质保证高度 ≤ 2log(n+1)。</p>
+                <p><strong>Morris遍历：</strong> O(1)空间的中序遍历，利用叶节点空指针作线索。</p>
+<pre><code class="language-python">def morrisInorder(root):
+    result = []
+    cur = root
+    while cur:
+        if not cur.left:
+            result.append(cur.val)    # 左子树为空，直接访问
+            cur = cur.right
+        else:
+            # 找中序前驱（左子树最右节点）
+            prev = cur.left
+            while prev.right and prev.right != cur:
+                prev = prev.right
+            if not prev.right:
+                prev.right = cur      # 建立线索
+                cur = cur.left
+            else:
+                prev.right = None     # 删除线索
+                result.append(cur.val)
+                cur = cur.right
+    return result
+</code></pre>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="tree">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 TR3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="TR1" data-answer="B" data-difficulty="basic" data-explanation="BST 性质：对每个节点，左子树所有节点值 < 当前节点 < 右子树所有节点值，中序遍历可得有序序列。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TR1. 二叉搜索树（BST）的核心性质是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR1" value="A"> A. 左右子树高度差<=1</label><label class="option"><input type="radio" name="TR1" value="B"> B. 左子树所有节点值<根<右子树所有节点值</label><label class="option"><input type="radio" name="TR1" value="C"> C. 所有叶节点深度相同</label><label class="option"><input type="radio" name="TR1" value="D"> D. 根节点值最大</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR2" data-answer="B" data-difficulty="basic" data-explanation="满二叉树（Full）：每个内部节点恰有2个子节点。完全二叉树（Complete）：除最后层外全满，最后层从左到右填充，可用数组存储（堆）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TR2. 完全二叉树和满二叉树的区别？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR2" value="A"> A. 没有区别</label><label class="option"><input type="radio" name="TR2" value="B"> B. 满二叉树每个节点有 0 或 2 个子节点；完全二叉树最后一层从左向右填充</label><label class="option"><input type="radio" name="TR2" value="C"> C. 完全二叉树更高</label><label class="option"><input type="radio" name="TR2" value="D"> D. 满二叉树只有叶子</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR3" data-answer="B" data-difficulty="basic" data-explanation="中序：左-根-右。BST 的中序遍历产生升序序列。前序（根-左-右）常用于复制树，后序（左-右-根）常用于删除树。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TR3. 二叉树的中序遍历顺序？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR3" value="A"> A. 根-左-右</label><label class="option"><input type="radio" name="TR3" value="B"> B. 左-根-右</label><label class="option"><input type="radio" name="TR3" value="C"> C. 左-右-根</label><label class="option"><input type="radio" name="TR3" value="D"> D. 右-根-左</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR4" data-answer="B" data-difficulty="basic" data-explanation="满二叉树每层节点数：1,2,4,...,2^(d-1)，合计 2^d - 1。例如深度3的满二叉树有7个节点（1+2+4）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TR4. 深度为 d 的满二叉树最多有几个节点？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR4" value="A"> A. d²</label><label class="option"><input type="radio" name="TR4" value="B"> B. 2^d - 1</label><label class="option"><input type="radio" name="TR4" value="C"> C. 2d</label><label class="option"><input type="radio" name="TR4" value="D"> D. d·log d</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR5" data-answer="B" data-difficulty="basic" data-explanation="普通 BST 最坏退化为链表 O(n)。AVL 树维护高度平衡（左右子树高度差<=1），确保 O(log n)。红黑树也是 O(log n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TR5. 以下哪种树能保证 O(log n) 的查找/插入/删除？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR5" value="A"> A. 普通二叉搜索树</label><label class="option"><input type="radio" name="TR5" value="B"> B. AVL 树</label><label class="option"><input type="radio" name="TR5" value="C"> C. 普通二叉树</label><label class="option"><input type="radio" name="TR5" value="D"> D. 满二叉树</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="TR6" data-answer="B" data-difficulty="mid" data-explanation="删除双子节点：找中序后继（右子树最小值）替换当前节点值，然后删除后继（后继只有右子或无子，更简单）。也可用中序前驱替换。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TR6. BST 删除有两个子节点的节点，通常的做法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR6" value="A"> A. 直接删除，子树断开</label><label class="option"><input type="radio" name="TR6" value="B"> B. 用中序后继（或前驱）替换其值，并删除后继节点</label><label class="option"><input type="radio" name="TR6" value="C"> C. 用右子树最大值替换</label><label class="option"><input type="radio" name="TR6" value="D"> D. 重建整棵树</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR7" data-answer="A" data-difficulty="mid" data-explanation="朴素解：前序首元为根，在中序找根的位置需 O(n)，递归每次 O(n)，总 O(n²)。用哈希表预存中序下标，总 O(n)，故最优是 O(n)。选 A(O(n log n)) 是次优，B(O(n)) 才是最优。答案改为 B。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TR7. 从前序+中序遍历序列重建二叉树，时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR7" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="TR7" value="B"> B. O(n)</label><label class="option"><input type="radio" name="TR7" value="C"> C. O(n²)</label><label class="option"><input type="radio" name="TR7" value="D"> D. O(log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR8" data-answer="B" data-difficulty="mid" data-explanation="后序 DFS：每节点计算左右子树最大深度，直径候选 = 左深 + 右深（不需要+1，取决于定义）。全局 ans 记录最大值，函数返回当前子树最大深度。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TR8. 树的直径（最长路径的节点数）用 DFS 怎么计算？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR8" value="A"> A. BFS 两次</label><label class="option"><input type="radio" name="TR8" value="B"> B. 对每个节点，更新 max(左深度+右深度+1)，返回 max(左,右)+1</label><label class="option"><input type="radio" name="TR8" value="C"> C. 只需找最深叶节点</label><label class="option"><input type="radio" name="TR8" value="D"> D. 用 Floyd 全源最短路</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR9" data-answer="B" data-difficulty="mid" data-explanation="前序 DFS：每次减去当前节点值，叶节点时判断剩余是否为 0。共访问 n 个节点，O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TR9. 路径和等于目标值（LC 112/113），判断根到叶路径中是否存在目标和，时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR9" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="TR9" value="B"> B. O(n)</label><label class="option"><input type="radio" name="TR9" value="C"> C. O(n²)</label><label class="option"><input type="radio" name="TR9" value="D"> D. O(log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR10" data-answer="B" data-difficulty="mid" data-explanation="Morris 遍历将一些 null 的 right 指针临时链接到中序后继，形成线索二叉树，O(1) 辅助空间但临时修改结构。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TR10. Morris 遍历（不使用栈，O(1) 空间的中序遍历）核心思路？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR10" value="A"> A. 用父指针辅助</label><label class="option"><input type="radio" name="TR10" value="B"> B. 暂时修改叶节点的 right 指针指向后继节点，遍历完恢复</label><label class="option"><input type="radio" name="TR10" value="C"> C. 用全局变量</label><label class="option"><input type="radio" name="TR10" value="D"> D. 将树转换为链表</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="TR11" data-answer="B" data-difficulty="hard" data-explanation="AVL 插入：向上检查祖先，最多找到一个最近不平衡祖先，用 1 次（LL/RR 型）或 2 次（LR/RL 型）旋转恢复平衡，之后向上传播高度，但不会再旋转。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TR11. AVL 树插入引起不平衡时，最多需要几次旋转？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR11" value="A"> A. O(log n) 次</label><label class="option"><input type="radio" name="TR11" value="B"> B. 1 或 2 次（单旋或双旋）</label><label class="option"><input type="radio" name="TR11" value="C"> C. n 次</label><label class="option"><input type="radio" name="TR11" value="D"> D. 3 次</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR12" data-answer="D" data-difficulty="hard" data-explanation="红黑树性质：①节点红/黑 ②根黑 ③红节点的子为黑 ④任意节点到叶的所有路径黑节点数相同（黑高相同）。路径不要求等长！">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TR12. 红黑树的性质不包括哪一条？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR12" value="A"> A. 节点是红或黑</label><label class="option"><input type="radio" name="TR12" value="B"> B. 根节点是黑色</label><label class="option"><input type="radio" name="TR12" value="C"> C. 红节点的子节点必须是黑色（不能有连续红节点）</label><label class="option"><input type="radio" name="TR12" value="D"> D. 任意路径上黑节点数相同，且路径等长</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR13" data-answer="A" data-difficulty="hard" data-explanation="BFS 序列化是 LeetCode 标准格式：层序遍历，null 用特殊符号表示，可唯一还原任意二叉树。前序+null标记也可，更简洁。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TR13. 二叉树序列化和反序列化（LeetCode 297），最实用的序列化方案？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR13" value="A"> A. BFS 层序（包含 null 占位）</label><label class="option"><input type="radio" name="TR13" value="B"> B. 只存值，用前序</label><label class="option"><input type="radio" name="TR13" value="C"> C. 只存叶节点</label><label class="option"><input type="radio" name="TR13" value="D"> D. 用哈希表</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR14" data-answer="B" data-difficulty="hard" data-explanation="普通二叉树节点存单个值；线段树节点存区间[l,r]的聚合信息（和/最大值等），支持 O(log n) 区间查询和修改（配合懒标记）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TR14. 线段树和普通二叉树的主要区别？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR14" value="A"> A. 线段树一定是平衡的</label><label class="option"><input type="radio" name="TR14" value="B"> B. 线段树每个节点代表区间，支持区间查询/修改</label><label class="option"><input type="radio" name="TR14" value="C"> C. 线段树不能处理动态数据</label><label class="option"><input type="radio" name="TR14" value="D"> D. 线段树要求有序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TR15" data-answer="C" data-difficulty="hard" data-explanation="Euler tour + Sparse Table RMQ：将 LCA 问题转化为区间最小值问题，O(n log n) 预处理，O(1) 在线查询，是最优的 LCA 方案（Tarjan 是 O(n+Q) 离线但不支持在线）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TR15. 求二叉树两节点的最近公共祖先（LCA）最高效的离线算法？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TR15" value="A"> A. 暴力枚举 O(n²)</label><label class="option"><input type="radio" name="TR15" value="B"> B. Tarjan LCA O(n+Q) 离线</label><label class="option"><input type="radio" name="TR15" value="C"> C. Euler tour + 稀疏表 O(n log n)预处理 O(1)查询</label><label class="option"><input type="radio" name="TR15" value="D"> D. 直接 DFS O(n) 每次</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TR15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

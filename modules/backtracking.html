@@ -1,0 +1,345 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>回溯算法模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div><h1>回溯算法模块</h1><p><a href="../index.html">返回主页面</a></p></div>
+            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+        </div>
+    </header>
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>回溯通用框架：</strong></p>
+<pre><code class="language-python">def backtrack(path, choices):
+    # 终止条件：达到目标
+    if 满足结束条件:
+        result.append(path[:])   # 注意：要拷贝path，不能直接引用
+        return
+
+    for choice in choices:
+        # 剪枝：提前排除无效分支
+        if 不合法: continue
+
+        # 做选择
+        path.append(choice)
+        mark_used(choice)
+
+        # 递归进入下一层
+        backtrack(path, new_choices)
+
+        # 撤销选择（回溯）
+        path.pop()
+        unmark_used(choice)
+</code></pre>
+                <p><strong>三类经典问题的starter index控制：</strong></p>
+                <ul>
+                    <li><strong>子集/组合：</strong> 从 <code>start</code> 开始，每次传 <code>start+1</code>（不重复使用）</li>
+                    <li><strong>排列：</strong> 用 <code>used[]</code> 数组标记已用元素，每次从0开始遍历</li>
+                    <li><strong>含重复元素：</strong> 先排序，同一层跳过 <code>nums[i]==nums[i-1]</code> 且未使用的</li>
+                </ul>
+            </div>
+
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>问题类型</th><th>时间复杂度</th><th>结果数量</th><th>典型题</th></tr>
+                    <tr><td>n个元素的全排列</td><td>O(n × n!)</td><td>n!</td><td>LeetCode 46</td></tr>
+                    <tr><td>从n选k的组合</td><td>O(k × C(n,k))</td><td>C(n,k)</td><td>LeetCode 77</td></tr>
+                    <tr><td>所有子集</td><td>O(n × 2ⁿ)</td><td>2ⁿ</td><td>LeetCode 78</td></tr>
+                    <tr><td>N皇后</td><td>O(n!)（近似）</td><td>≤n!</td><td>LeetCode 51</td></tr>
+                    <tr><td>数独求解</td><td>O(9^(空格数))</td><td>1（唯一解）</td><td>LeetCode 37</td></tr>
+                </table>
+            </div>
+
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：回溯搜索树</h3>
+<pre class="ascii-art">
+全排列 [1,2,3] 搜索树示意:
+
+                     []
+          /          |          \
+        [1]         [2]         [3]
+       /   \       /   \       /   \
+    [1,2] [1,3] [2,1] [2,3] [3,1] [3,2]
+      |     |     |     |     |     |
+  [1,2,3][1,3,2][2,1,3][2,3,1][3,1,2][3,2,1]
+
+每个叶节点都是一个完整排列，共 3!=6 个
+回溯：到达叶节点后，沿路径返回，"撤销"最后的选择
+
+含重复元素去重 [1,1,2]（排序后）:
+  同层中，若 nums[i]==nums[i-1] 且 used[i-1]==False
+  则跳过（因为上一个相同元素已经生成过）
+</pre>
+            </div>
+
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+                <details>
+                    <summary>例题1：全排列（LeetCode 46）</summary>
+                    <p><strong>题意：</strong> 给不含重复数字的数组，返回所有全排列。</p>
+<pre><code class="language-python">def permute(nums):
+    result = []
+    used = [False] * len(nums)
+
+    def backtrack(path):
+        if len(path) == len(nums):
+            result.append(path[:])   # 必须拷贝！
+            return
+        for i in range(len(nums)):
+            if used[i]: continue     # 跳过已使用元素
+            used[i] = True
+            path.append(nums[i])     # 做选择
+            backtrack(path)
+            path.pop()               # 撤销选择
+            used[i] = False          # 恢复标记
+
+    backtrack([])
+    return result
+</code></pre>
+                    <p><strong>时间：</strong> O(n × n!)；<strong>空间：</strong> O(n)</p>
+                </details>
+
+                <details>
+                    <summary>例题2：组合总和（LeetCode 39）— 可重复使用</summary>
+                    <p><strong>题意：</strong> 从candidates中找和为target的所有组合，数字可重复使用。</p>
+<pre><code class="language-python">def combinationSum(candidates, target):
+    result = []
+    candidates.sort()                # 排序方便剪枝
+
+    def backtrack(start, path, remaining):
+        if remaining == 0:
+            result.append(path[:])
+            return
+        for i in range(start, len(candidates)):
+            if candidates[i] > remaining:
+                break                # 剪枝：后面的更大，不可能凑成
+            path.append(candidates[i])
+            backtrack(i, path, remaining - candidates[i])  # i不是i+1，可重复
+            path.pop()
+
+    backtrack(0, [], target)
+    return result
+</code></pre>
+                    <p><strong>时间：</strong> O(N^(T/M))，T为target，M为最小元素；<strong>空间：</strong> O(T/M)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：N皇后（LeetCode 51）</summary>
+                    <p><strong>题意：</strong> 在N×N棋盘放N个皇后，使之互不攻击。</p>
+<pre><code class="language-python">def solveNQueens(n):
+    result = []
+    cols  = set()   # 已占用的列
+    diag1 = set()   # 主对角线 row-col
+    diag2 = set()   # 副对角线 row+col
+
+    board = [['.']*n for _ in range(n)]
+
+    def backtrack(row):
+        if row == n:
+            result.append([''.join(r) for r in board])
+            return
+        for col in range(n):
+            if col in cols or (row-col) in diag1 or (row+col) in diag2:
+                continue             # 该位置被攻击
+            # 放置皇后
+            board[row][col] = 'Q'
+            cols.add(col); diag1.add(row-col); diag2.add(row+col)
+            backtrack(row + 1)
+            # 撤销
+            board[row][col] = '.'
+            cols.discard(col); diag1.discard(row-col); diag2.discard(row+col)
+
+    backtrack(0)
+    return result
+</code></pre>
+                    <p><strong>时间：</strong> O(n!)；<strong>空间：</strong> O(n)</p>
+                </details>
+            </div>
+
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+                <p><strong>① 遗漏状态恢复导致污染后续分支</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（忘记pop）</p>
+<pre><code class="language-python">path.append(nums[i])
+backtrack(path)
+# 忘记 path.pop()
+# 后续分支看到污染的path
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（做-递归-撤）</p>
+<pre><code class="language-python">path.append(nums[i])    # 做选择
+backtrack(path)         # 递归
+path.pop()              # 撤销（必须！）
+</code></pre>
+                    </div>
+                </div>
+                <p><strong>② 结果收集时直接引用path而非拷贝</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（引用同一对象）</p>
+<pre><code class="language-python">result.append(path)
+# path后续会被修改
+# 所有result中的path都指向同一个列表
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（深拷贝）</p>
+<pre><code class="language-python">result.append(path[:])  # 切片拷贝
+# 或 result.append(list(path))
+# 或 result.append(path.copy())
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>Dancing Links（DLX）：</strong> 精确覆盖问题高效解法，用双向链表实现"删除-恢复"的O(1)回溯。适合数独、精确覆盖问题。</p>
+                <p><strong>迭代加深IDDFS：</strong> 深度限制从1开始逐渐增大的DFS，兼顾BFS找最优和DFS低空间的优点。</p>
+                <p><strong>启发式剪枝：</strong> 预计算"最优情况"，若当前剩余量在最优情况下也无法达标则剪枝。例如组合总和剪枝：<code>if remaining &lt; min_candidate: break</code></p>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="backtracking">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 BT3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题（概念·操作·追踪）</h3>
+<div class="quiz-item" data-question-id="BT1" data-answer="B" data-difficulty="basic" data-explanation="回溯 = DFS + 撤销：尝试一个选择，若不满足约束立即回退（undo），尝试下一个。通过剪枝减少无效搜索。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BT1. 回溯算法的核心操作是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT1" value="A"> A. 贪心选择最优路径</label><label class="option"><input type="radio" name="BT1" value="B"> B. 枚举所有可能，不满足则撤销（剪枝）</label><label class="option"><input type="radio" name="BT1" value="C"> C. 记忆化缓存结果</label><label class="option"><input type="radio" name="BT1" value="D"> D. 随机搜索</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT2" data-answer="C" data-difficulty="basic" data-explanation="按行枚举：每行只有 n 列可选，递归到下一行时已排除同列/对角线冲突，将搜索空间从 n^n 降到 n!。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BT2. 八皇后问题中，每行只放一个皇后，这是什么策略？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT2" value="A"> A. 贪心</label><label class="option"><input type="radio" name="BT2" value="B"> B. 约束传播</label><label class="option"><input type="radio" name="BT2" value="C"> C. 按行递增枚举（减少搜索空间）</label><label class="option"><input type="radio" name="BT2" value="D"> D. 动态规划</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT3" data-answer="B" data-difficulty="basic" data-explanation="n 个元素的全排列共 n! 种，每种需 O(n) 生成，总 O(n·n!)。pruning 很难改变本质，但实践中 visited[] 剪枝常数较小。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BT3. 全排列问题枚举 n 个不同元素，时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT3" value="A"> A. O(n²)</label><label class="option"><input type="radio" name="BT3" value="B"> B. O(n!)</label><label class="option"><input type="radio" name="BT3" value="C"> C. O(2^n)</label><label class="option"><input type="radio" name="BT3" value="D"> D. O(n^n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT4" data-answer="B" data-difficulty="basic" data-explanation="每个元素 2 种选择：选或不选，共 2^n 种子集。回溯框架：dfs(index)，递归包含/不包含 nums[index]。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BT4. 子集问题（2^n 个子集）的回溯框架，每个位置的选择是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT4" value="A"> A. 只选择不跳过</label><label class="option"><input type="radio" name="BT4" value="B"> B. 选择或不选择（二选一）</label><label class="option"><input type="radio" name="BT4" value="C"> C. 选择1到n皆可</label><label class="option"><input type="radio" name="BT4" value="D"> D. 只考虑相邻元素</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT5" data-answer="B" data-difficulty="basic" data-explanation="DFS 泛指深度优先遍历。回溯特指在 DFS 过程中维护路径状态，并在返回时恢复（undo），以便尝试其他分支。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> BT5. 回溯与 DFS 的关键区别是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT5" value="A"> A. 回溯只用于树，DFS 用于图</label><label class="option"><input type="radio" name="BT5" value="B"> B. 回溯在递归返回时撤销状态，DFS 不必撤销</label><label class="option"><input type="radio" name="BT5" value="C"> C. 回溯不使用递归</label><label class="option"><input type="radio" name="BT5" value="D"> D. 两者完全等价</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题（代码·复杂度·变形）</h3>
+<div class="quiz-item" data-question-id="BT6" data-answer="B" data-difficulty="mid" data-explanation="允许重复使用同一元素，故递归时传入当前 index（不是 index+1），下次仍从该元素开始尝试。不允许重复则传 index+1。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BT6. 组合总和 I（LeetCode 39，元素可重复使用），递归时 index 如何传递？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT6" value="A"> A. 每次从0开始</label><label class="option"><input type="radio" name="BT6" value="B"> B. 从当前 index 开始（允许重用）</label><label class="option"><input type="radio" name="BT6" value="C"> C. 从 index+1 开始</label><label class="option"><input type="radio" name="BT6" value="D"> D. 随机顺序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT7" data-answer="A" data-difficulty="mid" data-explanation="同一左斜对角线 (/) 上的格子满足 row+col 相同；右斜对角线（\）上满足 row-col 相同。所以存储 diag1=row-col，diag2=row+col 即可 O(1) 检测。选项A代表右斜，选项B代表左斜，两者都需要。答案A（row-col相同判右斜）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BT7. N 皇后问题，剪枝条件是三个方向不冲突。以下哪个公式检测左上对角线已占用？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT7" value="A"> A. row-col == 当前 row-col</label><label class="option"><input type="radio" name="BT7" value="B"> B. row+col == 当前 row+col</label><label class="option"><input type="radio" name="BT7" value="C"> C. abs(row-col) == 1</label><label class="option"><input type="radio" name="BT7" value="D"> D. row == col</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT8" data-answer="B" data-difficulty="mid" data-explanation="数独有 n 个空格，每格最多 9 种选择，最坏 O(9^n)。实际上约束传播大幅剪枝，n 通常 20-60，实践中极快。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BT8. 回溯解数独（9×9），最坏情况时间复杂度量级？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT8" value="A"> A. O(9^81)</label><label class="option"><input type="radio" name="BT8" value="B"> B. O(9^n)（n为空格数）</label><label class="option"><input type="radio" name="BT8" value="C"> C. O(n!)</label><label class="option"><input type="radio" name="BT8" value="D"> D. O(81²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT9" data-answer="A" data-difficulty="mid" data-explanation="合法括号：任意前缀中左括号数 >= 右括号数。剪枝：open<=n（不超预算），close<=open（不超已有左括号），递归深度 O(4^n/sqrt(n))（Catalan 数）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BT9. 生成 n 对括号（LC 22），以下哪个是合法剪枝条件？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT9" value="A"> A. 左括号数 <= n，且右括号数 <= 左括号数</label><label class="option"><input type="radio" name="BT9" value="B"> B. 只要总数不超过 2n 就继续</label><label class="option"><input type="radio" name="BT9" value="C"> C. 左括号数 >= 右括号数</label><label class="option"><input type="radio" name="BT9" value="D"> D. 只在末尾加右括号</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT10" data-answer="B" data-difficulty="mid" data-explanation="从每个格子出发 DFS，每步最多 4 个方向，最深 L 层，总 O(m·n·4^L)。实践中字母不匹配快速剪枝，常数很小。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> BT10. 单词搜索（LC 79）在矩阵中找路径，时间复杂度（m×n 矩阵，长度 L 的单词）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT10" value="A"> A. O(m·n·L)</label><label class="option"><input type="radio" name="BT10" value="B"> B. O(m·n·4^L)</label><label class="option"><input type="radio" name="BT10" value="C"> C. O((m·n)!)</label><label class="option"><input type="radio" name="BT10" value="D"> D. O(L²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题（竞赛·证明·综合）</h3>
+<div class="quiz-item" data-question-id="BT11" data-answer="A" data-difficulty="hard" data-explanation="通用分析：状态数（搜索树节点数）× 每节点操作（路径构造等）。例如全排列：O(n!) 种排列 × O(n) 构造 = O(n·n!)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BT11. 回溯的时间复杂度通常怎么分析？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT11" value="A"> A. O(状态数 × 每个状态的操作数)</label><label class="option"><input type="radio" name="BT11" value="B"> B. O(n log n)</label><label class="option"><input type="radio" name="BT11" value="C"> C. O(递归深度)</label><label class="option"><input type="radio" name="BT11" value="D"> D. 取决于剪枝策略，无法分析</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT12" data-answer="A" data-difficulty="hard" data-explanation="按行枚举将每行候选从 n² 降到 n，加上列/对角线检测从 O(n) 降到 O(1)，是 N 皇后最重要的剪枝。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BT12. 以下哪个剪枝技术在 N 皇后中最有效？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT12" value="A"> A. 按行枚举（减少到 n 列选择）</label><label class="option"><input type="radio" name="BT12" value="B"> B. 排序候选</label><label class="option"><input type="radio" name="BT12" value="C"> C. 随机化顺序</label><label class="option"><input type="radio" name="BT12" value="D"> D. 只从对角线出发</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT13" data-answer="B" data-difficulty="hard" data-explanation="DP 适合：只要最优值（不需要具体方案）+ 有重叠子问题 + 最优子结构。回溯适合：需要枚举所有解、约束复杂（如数独）、n 很小。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BT13. 回溯 vs 动态规划：哪种情况下应优先选 DP 而非回溯？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT13" value="A"> A. 问题要求枚举所有解</label><label class="option"><input type="radio" name="BT13" value="B"> B. 问题只要求最优值且有重叠子问题</label><label class="option"><input type="radio" name="BT13" value="C"> C. 问题有约束</label><label class="option"><input type="radio" name="BT13" value="D"> D. 问题规模 n<=10</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT14" data-answer="B" data-difficulty="hard" data-explanation="记忆化 = 回溯 + 缓存：要求相同参数（状态）必然产生相同结果（无副作用、无全局状态污染）。如果状态包含全局可变路径信息，则无法记忆化。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BT14. 将回溯转化记忆化搜索，最关键的前提是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT14" value="A"> A. 递归有尾调用优化</label><label class="option"><input type="radio" name="BT14" value="B"> B. 状态空间有限且相同状态对应相同结果（无副作用）</label><label class="option"><input type="radio" name="BT14" value="C"> C. 使用 DFS</label><label class="option"><input type="radio" name="BT14" value="D"> D. 问题有贪心性质</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="BT15" data-answer="A" data-difficulty="hard" data-explanation="Dancing Links（DLX）用双向链表表示稀疏约束矩阵，选择一行（消除列/行冲突）和撤销都是 O(1) 指针操作，比朴素矩阵高效数倍。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> BT15. 精确覆盖问题（DLX/Dancing Links）相比朴素回溯有什么优势？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="BT15" value="A"> A. 将约束矩阵稀疏化，O(1) 内执行选择和撤销</label><label class="option"><input type="radio" name="BT15" value="B"> B. 减少问题维度</label><label class="option"><input type="radio" name="BT15" value="C"> C. 使用贪心策略</label><label class="option"><input type="radio" name="BT15" value="D"> D. 使用并查集加速</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="BT15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

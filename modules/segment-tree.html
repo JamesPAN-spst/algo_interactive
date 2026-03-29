@@ -1,0 +1,376 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>线段树模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+<header><div class="container header-inner"><div><h1>线段树模块</h1><p><a href="../index.html">返回主页面</a></p></div><div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div></div></header>
+<main class="container">
+<section class="card">
+    <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 核心定义</h3>
+        <p><strong>线段树（区间和）完整实现：</strong></p>
+<pre><code class="language-python">class SegmentTree:
+    def __init__(self, nums):
+        n = len(nums)
+        self.n = n
+        self.tree = [0] * (4 * n)     # 4n保证空间够用
+        self.lazy = [0] * (4 * n)     # 懒标记（延迟批量更新）
+        self._build(nums, 1, 0, n-1)  # 从节点1开始（1-indexed更方便）
+
+    def _build(self, nums, node, start, end):
+        if start == end:
+            self.tree[node] = nums[start]
+            return
+        mid = (start + end) // 2
+        self._build(nums, 2*node,   start,   mid)
+        self._build(nums, 2*node+1, mid+1,   end)
+        self.tree[node] = self.tree[2*node] + self.tree[2*node+1]
+
+    def _pushdown(self, node, start, end):
+        """将懒标记下传给子节点"""
+        if self.lazy[node]:
+            mid = (start + end) // 2
+            lc, rc = 2*node, 2*node+1
+            self.tree[lc] += self.lazy[node] * (mid - start + 1)
+            self.tree[rc] += self.lazy[node] * (end - mid)
+            self.lazy[lc] += self.lazy[node]
+            self.lazy[rc] += self.lazy[node]
+            self.lazy[node] = 0         # 清除当前懒标记
+
+    def update_range(self, node, start, end, l, r, val):
+        """区间[l,r]每个元素加val"""
+        if r < start or end < l: return     # 无交集
+        if l <= start and end <= r:          # 被完全覆盖
+            self.tree[node] += val * (end - start + 1)
+            self.lazy[node] += val
+            return
+        self._pushdown(node, start, end)    # 先下传
+        mid = (start + end) // 2
+        self.update_range(2*node,   start,   mid, l, r, val)
+        self.update_range(2*node+1, mid+1,   end, l, r, val)
+        self.tree[node] = self.tree[2*node] + self.tree[2*node+1]
+
+    def query(self, node, start, end, l, r):
+        """查询[l,r]区间和"""
+        if r < start or end < l: return 0
+        if l <= start and end <= r: return self.tree[node]
+        self._pushdown(node, start, end)
+        mid = (start + end) // 2
+        return (self.query(2*node,   start, mid, l, r) +
+                self.query(2*node+1, mid+1, end, l, r))
+</code></pre>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查</h3>
+        <table>
+            <tr><th>操作</th><th>时间复杂度</th><th>空间复杂度</th><th>备注</th></tr>
+            <tr><td>建树 build</td><td>O(n)</td><td>O(n)</td><td>节点数≈4n</td></tr>
+            <tr><td>单点更新</td><td>O(log n)</td><td>O(1)</td><td>沿根到叶一条路</td></tr>
+            <tr><td>区间更新（懒标记）</td><td>O(log n)</td><td>O(1)</td><td>需实现pushdown</td></tr>
+            <tr><td>区间查询</td><td>O(log n)</td><td>O(1)</td><td>至多4个节点</td></tr>
+            <tr><td>树状数组（BIT）对比</td><td>O(log n)</td><td>O(n)</td><td>代码更简单，但功能受限</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🖼 结构图示：线段树节点与数组</h3>
+<pre class="ascii-art">
+数组: [1, 3, 2, 7, 9, 11]  (下标0-5)
+
+线段树（节点存区间和）:
+            [0,5]=33
+          /          \
+      [0,2]=6         [3,5]=27
+       /    \          /     \
+   [0,1]=4  [2,2]=2 [3,4]=16 [5,5]=11
+   /    \            /    \
+[0,0]=1 [1,1]=3  [3,3]=7 [4,4]=9
+
+树状数组（BIT）对比——仅支持前缀和：
+BIT[i] = 原数组中 [i-lowbit(i)+1, i] 的和
+lowbit(i) = i & (-i)
+update: 从i向上跳 i += lowbit(i)
+query:  从i向下跳 i -= lowbit(i)
+</pre>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题详解</h3>
+        <details>
+            <summary>例题1：区间求和（LeetCode 307）— 树状数组BIT</summary>
+            <p><strong>题意：</strong> 实现数组的单点更新和区间求和，操作次数多。</p>
+<pre><code class="language-python">class BIT:                              # Binary Indexed Tree (树状数组)
+    def __init__(self, nums):
+        n = len(nums)
+        self.n = n
+        self.bit = [0] * (n + 1)       # 1-indexed
+        for i, v in enumerate(nums):
+            self._update(i + 1, v)
+
+    def _update(self, i, delta):
+        while i <= self.n:
+            self.bit[i] += delta
+            i += i & (-i)              # 加上lowbit，向上跳
+
+    def _prefix(self, i):              # 前缀和 [1..i]
+        s = 0
+        while i > 0:
+            s += self.bit[i]
+            i -= i & (-i)              # 减去lowbit，向下跳
+        return s
+
+    def update(self, i, val):
+        old = self.nums[i]
+        self.nums[i] = val
+        self._update(i + 1, val - old)
+
+    def sumRange(self, left, right):
+        return self._prefix(right+1) - self._prefix(left)
+</code></pre>
+            <p><strong>时间：</strong> O(log n) 每次操作；<strong>空间：</strong> O(n)</p>
+        </details>
+
+        <details>
+            <summary>例题2：航班预订统计（LeetCode 1109）— 差分数组</summary>
+            <p><strong>题意：</strong> n个航班，多次订座操作[first,last,seats]，求每个航班实际预订量。</p>
+<pre><code class="language-python">def corpFlightBookings(bookings, n):
+    diff = [0] * (n + 2)               # 差分数组（多一位防越界）
+    for first, last, seats in bookings:
+        diff[first] += seats           # 起点加
+        diff[last+1] -= seats          # 终点后一位减
+    # 还原：前缀和即为实际值
+    result = []
+    cur = 0
+    for i in range(1, n+1):
+        cur += diff[i]
+        result.append(cur)
+    return result
+</code></pre>
+            <p><strong>时间：</strong> O(n + m)；<strong>空间：</strong> O(n)</p>
+        </details>
+
+        <details>
+            <summary>例题3：区间最值查询（RMQ）— 稀疏表 Sparse Table</summary>
+            <p><strong>题意：</strong> 静态数组，多次查询区间最小值（无修改操作）。</p>
+<pre><code class="language-python">import math
+
+class SparseTable:
+    def __init__(self, nums):
+        n = len(nums)
+        k = int(math.log2(n)) + 1
+        # st[i][j] = nums[i..i+2^j-1] 的最小值
+        self.st = [[float('inf')]*k for _ in range(n)]
+        for i in range(n):
+            self.st[i][0] = nums[i]
+        j = 1
+        while (1 << j) <= n:
+            for i in range(n - (1<<j) + 1):
+                self.st[i][j] = min(self.st[i][j-1],
+                                    self.st[i+(1<<(j-1))][j-1])
+            j += 1
+
+    def query(self, l, r):             # 查询[l,r]最小值，O(1)
+        k = int(math.log2(r - l + 1))
+        return min(self.st[l][k], self.st[r-(1<<k)+1][k])  # 两个重叠区间的min
+</code></pre>
+            <p><strong>建表：</strong> O(n log n)；<strong>查询：</strong> O(1)！适合无修改的密集查询</p>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+        <p><strong>① pushdown时机错误（区间更新前未下传）</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（更新前没pushdown）</p>
+<pre><code class="language-python">def update(self, node, start, end, l, r, val):
+    if r < start or end < l: return
+    if l <= start <= end <= r:
+        self.tree[node] += val*(end-start+1)
+        self.lazy[node] += val
+        return
+    # 忘记pushdown！子节点的lazy没有下传
+    mid = (start+end)//2
+    self.update(2*node, start, mid, l, r, val)
+    self.update(2*node+1, mid+1, end, l, r, val)
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（先pushdown再递归）</p>
+<pre><code class="language-python">def update(self, node, start, end, l, r, val):
+    if r < start or end < l: return
+    if l <= start <= end <= r:
+        self.tree[node] += val*(end-start+1)
+        self.lazy[node] += val
+        return
+    self._pushdown(node, start, end)  # 先下传！
+    mid = (start+end)//2
+    self.update(...)
+    self.tree[node] = self.tree[2*node] + self.tree[2*node+1]
+</code></pre>
+            </div>
+        </div>
+        <p><strong>② 树状数组update时delta计算错误</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（直接用新值）</p>
+<pre><code class="language-python">def update(self, i, val):
+    self._update(i+1, val)     # 错！应传差值delta
+    # BIT存的是增量，直接传val会累加而非替换
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（传差值）</p>
+<pre><code class="language-python">def update(self, i, val):
+    delta = val - self.nums[i]     # 新值 - 旧值
+    self.nums[i] = val             # 更新原始数组
+    self._update(i+1, delta)       # BIT加上差值
+</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>可持久化线段树（主席树）：</strong> 每次操作创建新版本，共享未修改节点，O(log n)空间/时间，支持区间第K小查询（历史版本）。</p>
+        <p><strong>线段树合并：</strong> 将两棵动态开点线段树在O(M log N)时间合并，用于树上DP降维（如统计子树内排名等）。</p>
+        <p><strong>Li Chao线段树：</strong> 维护线集合，O(log V)查询某x处最小/大y值（插入直线，查询静态位置的极值）。用于斜率优化DP的维护。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="segment-tree">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="SE3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="SE1" data-answer="B" data-difficulty="basic" data-explanation="线段树节点存区间 [l,r] 的信息（和/最大值/最小值等），子节点是 [l,mid] 和 [mid+1,r]，根节点代表整个数组区间。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SE1. 线段树每个节点代表？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE1" value="A"> A. 一个元素</label><label class="option"><input type="radio" name="SE1" value="B"> B. 一个区间 [l,r] 的聚合信息</label><label class="option"><input type="radio" name="SE1" value="C"> C. 一条边</label><label class="option"><input type="radio" name="SE1" value="D"> D. 一个字符</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE2" data-answer="B" data-difficulty="basic" data-explanation="线段树节点最多 4n 个（完全二叉树最坏情况），实践中 4n 是安全的上界。也可精确计算：最大节点数 = 2 * 2^(ceil(log2(n))) - 1 <= 4n。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SE2. 含 n 个元素的线段树，通常分配多大的数组？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE2" value="A"> A. 2n</label><label class="option"><input type="radio" name="SE2" value="B"> B. 4n</label><label class="option"><input type="radio" name="SE2" value="C"> C. n log n</label><label class="option"><input type="radio" name="SE2" value="D"> D. n²</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE3" data-answer="B" data-difficulty="basic" data-explanation="每次查询最多分裂为 O(log n) 个节点（每层至多4个节点参与），总 O(log n)。这是线段树相比暴力 O(n) 的核心优势。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SE3. 线段树的区间查询时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE3" value="A"> A. O(n)</label><label class="option"><input type="radio" name="SE3" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="SE3" value="C"> C. O(1)</label><label class="option"><input type="radio" name="SE3" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE4" data-answer="B" data-difficulty="basic" data-explanation="懒标记：区间更新时仅在对应节点打标记，子节点在下次被访问时再下传（pushdown），将区间更新也压缩到 O(log n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SE4. 懒标记（lazy tag）用于什么场景？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE4" value="A"> A. 单点更新</label><label class="option"><input type="radio" name="SE4" value="B"> B. 延迟批量区间更新（避免立即更新所有子节点）</label><label class="option"><input type="radio" name="SE4" value="C"> C. 删除元素</label><label class="option"><input type="radio" name="SE4" value="D"> D. 排序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE5" data-answer="B" data-difficulty="basic" data-explanation="树状数组用 lowbit(i) 维护前缀和，代码极简。支持单点更新和前缀和，O(log n)。但功能不如线段树（不支持最大/最小值、区间赋值等）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> SE5. 树状数组（BIT/Fenwick Tree）的主要优势是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE5" value="A"> A. 支持区间最大值查询</label><label class="option"><input type="radio" name="SE5" value="B"> B. 代码简洁，支持单点更新和前缀和查询，O(log n)</label><label class="option"><input type="radio" name="SE5" value="C"> C. 支持区间赋值</label><label class="option"><input type="radio" name="SE5" value="D"> D. 支持任意聚合函数</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="SE6" data-answer="B" data-difficulty="mid" data-explanation="pushdown 在递归查询或更新需要进入子节点时执行：先将当前节点的懒标记下传给两个子节点，再进入对应子区间。确保子节点数据是最新的。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SE6. 线段树区间更新（加法）加入懒标记后，pushdown 操作在什么时候执行？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE6" value="A"> A. build 时</label><label class="option"><input type="radio" name="SE6" value="B"> B. 每次递归进入子节点前（查询和更新时）</label><label class="option"><input type="radio" name="SE6" value="C"> C. 只在 build 时</label><label class="option"><input type="radio" name="SE6" value="D"> D. 每次 update 后立即</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE7" data-answer="B" data-difficulty="mid" data-explanation="稀疏表：O(n log n) 预处理，O(1) 区间 Min/Max 查询（利用区间重叠可覆盖）。无法支持修改，是纯静态 RMQ 的最优方案。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SE7. 稀疏表（Sparse Table）适合什么场景？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE7" value="A"> A. 频繁单点更新</label><label class="option"><input type="radio" name="SE7" value="B"> B. 静态数组的区间最小/最大值查询（无修改），O(1) 查询</label><label class="option"><input type="radio" name="SE7" value="C"> C. 区间求和</label><label class="option"><input type="radio" name="SE7" value="D"> D. 动态插入删除</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE8" data-answer="C" data-difficulty="mid" data-explanation="差分数组：diff[l]+=v，diff[r+1]-=v，两个 O(1) 操作。但查询某个位置的值需要前缀和 O(n) 还原，适合批量修改再整体还原。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SE8. 差分数组对区间 [l,r] 加 v 的操作复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE8" value="A"> A. O(n)</label><label class="option"><input type="radio" name="SE8" value="B"> B. O(r-l+1)</label><label class="option"><input type="radio" name="SE8" value="C"> C. O(1)</label><label class="option"><input type="radio" name="SE8" value="D"> D. O(log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE9" data-answer="B" data-difficulty="mid" data-explanation="build：后序遍历，每个叶节点 O(1) 初始化，每个内部节点 O(1) 合并，共 O(n) 个节点，总 O(n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SE9. 线段树 build 的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE9" value="A"> A. O(n log n)</label><label class="option"><input type="radio" name="SE9" value="B"> B. O(n)</label><label class="option"><input type="radio" name="SE9" value="C"> C. O(n²)</label><label class="option"><input type="radio" name="SE9" value="D"> D. O(4n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE10" data-answer="C" data-difficulty="mid" data-explanation="带懒标记的最大值线段树：区间赋值用 max 懒标记，pushdown 时向下传递。区间 max 和区间 sum 可同时维护，这是常见的双信息线段树。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> SE10. 线段树支持区间 max 查询，懒标记也用 max 合并，这种设计被称为？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE10" value="A"> A. 区间 DP</label><label class="option"><input type="radio" name="SE10" value="B"> B. 势能线段树</label><label class="option"><input type="radio" name="SE10" value="C"> C. 区间合并线段树（segment beats）的简化版：普通懒标记查max</label><label class="option"><input type="radio" name="SE10" value="D"> D. 树状数组变种</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="SE11" data-answer="B" data-difficulty="hard" data-explanation="主席树：每次版本更新沿路径创建新节点，路径长 O(log n)，共创建 O(log n) 个新节点，旧节点共享。总空间 O(n log n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SE11. 可持久化线段树（主席树）每次更新创建多少个新节点？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE11" value="A"> A. O(n)</label><label class="option"><input type="radio" name="SE11" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="SE11" value="C"> C. O(1)</label><label class="option"><input type="radio" name="SE11" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE12" data-answer="A" data-difficulty="hard" data-explanation="主席树：对值域建权值线段树，每次 insert 建新版本 O(log n)，n 次共 O(n log n)；查询区间第K小用两个版本前缀和差分，O(log n) 查一次。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SE12. 用主席树（可持久化线段树）解区间第 K 小，时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE12" value="A"> A. O(n log n) 预处理，O(log n) 查询</label><label class="option"><input type="radio" name="SE12" value="B"> B. O(n²)</label><label class="option"><input type="radio" name="SE12" value="C"> C. O(n) 预处理，O(1) 查询</label><label class="option"><input type="radio" name="SE12" value="D"> D. O(n log² n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE13" data-answer="B" data-difficulty="hard" data-explanation="Li Chao 树：维护一组直线 y=kx+b，每个节点存在其区间 mid 处最优的直线（与已存直线比较保留优者，输者可能在某半段优）。O(log V) 插入和查询，用于斜率优化 DP。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SE13. Li Chao 线段树（线段树管理直线集合）的查询功能是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE13" value="A"> A. 区间求和</label><label class="option"><input type="radio" name="SE13" value="B"> B. 在给定 x 处查询所有直线中 y 值最大/最小的</label><label class="option"><input type="radio" name="SE13" value="C"> C. 排序直线</label><label class="option"><input type="radio" name="SE13" value="D"> D. 查找重叠区间</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE14" data-answer="B" data-difficulty="hard" data-explanation="线段树合并：只递归处理两棵树节点都存在的部分。若两棵树共 M 个公共节点，时间 O(M)。树上问题中，所有子树合并总时间 O(n log n)，用于计数类树上 DP。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SE14. 线段树合并（segment tree merge）的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE14" value="A"> A. O(n log n) 总</label><label class="option"><input type="radio" name="SE14" value="B"> B. O(两棵树公共节点数)</label><label class="option"><input type="radio" name="SE14" value="C"> C. O(n)</label><label class="option"><input type="radio" name="SE14" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="SE15" data-answer="B" data-difficulty="hard" data-explanation="Segment Tree Beats：支持区间取 min（推平到 v），通过维护最大值/次大值和计数，若最大值 > v 则更新，次大值 >= v 则递归，均摊 O(n log² n)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> SE15. 吉司机线段树（Segment Tree Beats）的核心思想？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="SE15" value="A"> A. 普通懒标记</label><label class="option"><input type="radio" name="SE15" value="B"> B. 对区间取 min 操作：若区间最大值 > 阈值则分裂，保证均摊 O(n log² n) 复杂度</label><label class="option"><input type="radio" name="SE15" value="C"> C. 线段树合并</label><label class="option"><input type="radio" name="SE15" value="D"> D. 持久化版本</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="SE15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+</main>
+<script src="../assets/js/app.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>

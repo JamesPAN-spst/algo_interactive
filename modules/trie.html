@@ -1,0 +1,413 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>Trie 字典树模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+<header><div class="container header-inner"><div><h1>Trie 字典树模块</h1><p><a href="../index.html">返回主页面</a></p></div><div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div></div></header>
+<main class="container">
+<section class="card">
+    <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 核心定义</h3>
+        <p><strong>Trie完整实现（字典节点）：</strong></p>
+<pre><code class="language-python">class TrieNode:
+    def __init__(self):
+        self.children = {}             # 字符 → TrieNode（或用数组[None]*26）
+        self.is_end = False            # 是否是某个单词的结尾
+
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, word):
+        node = self.root
+        for ch in word:
+            if ch not in node.children:
+                node.children[ch] = TrieNode()   # 节点不存在则创建
+            node = node.children[ch]
+        node.is_end = True             # 标记单词结束
+
+    def search(self, word):
+        node = self.root
+        for ch in word:
+            if ch not in node.children:
+                return False           # 字符不存在
+            node = node.children[ch]
+        return node.is_end             # 必须是完整单词（not just前缀）
+
+    def startsWith(self, prefix):
+        node = self.root
+        for ch in prefix:
+            if ch not in node.children:
+                return False
+            node = node.children[ch]
+        return True                    # 只要前缀存在即可
+</code></pre>
+        <p><strong>数组优化（固定字符集时更快）：</strong></p>
+<pre><code class="language-python">class TrieNode:
+    def __init__(self):
+        self.children = [None] * 26    # 只含小写字母时
+        self.is_end = False
+
+def insert(self, word):
+    node = self.root
+    for ch in word:
+        idx = ord(ch) - ord('a')       # 字符→下标 O(1)
+        if not node.children[idx]:
+            node.children[idx] = TrieNode()
+        node = node.children[idx]
+    node.is_end = True
+</code></pre>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查</h3>
+        <table>
+            <tr><th>操作</th><th>时间复杂度</th><th>空间复杂度</th><th>说明</th></tr>
+            <tr><td>insert(word)</td><td>O(|word|)</td><td>O(|word|×Σ)</td><td>Σ=字符集大小</td></tr>
+            <tr><td>search(word)</td><td>O(|word|)</td><td>O(1)</td><td>不创建节点</td></tr>
+            <tr><td>startsWith(prefix)</td><td>O(|prefix|)</td><td>O(1)</td><td>前缀查询</td></tr>
+            <tr><td>建树(n个单词)</td><td>O(∑|word_i|)</td><td>O(∑|word_i|×Σ)</td><td>总字符数</td></tr>
+            <tr><td>vs 哈希表查找</td><td>O(|word|)</td><td>比哈希表大</td><td>优势在前缀查询</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🖼 结构图示：Trie插入"apple"和"app"</h3>
+<pre class="ascii-art">
+插入: "apple", "app", "application"
+
+root
+ └─ a
+     └─ p
+         └─ p [is_end=True] ← "app"结尾
+             └─ l
+             |   └─ e [is_end=True] ← "apple"结尾
+             └─ l
+                 └─ i
+                     └─ c
+                         └─ a
+                             └─ t
+                                 └─ i
+                                     └─ o
+                                         └─ n [is_end=True]
+
+search("app")  → 路径a→p→p，is_end=True  → True ✓
+search("ap")   → 路径a→p，is_end=False   → False ✓
+startsWith("ap") → 路径a→p存在          → True ✓
+startsWith("xy") → x不在root.children   → False ✓
+</pre>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题详解</h3>
+        <details>
+            <summary>例题1：实现Trie前缀树（LeetCode 208）</summary>
+            <p><strong>题意：</strong> 实现Trie，支持insert、search、startsWith三种操作。</p>
+            <p><strong>思路：</strong> 如上面核心定义，用字典存children，is_end标记单词结尾。</p>
+<pre><code class="language-python"># 完整可运行版本（与核心定义相同）
+class Trie:
+    def __init__(self):
+        self.root = {}              # 用嵌套字典简化
+
+    def insert(self, word):
+        node = self.root
+        for ch in word:
+            node = node.setdefault(ch, {})   # 不存在则创建
+        node['#'] = True            # '#'作为结束标记
+
+    def search(self, word):
+        node = self.root
+        for ch in word:
+            if ch not in node: return False
+            node = node[ch]
+        return '#' in node          # 必须有结束标记
+
+    def startsWith(self, prefix):
+        node = self.root
+        for ch in prefix:
+            if ch not in node: return False
+            node = node[ch]
+        return True
+</code></pre>
+        </details>
+
+        <details>
+            <summary>例题2：单词搜索 II（LeetCode 212）— Trie + DFS回溯</summary>
+            <p><strong>题意：</strong> 在二维字母网格中搜索给定单词列表中所有能找到的单词。</p>
+<pre><code class="language-python">def findWords(board, words):
+    # 构建Trie
+    trie = {}
+    for word in words:
+        node = trie
+        for ch in word:
+            node = node.setdefault(ch, {})
+        node['$'] = word            # '$'存原单词
+
+    rows, cols = len(board), len(board[0])
+    result = []
+
+    def dfs(r, c, node):
+        ch = board[r][c]
+        if ch not in node: return
+        next_node = node[ch]
+        if '$' in next_node:
+            result.append(next_node['$'])   # 找到单词
+            del next_node['$']              # 防重复收集
+
+        board[r][c] = '#'                   # 标记已访问
+        for dr, dc in [(0,1),(0,-1),(1,0),(-1,0)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and board[nr][nc] != '#':
+                dfs(nr, nc, next_node)
+        board[r][c] = ch                    # 回溯
+
+        # 剪枝：若节点为空则删除（减少无效遍历）
+        if not next_node:
+            del node[ch]
+
+    for r in range(rows):
+        for c in range(cols):
+            dfs(r, c, trie)
+    return result
+</code></pre>
+            <p><strong>时间：</strong> O(M × 4 × 3^(L-1))，M为格子数，L为最长单词长度；<strong>空间：</strong> O(∑|word|)</p>
+        </details>
+
+        <details>
+            <summary>例题3：键值映射（LeetCode 677）— 前缀和Trie</summary>
+            <p><strong>题意：</strong> 实现MapSum，支持键值插入和前缀求和。</p>
+<pre><code class="language-python">class MapSum:
+    def __init__(self):
+        self.trie = {}
+        self.vals = {}              # 存每个key的值
+
+    def insert(self, key, val):
+        delta = val - self.vals.get(key, 0)  # 增量（覆盖时用差值）
+        self.vals[key] = val
+        node = self.trie
+        for ch in key:
+            node = node.setdefault(ch, {'_sum': 0})
+            node['_sum'] += delta   # 每个节点累加经过该前缀的总和
+
+    def sum(self, prefix):
+        node = self.trie
+        for ch in prefix:
+            if ch not in node: return 0
+            node = node[ch]
+        return node.get('_sum', 0)  # 直接读取前缀和
+</code></pre>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+        <p><strong>① 搜索时混淆search和startsWith</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（search只检查路径存在）</p>
+<pre><code class="language-python">def search(self, word):
+    node = self.root
+    for ch in word:
+        if ch not in node.children: return False
+        node = node.children[ch]
+    return True    # 路径存在就返回True
+    # 错！"app"路径存在但如果只插入了"apple"，search("app")应返回False
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（必须检查is_end）</p>
+<pre><code class="language-python">def search(self, word):
+    node = self.root
+    for ch in word:
+        if ch not in node.children: return False
+        node = node.children[ch]
+    return node.is_end  # 必须是完整单词！
+</code></pre>
+            </div>
+        </div>
+        <p><strong>② 字符映射越界（字符集未统一）</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（大小写混用）</p>
+<pre><code class="language-python">idx = ord(ch) - ord('a')    # 转换大写字母会得到负数！
+# 'A' - 'a' = -32  → 数组越界
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（统一处理）</p>
+<pre><code class="language-python">ch = ch.lower()             # 先统一小写
+idx = ord(ch) - ord('a')    # 再转换，范围[0,25]
+# 或用字典代替数组，支持所有字符
+</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>压缩Trie（Radix Tree）：</strong> 合并只有一个子节点的链式路径为单条边，大幅节省节点数量。Go的路由库广泛使用此结构。</p>
+        <p><strong>AC自动机：</strong> 在Trie基础上添加失配指针（类似KMP的fail数组），实现多模式字符串同时匹配，O(n + ∑pattern + 匹配数)。</p>
+        <p><strong>01-Trie（异或Trie）：</strong> 将整数按二进制位建Trie（从高位到低位），O(log V)查找与某数异或最大/最小的数。</p>
+<pre><code class="language-python">class XorTrie:
+    def __init__(self):
+        self.root = [None, None]   # 0或1
+
+    def insert(self, num):
+        node = self.root
+        for i in range(31, -1, -1):   # 从高位到低位
+            bit = (num >> i) & 1
+            if not node[bit]:
+                node[bit] = [None, None]
+            node = node[bit]
+
+    def maxXor(self, num):
+        node = self.root
+        xor = 0
+        for i in range(31, -1, -1):
+            bit = (num >> i) & 1
+            want = 1 - bit             # 希望取相反位（最大化XOR）
+            if node[want]:
+                xor |= (1 << i)
+                node = node[want]
+            else:
+                node = node[bit]
+        return xor
+</code></pre>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="trie">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="TI3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="TI1" data-answer="B" data-difficulty="basic" data-explanation="Trie 每个节点代表字符串前缀，从根到某节点的路径拼成一个前缀。叶节点或 is_end=True 的节点代表完整单词。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TI1. Trie 树的每个节点代表什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI1" value="A"> A. 一个完整单词</label><label class="option"><input type="radio" name="TI1" value="B"> B. 从根到该节点路径上的字符串前缀</label><label class="option"><input type="radio" name="TI1" value="C"> C. 一个字符</label><label class="option"><input type="radio" name="TI1" value="D"> D. 单词列表</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI2" data-answer="B" data-difficulty="basic" data-explanation="Trie 查找只需沿字符路径走，与字典大小无关，只依赖查找词的长度 L，O(L)。这是 Trie vs 哈希表的优势（哈希需要 O(L) 计算哈希，但 Trie 还能做前缀查询）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TI2. 在包含 n 个长度为 L 的单词的 Trie 中，查找一个单词的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI2" value="A"> A. O(n)</label><label class="option"><input type="radio" name="TI2" value="B"> B. O(L)</label><label class="option"><input type="radio" name="TI2" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="TI2" value="D"> D. O(n·L)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI3" data-answer="B" data-difficulty="basic" data-explanation="is_end=True 表示此节点对应的前缀是一个完整单词（不代表是叶节点，可能还有以此为前缀的更长单词）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TI3. Trie 中 is_end 标志的作用是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI3" value="A"> A. 表示节点有子节点</label><label class="option"><input type="radio" name="TI3" value="B"> B. 标记从根到此节点的路径是一个完整单词</label><label class="option"><input type="radio" name="TI3" value="C"> C. 记录单词频率</label><label class="option"><input type="radio" name="TI3" value="D"> D. 标记删除</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI4" data-answer="B" data-difficulty="basic" data-explanation="Trie 擅长：前缀搜索、自动补全、词频统计。例如搜索引擎输入提示、IP路由前缀匹配（Patricia树）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TI4. Trie 最主要的应用场景是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI4" value="A"> A. 排序整数</label><label class="option"><input type="radio" name="TI4" value="B"> B. 字符串前缀匹配/自动补全</label><label class="option"><input type="radio" name="TI4" value="C"> C. 图的遍历</label><label class="option"><input type="radio" name="TI4" value="D"> D. 矩阵旋转</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI5" data-answer="C" data-difficulty="basic" data-explanation="最坏情况下每个字符创建一个节点，每节点有 26 个指针（字母表大小），空间 O(n·L·26)。可用哈希子节点优化但查询变慢。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> TI5. 存储 n 个平均长度为 L 的单词的 Trie，空间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI5" value="A"> A. O(n)</label><label class="option"><input type="radio" name="TI5" value="B"> B. O(n·L)</label><label class="option"><input type="radio" name="TI5" value="C"> C. O(n·L·字母表大小)</label><label class="option"><input type="radio" name="TI5" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="TI6" data-answer="B" data-difficulty="mid" data-explanation="沿 prefix 的每个字符在 Trie 中走，O(|prefix|) 即可判断该前缀是否存在，无需遍历所有单词。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TI6. 实现 Trie 的 startsWith(prefix) 操作，时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI6" value="A"> A. O(n)</label><label class="option"><input type="radio" name="TI6" value="B"> B. O(|prefix|)</label><label class="option"><input type="radio" name="TI6" value="C"> C. O(n·|prefix|)</label><label class="option"><input type="radio" name="TI6" value="D"> D. O(字典大小)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI7" data-answer="B" data-difficulty="mid" data-explanation="DFS 时若当前路径不是任何单词的前缀，就立即停止（剪枝）。哈希表不支持前缀匹配，必须等完整路径形成才能查。Trie 大幅减少无效搜索。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TI7. 单词搜索 II（LC 212，从矩阵中找词典里所有单词），为什么用 Trie 优于哈希表？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI7" value="A"> A. Trie 占用空间更小</label><label class="option"><input type="radio" name="TI7" value="B"> B. Trie 允许 DFS 时提前剪枝（前缀不存在则停止）</label><label class="option"><input type="radio" name="TI7" value="C"> C. Trie 查找 O(1)</label><label class="option"><input type="radio" name="TI7" value="D"> D. 哈希表不支持字符串</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI8" data-answer="B" data-difficulty="mid" data-explanation="01-Trie：每个节点的子节点只有 0 和 1（比特位）。插入整数的二进制表示，查询时贪心走与目标相反的方向，可在 O(log max_val) 内找使异或最大/小的搜索对。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TI8. 01-Trie（二进制 Trie）常用于哪类问题？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI8" value="A"> A. 统计词频</label><label class="option"><input type="radio" name="TI8" value="B"> B. 最大化/最小化数组中两个数的异或值</label><label class="option"><input type="radio" name="TI8" value="C"> C. 字符串排序</label><label class="option"><input type="radio" name="TI8" value="D"> D. 回文检测</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI9" data-answer="B" data-difficulty="mid" data-explanation="删除需谨慎：若该单词是其他单词的前缀，不能删内部节点。正确做法：清除 is_end，然后从叶向上逐个检查，仅删除没有其他合法用途的节点。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TI9. Trie 删除一个单词，需要注意什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI9" value="A"> A. 直接删节点</label><label class="option"><input type="radio" name="TI9" value="B"> B. 先将 is_end 设 False，再从叶向上删除唯一子节点（若有其他单词共享前缀则保留）</label><label class="option"><input type="radio" name="TI9" value="C"> C. 只删叶节点</label><label class="option"><input type="radio" name="TI9" value="D"> D. 重建整个 Trie</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI10" data-answer="B" data-difficulty="mid" data-explanation="压缩 Trie（Patricia/Radix Tree）：将只有一个子节点的节点链合并为一个节点，存储子串而非单字符。空间 O(n) 而非 O(n·L)，常用于 IP 路由表。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> TI10. 压缩 Trie（Radix Tree）相比普通 Trie 的优势？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI10" value="A"> A. 查找更慢</label><label class="option"><input type="radio" name="TI10" value="B"> B. 合并单子节点的链，减少节点数量，节省空间</label><label class="option"><input type="radio" name="TI10" value="C"> C. 使用哈希存储</label><label class="option"><input type="radio" name="TI10" value="D"> D. 适合只查不插入场景</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="TI11" data-answer="B" data-difficulty="hard" data-explanation="AC 自动机 = Trie + KMP 思想。失败指针指向当前节点对应字符串的最长真后缀（同时也是 Trie 中某节点的对应串）。BFS 建失败指针，O(Σ·n) 时间匹配所有模式串。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TI11. AC 自动机（Aho-Corasick）基于 Trie，额外构建什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI11" value="A"> A. 跳跃哈希表</label><label class="option"><input type="radio" name="TI11" value="B"> B. 失败指针（failure link），指向最长真后缀中存在于 Trie 的节点</label><label class="option"><input type="radio" name="TI11" value="C"> C. 前缀表</label><label class="option"><input type="radio" name="TI11" value="D"> D. 双向链表</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI12" data-answer="B" data-difficulty="hard" data-explanation="后缀自动机 SAM 的状态数 <= 2n-1，转移数 <= 3n-4，是接受所有后缀的最小 DFA。用于各类子串统计问题，O(n) 空间，O(n) 构建。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TI12. 后缀自动机（SAM）的节点数上界是多少（字符串长度 n）？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI12" value="A"> A. O(n)</label><label class="option"><input type="radio" name="TI12" value="B"> B. O(2n)</label><label class="option"><input type="radio" name="TI12" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="TI12" value="D"> D. O(n²)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI13" data-answer="A" data-difficulty="hard" data-explanation="01-Trie 高度固定为 32（32位整数），每次操作固定走32步，O(32)=O(1)（常数）。整数范围决定高度，与已插入数量 n 无关。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TI13. Trie 用于 XOR 最大值：插入32位整数 x，查询与 x 异或最大的已插入数，每次操作时间？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI13" value="A"> A. O(32) = O(1)</label><label class="option"><input type="radio" name="TI13" value="B"> B. O(log x)</label><label class="option"><input type="radio" name="TI13" value="C"> C. O(n)</label><label class="option"><input type="radio" name="TI13" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI14" data-answer="B" data-difficulty="hard" data-explanation="回文树（Palindromic Tree）：O(n) 构建，节点数正好等于本质不同的回文子串数（<=n+2），可同时统计每种回文子串出现次数，是回文专用的后缀结构。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TI14. 回文树（Eertree）可以解决哪类问题？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI14" value="A"> A. 前缀匹配</label><label class="option"><input type="radio" name="TI14" value="B"> B. 统计字符串中所有本质不同的回文子串数量</label><label class="option"><input type="radio" name="TI14" value="C"> C. AC 多模式匹配</label><label class="option"><input type="radio" name="TI14" value="D"> D. 后缀排序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="TI15" data-answer="B" data-difficulty="hard" data-explanation="广义 SAM：对所有字符串构建一个 SAM，节点数仍为 O(2n)，n 为所有字符串总长。可同时处理多字符串的公共子串统计等问题。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> TI15. 广义后缀自动机（多字符串 SAM）与单字符串 SAM 相比，节点数上界？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="TI15" value="A"> A. n（总长度）</label><label class="option"><input type="radio" name="TI15" value="B"> B. 2n（总长度为 n 时）</label><label class="option"><input type="radio" name="TI15" value="C"> C. n·k（k 个字符串）</label><label class="option"><input type="radio" name="TI15" value="D"> D. n²</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="TI15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+</main>
+<script src="../assets/js/app.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>

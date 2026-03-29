@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <title>算法学习互动式网页</title>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div>
+                <h1>算法学习互动式网页</h1>
+                <p>主页面 + 多模块页面（总分结构）</p>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="primary">切换模式</button>
+                <input type="text" id="search" placeholder="搜索模块，例如：动态规划 / 并查集 / 线段树 / 网络流">
+            </div>
+        </div>
+    </header>
+
+    <main class="container home-main">
+        <section class="intro-panel">
+            <h2>学习路径总览</h2>
+            <p>
+                每个学习单元均包含：
+                <span class="highlight">知识点 Knowledge / Connaissances</span>
+                与
+                <span class="highlight">练习题 Practice / Exercices</span>
+                两大模块，覆盖基础数据结构、经典算法与进阶专题。
+            </p>
+        </section>
+
+        <section class="module-group">
+            <h2 class="section-divider">─── 线性结构 ───</h2>
+            <div class="grid module-grid">
+                <a class="module-card accent-linear" style="--card-index: 1;" data-module-card href="modules/arrays.html"><h3>数组与双指针</h3><p class="module-meta">Array · Tableau</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 滑动窗口 Sliding Window / Fenêtre glissante</p></a>
+                <a class="module-card accent-linear" style="--card-index: 2;" data-module-card href="modules/strings.html"><h3>字符串与哈希</h3><p class="module-meta">String · Chaîne</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 哈希 Hash / Hachage</p></a>
+                <a class="module-card accent-linear" style="--card-index: 3;" data-module-card href="modules/linked-list.html"><h3>链表基础</h3><p class="module-meta">Linked List · Liste chaînée</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 快慢指针 Fast-Slow Pointers / Pointeurs rapide-lent</p></a>
+                <a class="module-card accent-linear" style="--card-index: 4;" data-module-card href="modules/stack-queue.html"><h3>栈与队列</h3><p class="module-meta">Stack & Queue · Pile et File</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 单调栈 Monotonic Stack / Pile monotone</p></a>
+            </div>
+        </section>
+
+        <section class="module-group">
+            <h2 class="section-divider">─── 树与堆 ───</h2>
+            <div class="grid module-grid">
+                <a class="module-card accent-tree-heap" style="--card-index: 5;" data-module-card href="modules/tree.html"><h3>二叉树与遍历</h3><p class="module-meta">Binary Tree · Arbre binaire</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 递归 Recursion / Récursion</p></a>
+                <a class="module-card accent-tree-heap" style="--card-index: 6;" data-module-card href="modules/heap.html"><h3>堆与优先队列</h3><p class="module-meta">Heap · Tas</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 优先队列 Priority Queue / File de priorité</p></a>
+                <a class="module-card accent-tree-heap" style="--card-index: 7;" data-module-card href="modules/trie.html"><h3>Trie 字典树</h3><p class="module-meta">Trie · Trie</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 前缀匹配 Prefix Match / Correspondance de préfixe</p></a>
+                <a class="module-card accent-tree-heap" style="--card-index: 8;" data-module-card href="modules/segment-tree.html"><h3>线段树</h3><p class="module-meta">Segment Tree · Arbre de segments</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 区间查询 Range Query / Requête d'intervalle</p></a>
+            </div>
+        </section>
+
+        <section class="module-group">
+            <h2 class="section-divider">─── 图与集合 ───</h2>
+            <div class="grid module-grid">
+                <a class="module-card accent-graph-set" style="--card-index: 9;" data-module-card href="modules/graphs.html"><h3>图与搜索</h3><p class="module-meta">Graph · Graphe</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 广度优先 BFS / Parcours en largeur</p></a>
+                <a class="module-card accent-graph-set" style="--card-index: 10;" data-module-card href="modules/union-find.html"><h3>并查集</h3><p class="module-meta">Union-Find · Union-Find</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 路径压缩 Path Compression / Compression de chemin</p></a>
+            </div>
+        </section>
+
+        <section class="module-group">
+            <h2 class="section-divider">─── 算法思想 ───</h2>
+            <div class="grid module-grid">
+                <a class="module-card accent-algo-idea" style="--card-index: 11;" data-module-card href="modules/dp.html"><h3>动态规划</h3><p class="module-meta">Dynamic Programming · Programmation dynamique</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 状态转移 State Transition / Transition d'état</p></a>
+                <a class="module-card accent-algo-idea" style="--card-index: 12;" data-module-card href="modules/sorting.html"><h3>排序算法</h3><p class="module-meta">Sorting · Tri</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 分治 Divide and Conquer / Diviser pour régner</p></a>
+                <a class="module-card accent-algo-idea" style="--card-index: 13;" data-module-card href="modules/greedy.html"><h3>贪心算法</h3><p class="module-meta">Greedy · Glouton</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 局部最优 Local Optimal / Optimum local</p></a>
+                <a class="module-card accent-algo-idea" style="--card-index: 14;" data-module-card href="modules/backtracking.html"><h3>回溯算法</h3><p class="module-meta">Backtracking · Retour arrière</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 搜索树 Search Tree / Arbre de recherche</p></a>
+            </div>
+        </section>
+
+        <section class="module-group">
+            <h2 class="section-divider">─── 进阶专题 ───</h2>
+            <div class="grid module-grid">
+                <a class="module-card accent-advanced" style="--card-index: 15;" data-module-card href="modules/bit-manipulation.html"><h3>位运算</h3><p class="module-meta">Bit Manipulation · Manipulation de bits</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 按位操作 Bitwise / Opérations bit à bit</p></a>
+                <a class="module-card accent-advanced" style="--card-index: 16;" data-module-card href="modules/math.html"><h3>数学算法</h3><p class="module-meta">Math Algorithms · Algorithmes mathématiques</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 数论 Number Theory / Théorie des nombres</p></a>
+                <a class="module-card accent-advanced" style="--card-index: 17;" data-module-card href="modules/network-flow.html"><h3>网络流</h3><p class="module-meta">Network Flow · Flot de réseau</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 最大流 Max Flow / Flot maximal</p></a>
+                <a class="module-card accent-advanced" style="--card-index: 18;" data-module-card href="modules/computational-geometry.html"><h3>计算几何</h3><p class="module-meta">Computational Geometry · Géométrie computationnelle</p><p class="module-keyword"><span class="keyword-tag">keyword <span class="keyword-arrow">→</span></span> 叉积 Cross Product / Produit vectoriel</p></a>
+            </div>
+        </section>
+
+        <details class="learning-order">
+            <summary>建议学习顺序</summary>
+            <ol>
+                <li>线性结构：数组 → 字符串 → 链表 → 栈与队列</li>
+                <li>树与堆：二叉树遍历 → 堆与优先队列 → Trie → 线段树</li>
+                <li>图与集合：图遍历与最短路 → 并查集</li>
+                <li>算法思想：排序、贪心、动态规划、回溯</li>
+                <li>进阶专题：位运算、数学算法、网络流、计算几何</li>
+            </ol>
+        </details>
+    </main>
+
+    <footer>
+        <div class="container">为算法学习设计的高完成度互动式网页 · 中文优先 + 英法关键词辅助</div>
+    </footer>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

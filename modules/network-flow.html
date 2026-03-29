@@ -1,0 +1,412 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>网络流模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+<header><div class="container header-inner"><div><h1>网络流模块</h1><p><a href="../index.html">返回主页面</a></p></div><div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div></div></header>
+<main class="container">
+<section class="card">
+    <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 核心定义</h3>
+        <p><strong>Dinic算法（最高效的实用最大流算法）：</strong></p>
+<pre><code class="language-python">from collections import deque
+
+class MaxFlow:
+    def __init__(self, n):
+        self.n = n
+        self.graph = [[] for _ in range(n)]
+
+    def add_edge(self, u, v, cap):
+        # 关键：用成对边（正向+反向）存储，反向边初始容量为0
+        self.graph[u].append([v, cap, len(self.graph[v])])
+        self.graph[v].append([u, 0,   len(self.graph[u])-1])
+
+    def bfs(self, s, t):
+        """BFS构建层次图，返回是否存在s到t的路径"""
+        self.level = [-1] * self.n
+        self.level[s] = 0
+        queue = deque([s])
+        while queue:
+            u = queue.popleft()
+            for v, cap, _ in self.graph[u]:
+                if cap > 0 and self.level[v] < 0:
+                    self.level[v] = self.level[u] + 1
+                    queue.append(v)
+        return self.level[t] >= 0
+
+    def dfs(self, u, t, f, iter_):
+        """DFS在层次图上找增广路，iter_是当前弧优化指针"""
+        if u == t: return f
+        while iter_[u] < len(self.graph[u]):
+            v, cap, rev = self.graph[u][iter_[u]]
+            if cap > 0 and self.level[v] == self.level[u] + 1:
+                d = self.dfs(v, t, min(f, cap), iter_)
+                if d > 0:
+                    self.graph[u][iter_[u]][1] -= d   # 减少正向容量
+                    self.graph[v][rev][1] += d         # 增加反向容量
+                    return d
+            iter_[u] += 1                             # 当前弧无效，跳到下一条
+        return 0
+
+    def max_flow(self, s, t):
+        flow = 0
+        while self.bfs(s, t):                        # 反复构建层次图
+            iter_ = [0] * self.n                     # 每轮重置当前弧指针
+            while True:
+                f = self.dfs(s, t, float('inf'), iter_)
+                if f == 0: break
+                flow += f
+        return flow
+</code></pre>
+        <p><strong>最大流最小割定理：</strong> 从s到t的最大流 = 分离s和t的最小割容量。</p>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查</h3>
+        <table>
+            <tr><th>算法</th><th>时间复杂度</th><th>适用场景</th></tr>
+            <tr><td>Ford-Fulkerson（DFS增广）</td><td>O(E × max_flow)</td><td>容量小的图</td></tr>
+            <tr><td>Edmonds-Karp（BFS增广）</td><td>O(V × E²)</td><td>通用最大流</td></tr>
+            <tr><td>Dinic（层次图+当前弧）</td><td>O(V² × E)</td><td>实用中最快</td></tr>
+            <tr><td>Dinic（单位容量图）</td><td>O(E × √V)</td><td>二分图最大匹配</td></tr>
+            <tr><td>最小费用最大流（SPFA+增广）</td><td>O(V × E × flow)</td><td>有代价的流问题</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🖼 结构图示：残量网络与增广路</h3>
+<pre class="ascii-art">
+原始网络（容量）:
+    s --10--> A --9--> t
+    s --8---> B --7--> t
+         A --6--> B
+
+找增广路：s→A→t (flow=9)
+残量网络更新:
+    s --1--> A    (正向剩余10-9=1)
+    A --9--> s    (反向增加9，允许"撤销")
+    A --0--> t    (正向剩余9-9=0)
+    t --9--> A    (反向增加9)
+
+再找：s→B→t (flow=7)
+再找：s→A→B→t (flow=1，利用A→B=6)
+
+总最大流 = 9+7+1 = 17
+
+最小割 = 去掉 (A→t容量0) + (B→t容量7): 容量 = 9+7=16
+实际最大流 = 最小割容量 (最大流最小割定理!)
+</pre>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题详解</h3>
+        <details>
+            <summary>例题1：二分图最大匹配（匈牙利算法）</summary>
+            <p><strong>题意：</strong> 左右两侧节点，给定可匹配边集，求最大匹配数。</p>
+<pre><code class="language-python">def maxBipartiteMatching(graph, left_n, right_n):
+    """graph[u] = 左侧u节点可以匹配的右侧节点列表"""
+    match = [-1] * right_n     # match[v] = 右侧v当前匹配的左侧节点
+
+    def dfs(u, visited):
+        for v in graph[u]:
+            if not visited[v]:
+                visited[v] = True
+                # v未被匹配，或v当前匹配的节点可以改配
+                if match[v] == -1 or dfs(match[v], visited):
+                    match[v] = u
+                    return True
+        return False
+
+    result = 0
+    for u in range(left_n):
+        visited = [False] * right_n
+        if dfs(u, visited):
+            result += 1
+    return result
+
+# 等价地，可用Dinic最大流建模（更快）
+# 建图：超源s→左节点(容量1)，左→右(容量1)，右→超汇t(容量1)
+</code></pre>
+            <p><strong>时间：</strong> O(V × E)；Dinic建模后 O(E × √V)</p>
+        </details>
+
+        <details>
+            <summary>例题2：项目选择 / 最小割建模</summary>
+            <p><strong>题意：</strong> 选某些项目获利，但选项目需选其依赖，问最大净获利。</p>
+<pre><code class="language-python">"""
+建模思路（最大权闭合子图 → 最大流）:
+- 超源s连向所有正收益项目，边容量=收益
+- 所有负收益项目连向超汇t，边容量=|收益|
+- 项目依赖关系建无限容量边（a依赖b则a→b，容量∞）
+- 最大净收益 = 正收益之和 - 最小割
+
+最大净收益 = 正收益总和 - min_cut(s, t)
+"""
+
+def maxProfit(projects, dependencies):
+    INF = float('inf')
+    n = len(projects)
+    mf = MaxFlow(n + 2)        # +2 for s=n and t=n+1
+    s, t = n, n + 1
+    pos_sum = 0
+
+    for i, profit in enumerate(projects):
+        if profit > 0:
+            mf.add_edge(s, i, profit)    # s连正收益项目
+            pos_sum += profit
+        else:
+            mf.add_edge(i, t, -profit)  # 负收益项目连t
+
+    for u, v in dependencies:
+        mf.add_edge(u, v, INF)          # 依赖关系（无限容量）
+
+    return pos_sum - mf.max_flow(s, t)
+</code></pre>
+        </details>
+
+        <details>
+            <summary>例题3：最小费用最大流（MCMF）框架</summary>
+<pre><code class="language-python">from collections import defaultdict
+import heapq
+
+def mcmf(graph, s, t, n):
+    """最小费用最大流：Bellman-Ford/SPFA找最短增广路"""
+    total_flow = 0
+    total_cost = 0
+
+    while True:
+        # SPFA找最短（费用最小）增广路
+        dist = [float('inf')] * n
+        in_queue = [False] * n
+        prev_node = [-1] * n
+        prev_edge = [-1] * n
+        dist[s] = 0
+        queue = deque([s])
+        in_queue[s] = True
+
+        while queue:
+            u = queue.popleft()
+            in_queue[u] = False
+            for i, (v, cap, cost) in enumerate(graph[u]):
+                if cap > 0 and dist[u] + cost < dist[v]:
+                    dist[v] = dist[u] + cost
+                    prev_node[v] = u
+                    prev_edge[v] = i
+                    if not in_queue[v]:
+                        queue.append(v)
+                        in_queue[v] = True
+
+        if dist[t] == float('inf'): break   # 无增广路
+
+        # 找路径最小容量
+        flow = float('inf')
+        v = t
+        while v != s:
+            u = prev_node[v]
+            flow = min(flow, graph[u][prev_edge[v]][1])
+            v = u
+
+        # 更新残量
+        v = t
+        while v != s:
+            u = prev_node[v]
+            graph[u][prev_edge[v]][1] -= flow
+            # 更新反向边...
+            v = u
+
+        total_flow += flow
+        total_cost += flow * dist[t]
+
+    return total_flow, total_cost
+</code></pre>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+        <p><strong>① 反向边初始容量漏加</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（忘记反向边）</p>
+<pre><code class="language-python">graph[u].append([v, cap])
+# 没有加反向边
+# 算法无法通过"撤销"找到更优路径
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（正向+反向成对）</p>
+<pre><code class="language-python">graph[u].append([v, cap, len(graph[v])])    # 正向
+graph[v].append([u, 0, len(graph[u])-1])   # 反向（容量0）
+# 两边通过下标互相引用
+</code></pre>
+            </div>
+        </div>
+        <p><strong>② Dinic的层次图重复BFS没有重置level</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误（沿用旧level）</p>
+<pre><code class="language-python">def max_flow(self, s, t):
+    while True:
+        # 忘记重建层次图（BFS）
+        f = self.dfs(s, t, INF, iter_)
+        if f == 0: break
+        flow += f
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 正确（每轮重新BFS）</p>
+<pre><code class="language-python">def max_flow(self, s, t):
+    flow = 0
+    while self.bfs(s, t):      # 重建层次图
+        iter_ = [0] * self.n   # 重置当前弧
+        while f := self.dfs(s, t, INF, iter_):
+            flow += f
+    return flow
+</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>最小费用最大流（MCMF）：</strong> 在满足最大流的条件下，使总费用最小。SPFA找最短费用路径，结合Ford-Fulkerson增广，时间 O(V × E × flow)。</p>
+        <p><strong>上下界可行流：</strong> 每条边有容量上界和下界，求满足约束的可行流。转化为无下界网络的最大流问题。</p>
+        <p><strong>全局最小割（Stoer-Wagner）：</strong> 不指定源汇的最小割，O(V³)或O(VE + V²log V)。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="network-flow">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="NF3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题</h3>
+<div class="quiz-item" data-question-id="NF1" data-answer="B" data-difficulty="basic" data-explanation="最大流：找从 s 到 t 满足容量约束的最大流量值。约束：每条边 flow <= capacity，每个中间节点流量守恒（入=出）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> NF1. 最大流的目标是什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF1" value="A"> A. 从 s 到 t 的最短路</label><label class="option"><input type="radio" name="NF1" value="B"> B. 从源点 s 到汇点 t 的最大可传输流量</label><label class="option"><input type="radio" name="NF1" value="C"> C. 最小连通代价</label><label class="option"><input type="radio" name="NF1" value="D"> D. 最大生成树</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF2" data-answer="B" data-difficulty="basic" data-explanation="Ford-Fulkerson 定理：f 是最大流 ⟺ 残量网络无增广路。每找到一条增广路并沿其增流，重复直到无增广路。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> NF2. 增广路定理：流是最大流当且仅当？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF2" value="A"> A. 所有边满流</label><label class="option"><input type="radio" name="NF2" value="B"> B. 残量网络中不存在从 s 到 t 的增广路</label><label class="option"><input type="radio" name="NF2" value="C"> C. 图是 DAG</label><label class="option"><input type="radio" name="NF2" value="D"> D. s 和 t 不连通</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF3" data-answer="B" data-difficulty="basic" data-explanation="残量网络：正向边剩余容量 = cap - flow，反向边容量 = flow（代表可撤回的流量）。通过反向边，算法能撤销之前的错误增流决策。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> NF3. 残量网络中，正向边容量 = ? <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF3" value="A"> A. 原容量</label><label class="option"><input type="radio" name="NF3" value="B"> B. 原容量 - 当前流量</label><label class="option"><input type="radio" name="NF3" value="C"> C. 当前流量</label><label class="option"><input type="radio" name="NF3" value="D"> D. 0</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF4" data-answer="B" data-difficulty="basic" data-explanation="Edmonds-Karp = Ford-Fulkerson + BFS。BFS 确保找到跳数最少的增广路，使算法复杂度从 O(VEf)（DFS 依赖流量大小）变为 O(VE²)（与流量无关）。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> NF4. Edmonds-Karp 算法用哪种方法寻找增广路？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF4" value="A"> A. DFS</label><label class="option"><input type="radio" name="NF4" value="B"> B. BFS（找最短增广路）</label><label class="option"><input type="radio" name="NF4" value="C"> C. 贪心</label><label class="option"><input type="radio" name="NF4" value="D"> D. 随机</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF5" data-answer="B" data-difficulty="basic" data-explanation="Ford-Fulkerson 定理：max_flow(s,t) = min_cut(s,t)。算法找到最大流后，残量网络中从 s 可达的节点集合即定义了最小割的划分。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> NF5. 最大流最小割定理的内容是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF5" value="A"> A. 最大流 = 最长路径</label><label class="option"><input type="radio" name="NF5" value="B"> B. 从 s 到 t 最大流值 = 分离 s 和 t 的最小割容量</label><label class="option"><input type="radio" name="NF5" value="C"> C. 最大流 = 边的数量</label><label class="option"><input type="radio" name="NF5" value="D"> D. 最大流 = 节点数</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题</h3>
+<div class="quiz-item" data-question-id="NF6" data-answer="B" data-difficulty="mid" data-explanation="Dinic：①BFS 建层次图（保证只走层次递增的边）②当前弧优化（记录每个节点已走到哪条边，跳过已知无用的边）。一般图 O(V²E)，单位容量图 O(E√V)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> NF6. Dinic 算法相比 Edmonds-Karp 的加速来自哪两个优化？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF6" value="A"> A. 随机化和剪枝</label><label class="option"><input type="radio" name="NF6" value="B"> B. 层次图（BFS 分层）+ 当前弧优化（避免重复走死路）</label><label class="option"><input type="radio" name="NF6" value="C"> C. 更快的 DFS</label><label class="option"><input type="radio" name="NF6" value="D"> D. 矩阵加速</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF7" data-answer="B" data-difficulty="mid" data-explanation="建图：超源 s→每个左节点（容量1），左节点→右节点（容量1，按匹配关系），每个右节点→超汇 t（容量1）。最大流值 = 最大匹配数。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> NF7. 二分图最大匹配转化为最大流，左节点和右节点分别如何连接源汇？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF7" value="A"> A. 左→源，右→汇</label><label class="option"><input type="radio" name="NF7" value="B"> B. 源→左节点（容量1），匹配边双向，右节点→汇（容量1）</label><label class="option"><input type="radio" name="NF7" value="C"> C. 全部连源</label><label class="option"><input type="radio" name="NF7" value="D"> D. 全部连汇</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF8" data-answer="B" data-difficulty="mid" data-explanation="MCMF：在满足最大流的前提下最小化费用。每次用 SPFA 找最短费用增广路（允许负权边，因为残量网络中反向边费用为负），在该路上增流。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> NF8. 最小费用最大流（MCMF）中，找增广路用哪种算法保证最小费用？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF8" value="A"> A. BFS</label><label class="option"><input type="radio" name="NF8" value="B"> B. SPFA/Bellman-Ford 找最短费用路</label><label class="option"><input type="radio" name="NF8" value="C"> C. DFS</label><label class="option"><input type="radio" name="NF8" value="D"> D. Dijkstra（无负权时也可）</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF9" data-answer="B" data-difficulty="mid" data-explanation="收益最大化=正收益总和 - 最小割。割掉正权边=放弃该项目，割掉负权边=承担该代价，无穷大边=must-have 依赖不可割。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> NF9. 最大权闭合子图问题（项目依赖选择），建网络流的方式？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF9" value="A"> A. 直接跑最大流</label><label class="option"><input type="radio" name="NF9" value="B"> B. 超源→正权节点，负权节点→超汇，依赖关系建无穷大容量边，答案=正权和-最小割</label><label class="option"><input type="radio" name="NF9" value="C"> C. 只用 DP</label><label class="option"><input type="radio" name="NF9" value="D"> D. 用贪心</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF10" data-answer="B" data-difficulty="mid" data-explanation="单位容量图（每边容量1），Dinic 的 BFS 阶段最多 O(√V) 轮（因为增广后层次图直径增长），每轮 O(E)，总 O(E√V)。比 Hopcroft-Karp 的二分图最大匹配 O(E√V) 本质相同。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> NF10. Dinic 在单位容量二分图上的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF10" value="A"> A. O(V²E)</label><label class="option"><input type="radio" name="NF10" value="B"> B. O(E√V)</label><label class="option"><input type="radio" name="NF10" value="C"> C. O(VE)</label><label class="option"><input type="radio" name="NF10" value="D"> D. O(E log V)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题</h3>
+<div class="quiz-item" data-question-id="NF11" data-answer="B" data-difficulty="hard" data-explanation="转化：每条边(u,v,[lo,hi])拆分为容量 hi-lo 的自由边 + 强制流 lo（通过超级源汇处理下界）。先求可行流存在性，再在可行流基础上求最大/最小流。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> NF11. 上下界可行流（每条边有容量上下界 [lo, hi]）如何转化为求解？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF11" value="A"> A. 直接跑 Dinic</label><label class="option"><input type="radio" name="NF11" value="B"> B. 令差量 d = hi - lo，建新网络处理下界强制流，转为无下界网络</label><label class="option"><input type="radio" name="NF11" value="C"> C. 只能 MCMF</label><label class="option"><input type="radio" name="NF11" value="D"> D. 增加虚节点</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF12" data-answer="A" data-difficulty="hard" data-explanation="Stoer-Wagner：每次找最大邻接序 maximum adjacency ordering，去掉最后两点之一，O(V) 次迭代，每次 O(E + V log V)（用堆），总 O(VE + V² log V) 或简化 O(V³)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> NF12. 全局最小割（不指定源汇，Stoer-Wagner 算法）的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF12" value="A"> A. O(V³) 或 O(VE + V² log V)</label><label class="option"><input type="radio" name="NF12" value="B"> B. O(VE²)</label><label class="option"><input type="radio" name="NF12" value="C"> C. O(E log E)</label><label class="option"><input type="radio" name="NF12" value="D"> D. O(V²E)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF13" data-answer="B" data-difficulty="hard" data-explanation="关键路径：AOE 网中从起点到终点的最长路径，决定整个项目最短工期。关键路径上所有活动的浮动时间为0（延迟则项目延期），可用拓扑排序 O(V+E) 计算。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> NF13. 项目管理中用网络流求关键路径（CPM），关键路径上的特征是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF13" value="A"> A. 浮动时间最大</label><label class="option"><input type="radio" name="NF13" value="B"> B. 最早完成时间=最晚完成时间（浮动=0），是最长路径</label><label class="option"><input type="radio" name="NF13" value="C"> C. 费用最小</label><label class="option"><input type="radio" name="NF13" value="D"> D. 最短路径</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF14" data-answer="B" data-difficulty="hard" data-explanation="棒球消除：若问队 x 是否已被淘汰，建图：s→game(i,j)→team_i,team_j→t，游戏节点容量=剩余场数，队伍节点容量=阈值-胜场。若最大流 < 总剩余场数则 x 被淘汰。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> NF14. 棒球淘汰赛（Baseball Elimination）问题转化为最大流，关键建模思路？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF14" value="A"> A. 直接比较胜场</label><label class="option"><input type="radio" name="NF14" value="B"> B. 对每对可能比赛的队建游戏节点，连接源汇和队伍节点，判断是否能全部流满</label><label class="option"><input type="radio" name="NF14" value="C"> C. 用 DP</label><label class="option"><input type="radio" name="NF14" value="D"> D. 用贪心</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="NF15" data-answer="B" data-difficulty="hard" data-explanation="Menger 定理：s 到 t 的最大边不相交路径数 = 最小边割集大小 = 最大流（每边容量1）。点不相交路径：将每个节点拆成入/出点（容量1的点容量限制），同样跑最大流。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> NF15. 有向图中 k 条边不相交路径（从 s 到 t）的最大数量，等价于什么？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="NF15" value="A"> A. 最长路径</label><label class="option"><input type="radio" name="NF15" value="B"> B. 最大流（每条边容量1）</label><label class="option"><input type="radio" name="NF15" value="C"> C. 最小割</label><label class="option"><input type="radio" name="NF15" value="D"> D. 最小生成树</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="NF15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+</main>
+<script src="../assets/js/app.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>

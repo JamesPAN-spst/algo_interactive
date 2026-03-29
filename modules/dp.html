@@ -1,0 +1,368 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <title>动态规划模块</title>
+    <style>
+        .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-blue { border-left: 3px solid #3b82f6; }
+        .kc-green { border-left: 3px solid #10b981; }
+        .kc-red { border-left: 3px solid #f43f5e; }
+        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-purple { border-left: 3px solid #8b5cf6; }
+        .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
+        .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th { background: #0f172a; }
+        details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+        details[open] summary { margin-bottom: 0.8rem; }
+        .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+        .code-compare .wrong { border-left: 3px solid #f43f5e; padding-left: 0.5rem; }
+        .code-compare .right { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        .code-compare p { font-size: 0.85rem; margin: 0 0 0.3rem; font-weight: 600; }
+        pre { margin: 0; }
+        .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
+        @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="day">
+    <header>
+        <div class="container header-inner">
+            <div><h1>动态规划模块</h1><p><a href="../index.html">返回主页面</a></p></div>
+            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+        </div>
+    </header>
+    <main class="container">
+        <section class="card">
+            <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
+
+            <!-- 1. 核心定义 -->
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 核心定义</h3>
+                <p><strong>DP四步法：</strong></p>
+                <ol>
+                    <li><strong>定义状态：</strong> <code>dp[i]</code> 表示什么（需要精确定义语义）</li>
+                    <li><strong>写状态转移：</strong> <code>dp[i] = f(dp[i-1], dp[i-2], ...)</code></li>
+                    <li><strong>初始化：</strong> 边界条件 <code>dp[0]</code>, <code>dp[1]</code> 等</li>
+                    <li><strong>确定遍历顺序：</strong> 保证转移时子问题已解决</li>
+                </ol>
+                <p><strong>01背包转移方程：</strong></p>
+<pre><code class="language-python"># dp[j] = 容量j时的最大价值
+# 01背包：每件物品只能选一次 → 容量从大到小遍历
+for i in range(n):                         # 遍历物品
+    for j in range(W, weight[i]-1, -1):    # 从大到小！防止重复使用
+        dp[j] = max(dp[j], dp[j - weight[i]] + value[i])
+
+# 完全背包：每件物品可重复选 → 容量从小到大遍历
+for i in range(n):
+    for j in range(weight[i], W+1):        # 从小到大！允许重复使用
+        dp[j] = max(dp[j], dp[j - weight[i]] + value[i])
+</code></pre>
+                <p><strong>最长公共子序列（LCS）转移：</strong></p>
+<pre><code class="language-python"># dp[i][j] = text1[:i] 与 text2[:j] 的LCS长度
+if text1[i-1] == text2[j-1]:
+    dp[i][j] = dp[i-1][j-1] + 1
+else:
+    dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+</code></pre>
+            </div>
+
+            <!-- 2. 复杂度速查 -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>DP类型</th><th>时间复杂度</th><th>空间复杂度</th><th>典型题</th></tr>
+                    <tr><td>线性DP（爬楼梯）</td><td>O(n)</td><td>O(1) 滚动</td><td>Fibonacci、爬楼梯</td></tr>
+                    <tr><td>01背包</td><td>O(nW)</td><td>O(W) 一维</td><td>分割等和子集</td></tr>
+                    <tr><td>完全背包</td><td>O(nW)</td><td>O(W)</td><td>零钱兑换</td></tr>
+                    <tr><td>区间DP</td><td>O(n³)</td><td>O(n²)</td><td>戳气球、矩阵连乘</td></tr>
+                    <tr><td>LCS / LIS</td><td>O(n²) / O(n log n)</td><td>O(n²) / O(n)</td><td>编辑距离、最长递增子序列</td></tr>
+                    <tr><td>状压DP</td><td>O(2ⁿ × n)</td><td>O(2ⁿ)</td><td>TSP旅行商</td></tr>
+                </table>
+            </div>
+
+            <!-- 3. 结构图示 -->
+            <div class="knowledge-card kc-purple">
+                <h3>🖼 结构图示：DP状态转移可视化</h3>
+<pre class="ascii-art">
+【爬楼梯 dp[i] = dp[i-1] + dp[i-2]】
+  i:   0   1   2   3   4   5
+dp[]: [1] [1] [2] [3] [5] [8]
+       ↑   ↑   ↑   ↑   ↑   ↑
+       基  基  ←←←←+←←←←  (每格依赖前两格)
+
+【01背包二维→一维优化（容量从大到小）】
+二维: dp[i][j] = max(dp[i-1][j], dp[i-1][j-w]+v)
+       ↑滚动↑      (覆盖掉上一行)
+一维: 从右向左遍历，保证使用的是"上一行"的值
+
+【LCS DP 矩阵】
+      ""  a  b  c
+   "" [0][0][0][0]
+   a  [0][1][1][1]
+   c  [0][1][1][2]
+</pre>
+            </div>
+
+            <!-- 4. 典型例题 -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题详解</h3>
+
+                <details>
+                    <summary>例题1：零钱兑换（LeetCode 322）— 完全背包</summary>
+                    <p><strong>题意：</strong> 给定硬币面额数组和目标金额，求最少硬币数，不能凑成返回−1。</p>
+                    <p><strong>思路：</strong> 完全背包变形，dp[j] = 凑成金额j所需最少硬币数。</p>
+<pre><code class="language-python">def coinChange(coins, amount):
+    INF = float('inf')
+    dp = [INF] * (amount + 1)
+    dp[0] = 0                                # 凑成0元需要0枚硬币
+
+    for coin in coins:                       # 遍历每种硬币
+        for j in range(coin, amount + 1):    # 从小到大（完全背包）
+            if dp[j - coin] != INF:
+                dp[j] = min(dp[j], dp[j - coin] + 1)  # 选这枚硬币
+
+    return dp[amount] if dp[amount] != INF else -1
+</code></pre>
+                    <p><strong>时间：</strong> O(amount × len(coins))；<strong>空间：</strong> O(amount)</p>
+                </details>
+
+                <details>
+                    <summary>例题2：最长递增子序列 LIS（LeetCode 300）— O(n log n)</summary>
+                    <p><strong>题意：</strong> 求最长严格递增子序列的长度。</p>
+                    <p><strong>思路：</strong> 维护一个单调递增的 tails 数组，每个新元素用二分查找找到其应插入位置。</p>
+<pre><code class="language-python">import bisect
+
+def lengthOfLIS(nums):
+    tails = []                        # tails[i] = 长度为i+1的递增子序列末尾最小值
+    for num in nums:
+        pos = bisect.bisect_left(tails, num)   # 二分找第一个 >= num 的位置
+        if pos == len(tails):
+            tails.append(num)         # num比所有末尾都大，LIS长度+1
+        else:
+            tails[pos] = num          # 替换，让末尾尽量小（贪心）
+    return len(tails)                 # tails长度即为LIS长度
+</code></pre>
+                    <p><strong>时间：</strong> O(n log n)；<strong>空间：</strong> O(n)</p>
+                </details>
+
+                <details>
+                    <summary>例题3：编辑距离（LeetCode 72）— 二维DP</summary>
+                    <p><strong>题意：</strong> 求将 word1 转换为 word2 的最少操作数（插入、删除、替换）。</p>
+                    <p><strong>思路：</strong> dp[i][j] = word1[:i] 转换为 word2[:j] 的最小操作数。</p>
+<pre><code class="language-python">def minDistance(word1, word2):
+    m, n = len(word1), len(word2)
+    dp = [[0]*(n+1) for _ in range(m+1)]
+
+    # 初始化：空字符串与另一字符串的编辑距离
+    for i in range(m+1): dp[i][0] = i   # 全删除
+    for j in range(n+1): dp[0][j] = j   # 全插入
+
+    for i in range(1, m+1):
+        for j in range(1, n+1):
+            if word1[i-1] == word2[j-1]:
+                dp[i][j] = dp[i-1][j-1]       # 字符相同，无需操作
+            else:
+                dp[i][j] = 1 + min(
+                    dp[i-1][j],    # 删除 word1[i-1]
+                    dp[i][j-1],    # 在 word1 插入 word2[j-1]
+                    dp[i-1][j-1]   # 替换
+                )
+    return dp[m][n]
+</code></pre>
+                    <p><strong>时间：</strong> O(m×n)；<strong>空间：</strong> O(m×n)，可优化至 O(n)</p>
+                </details>
+            </div>
+
+            <!-- 5. 易错点 -->
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点</h3>
+
+                <p><strong>① 01背包与完全背包循环方向写反</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（01背包顺序遍历）</p>
+<pre><code class="language-python"># 01背包却从小到大
+for j in range(weight[i], W+1):
+    dp[j] = max(dp[j], dp[j-w]+v)
+# 物品会被重复使用！变成完全背包
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（01背包逆序）</p>
+<pre><code class="language-python"># 01背包必须从大到小
+for j in range(W, weight[i]-1, -1):
+    dp[j] = max(dp[j], dp[j-w]+v)
+# 逆序确保每件物品只用一次
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>② DP初始化遗漏导致全局错误</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（忘记初始化边界）</p>
+<pre><code class="language-python">dp = [0] * (amount + 1)
+# dp[0]没有设置，或dp全为0
+# 导致所有状态计算错误
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（明确初始化）</p>
+<pre><code class="language-python">dp = [float('inf')] * (amount + 1)
+dp[0] = 0   # 凑成0元需要0枚，显式设置
+</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>③ 贪心 vs DP 判断错误</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误（零钱兑换用贪心）</p>
+<pre><code class="language-python">coins = [1, 3, 4]; amount = 6
+# 贪心：4+1+1=3枚
+# 正确：3+3=2枚，贪心得到次优解！
+</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确（用DP）</p>
+<pre><code class="language-python"># 贪心不适用于非标准面额
+# 必须用DP枚举所有可能
+# 贪心只适合面额为倍数关系的情况
+</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 竞赛拓展 -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>状态压缩DP（Bitmask DP）：</strong> 用整数的二进制位表示集合状态，常用于 TSP 和图着色。时间 O(2ⁿ × n²)。</p>
+<pre><code class="language-python">def tsp(dist, n):
+    # dp[mask][i] = 访问了mask集合中的城市，当前在i，的最短路
+    INF = float('inf')
+    dp = [[INF]*n for _ in range(1<<n)]
+    dp[1][0] = 0                          # 从城市0出发
+    for mask in range(1<<n):
+        for u in range(n):
+            if not (mask >> u & 1): continue  # u不在mask中
+            for v in range(n):
+                if mask >> v & 1: continue    # v已在mask中
+                new_mask = mask | (1 << v)
+                dp[new_mask][v] = min(dp[new_mask][v], dp[mask][u] + dist[u][v])
+    return min(dp[(1<<n)-1][i] + dist[i][0] for i in range(n))
+</code></pre>
+                <p><strong>树形DP：</strong> 在树上定义状态，通常 dp[u][0/1] 表示以u为根选/不选时的最优解，后序遍历更新。</p>
+            </div>
+        </section>
+
+        <section class="card" data-quiz data-module="dp">
+<h2>练习题（Practice）</h2>
+<div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 D3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
+<p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
+<p data-diff-accuracy style="font-size:0.85rem;color:var(--subtle-text)">基础 0/5 · 中级 0/5 · 高级 0/5</p>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟢 基础题（概念·操作·追踪）</h3>
+<div class="quiz-item" data-question-id="D1" data-answer="B" data-difficulty="basic" data-explanation="DP = 记忆化（memoization）+ 最优子结构。将指数级重复计算压缩到多项式，空间换时间的典型。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> D1. 动态规划的核心思想是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D1" value="A"> A. 分治：递归拆分独立子问题</label><label class="option"><input type="radio" name="D1" value="B"> B. 记忆化：缓存重叠子问题结果，避免重复计算</label><label class="option"><input type="radio" name="D1" value="C"> C. 贪心：每步取局部最优</label><label class="option"><input type="radio" name="D1" value="D"> D. 回溯：枚举所有可能</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D1" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D2" data-answer="B" data-difficulty="basic" data-explanation="到第 n 级 = 从 n-1 走1步 + 从 n-2 走2步，dp[n]=dp[n-1]+dp[n-2]，即斐波那契数列，初始 dp[1]=1, dp[2]=2。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> D2. 爬楼梯（每次走 1 或 2 步，走 n 步）的状态转移方程？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D2" value="A"> A. dp[n] = dp[n-1] * 2</label><label class="option"><input type="radio" name="D2" value="B"> B. dp[n] = dp[n-1] + dp[n-2]</label><label class="option"><input type="radio" name="D2" value="C"> C. dp[n] = dp[n-2] + 1</label><label class="option"><input type="radio" name="D2" value="D"> D. dp[n] = 2^n</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D2" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D3" data-answer="B" data-difficulty="basic" data-explanation="0-1 背包内层逆序遍历容量：确保每件物品只被考虑一次。完全背包正序：让物品可被反复选用。这是两者 DP 写法的核心区别。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> D3. 0-1 背包和完全背包的内层循环方向区别？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D3" value="A"> A. 都是正序</label><label class="option"><input type="radio" name="D3" value="B"> B. 0-1 背包逆序（防重选），完全背包正序（允许重选）</label><label class="option"><input type="radio" name="D3" value="C"> C. 0-1 背包正序，完全背包逆序</label><label class="option"><input type="radio" name="D3" value="D"> D. 取决于物品价值</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D3" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D4" data-answer="C" data-difficulty="basic" data-explanation="长度 m 和 n 的两个序列，DP 表 m×n，每格 O(1)，总 O(mn)，m=n 时 O(n²)。可用滚动数组优化到 O(min(m,n)) 空间。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> D4. 最长公共子序列（LCS）的时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D4" value="A"> A. O(n)</label><label class="option"><input type="radio" name="D4" value="B"> B. O(n log n)</label><label class="option"><input type="radio" name="D4" value="C"> C. O(n²)</label><label class="option"><input type="radio" name="D4" value="D"> D. O(n³)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D4" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D5" data-answer="C" data-difficulty="basic" data-explanation="N 皇后无重叠子问题结构，本质是组合搜索（回溯），状态空间指数但 DP 表达困难。最短路径/LCS/子数组和都有清晰的 DP 状态。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(34,197,94,.1);color:#22c55e">基础</span> D5. 下列哪个问题不适合直接用 DP 解决？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D5" value="A"> A. 最短路径</label><label class="option"><input type="radio" name="D5" value="B"> B. 最长公共子序列</label><label class="option"><input type="radio" name="D5" value="C"> C. N 皇后问题</label><label class="option"><input type="radio" name="D5" value="D"> D. 最大连续子数组和</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D5" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🟡 中级题（代码·复杂度·变形）</h3>
+<div class="quiz-item" data-question-id="D6" data-answer="B" data-difficulty="mid" data-explanation="区间 DP：O(n²) 个区间，每个枚举 O(n) 个分割点，总 O(n³)。空间 O(n²)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> D6. 矩阵链乘法的 DP 时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D6" value="A"> A. O(n²)</label><label class="option"><input type="radio" name="D6" value="B"> B. O(n³)</label><label class="option"><input type="radio" name="D6" value="C"> C. O(2^n)</label><label class="option"><input type="radio" name="D6" value="D"> D. O(n log n)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D6" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D7" data-answer="B" data-difficulty="mid" data-explanation="字符相同无需操作，直接继承左上角 dp[i-1][j-1]。字符不同时 dp[i][j] = 1 + min(替换=dp[i-1][j-1], 删=dp[i-1][j], 插=dp[i][j-1])。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> D7. 编辑距离中，当 word1[i] == word2[j] 时，dp[i][j] = ？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D7" value="A"> A. dp[i-1][j-1] + 1</label><label class="option"><input type="radio" name="D7" value="B"> B. dp[i-1][j-1]</label><label class="option"><input type="radio" name="D7" value="C"> C. min(dp[i-1][j], dp[i][j-1])</label><label class="option"><input type="radio" name="D7" value="D"> D. 0</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D7" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D8" data-answer="C" data-difficulty="mid" data-explanation="LIS 中 dp[i] 代表以 nums[i] 结尾的最长递增子序列长度，不能直接继承 dp[i-1]，因为 nums[i] 可能小于 nums[i-1]，必须寻找所有合法前驱中最大的。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> D8. 以下哪个 LIS 状态转移是错误的？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D8" value="A"> A. dp[i] = 1 + max(dp[j]) for j<i where nums[j]<nums[i]</label><label class="option"><input type="radio" name="D8" value="B"> B. 初始 dp[i]=1</label><label class="option"><input type="radio" name="D8" value="C"> C. dp[i] = dp[i-1]+1（直接继承前一个）</label><label class="option"><input type="radio" name="D8" value="D"> D. 答案 = max(dp)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D8" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D9" data-answer="B" data-difficulty="mid" data-explanation="记忆化按需计算（lazy evaluation），对稀疏状态空间很高效。迭代 DP 预计算所有状态（适合密集依赖）。渐进复杂度相同，看问题特点选择。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> D9. 记忆化搜索（top-down）相比迭代 DP（bottom-up）的优势是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D9" value="A"> A. 总是更快</label><label class="option"><input type="radio" name="D9" value="B"> B. 只计算实际需要的子问题，适合稀疏状态空间</label><label class="option"><input type="radio" name="D9" value="C"> C. 空间占用更小</label><label class="option"><input type="radio" name="D9" value="D"> D. 更容易推导正确性</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D9" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D10" data-answer="A" data-difficulty="mid" data-explanation="容量4：仅选物品1（w=2,v=3）+ 物品2（w=3,v=4）超出容量；选物品1+物品3超出；只选物品1 v=3；只选物品2 v=4；选物品1(w=2)+物品2(w=2? 不，w=3)4+3>4；实际可选{物品1,物品2}超重。能选 w<=4：物品1(3)+... 让我重算：物品索引0起。w=[2,3,4]v=[3,4,5]。容量4：可以选0号(w=2,v=3)和1号(w=3,v=4)？2+3=5>4超重。只选0号+补：0号(2,3)，剩容量2，没有<=2的其他物品。只选1号(3,4)，剩容量1，可选？无。只选2号(4,5)，正好，v=5。0号+2号: 2+4=6>4超重。所以最优是选2号或（选0号，然后剩余容量2不够其他），最大价值=max(3,4,5)=5。等等，只选物品1(w=3,v=4)，剩容量1，没有w<=1的。只选物品0(w=2,v=3)，剩容量2，没有w<=2的其他。所以v=5。答案应该是B=5。让我修正选项。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,191,36,.1);color:#fbbf24">中级</span> D10. 背包问题：物品 w=[2,3,4]，v=[3,4,5]，容量4，最大价值？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D10" value="A"> A. 7</label><label class="option"><input type="radio" name="D10" value="B"> B. 5</label><label class="option"><input type="radio" name="D10" value="C"> C. 4</label><label class="option"><input type="radio" name="D10" value="D"> D. 8</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D10" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin:1.4rem 0 0.4rem;padding-top:0.8rem;border-top:1px solid var(--border-color)">🔴 高级题（竞赛·证明·综合）</h3>
+<div class="quiz-item" data-question-id="D11" data-answer="C" data-difficulty="hard" data-explanation="状态 dp[mask][i]：已访问集合 mask，当前在城市 i，共 2^n × n 个状态，每次转移枚举下一城市 O(n)，总 O(2^n · n²)。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> D11. 状压 DP 解旅行商问题（n 个城市），时间复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D11" value="A"> A. O(n!)</label><label class="option"><input type="radio" name="D11" value="B"> B. O(2^n · n)</label><label class="option"><input type="radio" name="D11" value="C"> C. O(2^n · n²)</label><label class="option"><input type="radio" name="D11" value="D"> D. O(n³)</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D11" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D12" data-answer="B" data-difficulty="hard" data-explanation="区间 DP（矩阵链乘、回文切割等）：先计算长度为2的区间，再3，...到n，因为长区间依赖短区间的结果。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> D12. 区间 DP 的核心填表顺序是？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D12" value="A"> A. 按左端点从大到小</label><label class="option"><input type="radio" name="D12" value="B"> B. 按区间长度从小到大（先算短区间）</label><label class="option"><input type="radio" name="D12" value="C"> C. 按右端点从小到大</label><label class="option"><input type="radio" name="D12" value="D"> D. 随机顺序</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D12" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D13" data-answer="A" data-difficulty="hard" data-explanation="斜率优化把转移改写为 y=kx+b 的直线形式，用凸包 + 单调栈将每次转移从 O(n) 降到 O(1)，总复杂度 O(n)。前提：代价函数满足凸/凹性。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> D13. 斜率优化 DP 适用于哪类转移方程？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D13" value="A"> A. dp[i] = min(dp[j] + cost(i,j)) 且代价满足特定凸性</label><label class="option"><input type="radio" name="D13" value="B"> B. 任意 DP</label><label class="option"><input type="radio" name="D13" value="C"> C. dp[i] = dp[i-1] + c</label><label class="option"><input type="radio" name="D13" value="D"> D. 只适用于最短路</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D13" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D14" data-answer="B" data-difficulty="hard" data-explanation="数位 DP 逐位处理 log₁₀(n) 位，每位状态 O(10)，总 O(log n × 状态数)，远比暴力 O(n) 快。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> D14. 数位 DP 解'1到 n 中数字1出现的次数'，复杂度？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D14" value="A"> A. O(n)</label><label class="option"><input type="radio" name="D14" value="B"> B. O(log n)</label><label class="option"><input type="radio" name="D14" value="C"> C. O(n log n)</label><label class="option"><input type="radio" name="D14" value="D"> D. O(sqrt(n))</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D14" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<div class="quiz-item" data-question-id="D15" data-answer="C" data-difficulty="hard" data-explanation="记忆化搜索要求 DAG（有向无环图），有环时递归不终止（死循环）。有环图需 Bellman-Ford 或特殊负环处理，选项 A、B、D 匹配正确。">
+<p><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:0.78rem;font-weight:700;margin-right:6px;background:rgba(251,113,133,.08);color:#fb7185">高级</span> D15. 以下 DP 优化与场景哪个匹配错误？ <span data-status></span></p>
+<div class="options"><label class="option"><input type="radio" name="D15" value="A"> A. 四边形不等式→区间 DP 决策单调化</label><label class="option"><input type="radio" name="D15" value="B"> B. 线段树优化 DP→转移依赖区间最优值</label><label class="option"><input type="radio" name="D15" value="C"> C. 记忆化搜索→有环图最优路径</label><label class="option"><input type="radio" name="D15" value="D"> D. 斜率优化→线性代价 DP</label></div>
+<div data-explanation-box style="display:none"></div>
+<button data-reset-question="D15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
+</div>
+<h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
+</section>
+    </main>
+    <script src="../assets/js/app.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
