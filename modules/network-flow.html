@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -36,272 +51,129 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <div class="knowledge-card kc-blue">
-        <h3>🔵 核心定义</h3>
-        <p><strong>Dinic算法（最高效的实用最大流算法）：</strong></p>
-<pre><code class="language-python">from collections import deque
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">BFS / DFS 搜索</span>
+        <span class="prereq-tag">图论基础与邻接表</span>
+        <p>网络流（Network Flow）是一类特殊的图论问题，将图想象成水管网络：每条边是一个有容量限制的水管（Capacity），源点（Source）不断涌水，汇点（Sink）收集水。如何在不撑爆任何一条水管的前提下，让汇点收到的水流量最大？</p>
+    </div>
 
-class MaxFlow:
-    def __init__(self, n):
-        self.n = n
-        self.graph = [[] for _ in range(n)]
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：残量网络与最大流算法推演</h3>
 
-    def add_edge(self, u, v, cap):
-        # 关键：用成对边（正向+反向）存储，反向边初始容量为0
-        self.graph[u].append([v, cap, len(self.graph[v])])
-        self.graph[v].append([u, 0,   len(self.graph[u])-1])
+        <h4>1. 为什么“找到路径就注水”不够？</h4>
+        <div class="intuition-box">
+            <strong>核心思想：</strong>如果我们只是随便用 DFS 找一条能通水的路径（从源点到汇点），并填满瓶颈水量，很容易走错——占用了某条关键管道，导致真正大容量的水流无法通过！这就好比你做了一个贪心选择，但是贪心是错的。
+        </div>
 
-    def bfs(self, s, t):
-        """BFS构建层次图，返回是否存在s到t的路径"""
-        self.level = [-1] * self.n
-        self.level[s] = 0
-        queue = deque([s])
-        while queue:
-            u = queue.popleft()
-            for v, cap, _ in self.graph[u]:
-                if cap > 0 and self.level[v] < 0:
-                    self.level[v] = self.level[u] + 1
-                    queue.append(v)
-        return self.level[t] >= 0
+        <h4>2. 反向边与残量网络 (Residual Network)</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>反悔机制：</strong>为了解决“走错”问题，我们引入<strong>反悔边</strong>。当向正向边注水流 $f$ 时，我们自动构建一条容量同样为 $f$ 的反向边。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>物理直觉：</strong>如果未来的水流流过了这条反向边，相当于“抵消”了原来正向的水流，也就是把原来误占的水管让给别人！这就把贪心失败的可能性变成了一种自由的动态平衡。
+            </div>
+        </div>
 
-    def dfs(self, u, t, f, iter_):
-        """DFS在层次图上找增广路，iter_是当前弧优化指针"""
-        if u == t: return f
-        while iter_[u] < len(self.graph[u]):
-            v, cap, rev = self.graph[u][iter_[u]]
-            if cap > 0 and self.level[v] == self.level[u] + 1:
-                d = self.dfs(v, t, min(f, cap), iter_)
-                if d > 0:
-                    self.graph[u][iter_[u]][1] -= d   # 减少正向容量
-                    self.graph[v][rev][1] += d         # 增加反向容量
-                    return d
-            iter_[u] += 1                             # 当前弧无效，跳到下一条
-        return 0
+        <h4>3. 最大流最小割定理 (Max-Flow Min-Cut Theorem)</h4>
+        <div class="intuition-box">
+            <strong>宏观定理：</strong>图中的最大流量，严格等于将其切分为两个部分（源和汇必须隔开）的“最小割”容量。为什么？因为水流受限于图中那组最细的瓶颈管道组合。当你找出这组瓶颈，并将它们切断，图就被一分为二，流量就是这些瓶颈的总和！
+        </div>
 
-    def max_flow(self, s, t):
-        flow = 0
-        while self.bfs(s, t):                        # 反复构建层次图
-            iter_ = [0] * self.n                     # 每轮重置当前弧指针
-            while True:
-                f = self.dfs(s, t, float('inf'), iter_)
-                if f == 0: break
-                flow += f
-        return flow
-</code></pre>
-        <p><strong>最大流最小割定理：</strong> 从s到t的最大流 = 分离s和t的最小割容量。</p>
+        <h4>4. Ford-Fulkerson vs Edmonds-Karp</h4>
+        <div class="naive-vs-smart">
+            <div class="naive"><h4 class="label">Ford-Fulkerson (DFS路径)</h4><p>因为用 DFS 找增广路，可能在一个大容量图里每次只增广 1 个单位的水量，导致时间复杂度受到最大容量 $F$ 影响，变成 O(E·F)！</p></div>
+            <div class="smart"><h4 class="label">Edmonds-Karp (BFS路径)</h4><p>改用 BFS 找跳数最短的增广路。严格数学证明表明，这种做法最多只会进行 $V 	imes E$ 次增广，复杂度只受点边规模限制，达到了稳定的 O($V \cdot E^2$)。</p></div>
+        </div>
     </div>
 
     <div class="knowledge-card kc-blue">
-        <h3>📊 复杂度速查</h3>
+        <h3>💻 模板代码：Edmonds-Karp 与残量图</h3>
+<pre><code class="language-python">from collections import deque
+
+def max_flow_ek(n, capacity, adj, source, sink):
+    # capacity: 2D array, adj: adjacency list (包含反向边的占位)
+    flow = 0
+    parent = [-1] * n  # 记录 BFS 路径
+    
+    # Edmonds-Karp: BFS 找寻最短增广路
+    def bfs():
+        for i in range(n): parent[i] = -1
+        parent[source] = source
+        queue = deque([(source, float('inf'))])
+        
+        while queue:
+            u, bottle_neck = queue.popleft()
+            for v in adj[u]:
+                # 如果仍有残量，且之前未访问过
+                if parent[v] == -1 and capacity[u][v] > 0:
+                    parent[v] = u
+                    new_flow = min(bottle_neck, capacity[u][v])
+                    if v == sink:
+                        return new_flow
+                    queue.append((v, new_flow))
+        return 0
+
+    while True:
+        pushed = bfs()
+        if pushed == 0:
+            break
+        flow += pushed
+        # 回溯更新残量图
+        curr = sink
+        while curr != source:
+            prev = parent[curr]
+            capacity[prev][curr] -= pushed # 正向管道变窄
+            capacity[curr][prev] += pushed # 反悔余量增加
+            curr = prev
+            
+    return flow
+</code></pre>
         <table>
-            <tr><th>算法</th><th>时间复杂度</th><th>适用场景</th></tr>
-            <tr><td>Ford-Fulkerson（DFS增广）</td><td>O(E × max_flow)</td><td>容量小的图</td></tr>
-            <tr><td>Edmonds-Karp（BFS增广）</td><td>O(V × E²)</td><td>通用最大流</td></tr>
-            <tr><td>Dinic（层次图+当前弧）</td><td>O(V² × E)</td><td>实用中最快</td></tr>
-            <tr><td>Dinic（单位容量图）</td><td>O(E × √V)</td><td>二分图最大匹配</td></tr>
-            <tr><td>最小费用最大流（SPFA+增广）</td><td>O(V × E × flow)</td><td>有代价的流问题</td></tr>
+            <tr><th>算法</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>Ford-Fulkerson</td><td>O(F * E)</td><td>O(N^2)</td><td>使用DFS找路径，可能陷入来回微小增容的惨状。</td></tr>
+            <tr><td>Edmonds-Karp</td><td>O(V * E^2)</td><td>O(N^2)</td><td>强制 BFS，确保距离只增不减，增广次数 bounded。</td></tr>
+            <tr><td>Dinic 算法</td><td>O(V^2 * E)</td><td>O(N^2)</td><td>分层图 + 多路增广，最常考、最工业级的实现方案！二分图中更是 O(E * sqrt(V))。</td></tr>
         </table>
     </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🖼 结构图示：残量网络与增广路</h3>
-<pre class="ascii-art">
-原始网络（容量）:
-    s --10--> A --9--> t
-    s --8---> B --7--> t
-         A --6--> B
-
-找增广路：s→A→t (flow=9)
-残量网络更新:
-    s --1--> A    (正向剩余10-9=1)
-    A --9--> s    (反向增加9，允许"撤销")
-    A --0--> t    (正向剩余9-9=0)
-    t --9--> A    (反向增加9)
-
-再找：s→B→t (flow=7)
-再找：s→A→B→t (flow=1，利用A→B=6)
-
-总最大流 = 9+7+1 = 17
-
-最小割 = 去掉 (A→t容量0) + (B→t容量7): 容量 = 9+7=16
-实际最大流 = 最小割容量 (最大流最小割定理!)
-</pre>
-    </div>
-
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题详解</h3>
-        <details>
-            <summary>例题1：二分图最大匹配（匈牙利算法）</summary>
-            <p><strong>题意：</strong> 左右两侧节点，给定可匹配边集，求最大匹配数。</p>
-<pre><code class="language-python">def maxBipartiteMatching(graph, left_n, right_n):
-    """graph[u] = 左侧u节点可以匹配的右侧节点列表"""
-    match = [-1] * right_n     # match[v] = 右侧v当前匹配的左侧节点
-
-    def dfs(u, visited):
-        for v in graph[u]:
-            if not visited[v]:
-                visited[v] = True
-                # v未被匹配，或v当前匹配的节点可以改配
-                if match[v] == -1 or dfs(match[v], visited):
-                    match[v] = u
-                    return True
-        return False
-
-    result = 0
-    for u in range(left_n):
-        visited = [False] * right_n
-        if dfs(u, visited):
-            result += 1
-    return result
-
-# 等价地，可用Dinic最大流建模（更快）
-# 建图：超源s→左节点(容量1)，左→右(容量1)，右→超汇t(容量1)
-</code></pre>
-            <p><strong>时间：</strong> O(V × E)；Dinic建模后 O(E × √V)</p>
-        </details>
-
-        <details>
-            <summary>例题2：项目选择 / 最小割建模</summary>
-            <p><strong>题意：</strong> 选某些项目获利，但选项目需选其依赖，问最大净获利。</p>
-<pre><code class="language-python">"""
-建模思路（最大权闭合子图 → 最大流）:
-- 超源s连向所有正收益项目，边容量=收益
-- 所有负收益项目连向超汇t，边容量=|收益|
-- 项目依赖关系建无限容量边（a依赖b则a→b，容量∞）
-- 最大净收益 = 正收益之和 - 最小割
-
-最大净收益 = 正收益总和 - min_cut(s, t)
-"""
-
-def maxProfit(projects, dependencies):
-    INF = float('inf')
-    n = len(projects)
-    mf = MaxFlow(n + 2)        # +2 for s=n and t=n+1
-    s, t = n, n + 1
-    pos_sum = 0
-
-    for i, profit in enumerate(projects):
-        if profit > 0:
-            mf.add_edge(s, i, profit)    # s连正收益项目
-            pos_sum += profit
-        else:
-            mf.add_edge(i, t, -profit)  # 负收益项目连t
-
-    for u, v in dependencies:
-        mf.add_edge(u, v, INF)          # 依赖关系（无限容量）
-
-    return pos_sum - mf.max_flow(s, t)
-</code></pre>
-        </details>
-
-        <details>
-            <summary>例题3：最小费用最大流（MCMF）框架</summary>
-<pre><code class="language-python">from collections import defaultdict
-import heapq
-
-def mcmf(graph, s, t, n):
-    """最小费用最大流：Bellman-Ford/SPFA找最短增广路"""
-    total_flow = 0
-    total_cost = 0
-
-    while True:
-        # SPFA找最短（费用最小）增广路
-        dist = [float('inf')] * n
-        in_queue = [False] * n
-        prev_node = [-1] * n
-        prev_edge = [-1] * n
-        dist[s] = 0
-        queue = deque([s])
-        in_queue[s] = True
-
-        while queue:
-            u = queue.popleft()
-            in_queue[u] = False
-            for i, (v, cap, cost) in enumerate(graph[u]):
-                if cap > 0 and dist[u] + cost < dist[v]:
-                    dist[v] = dist[u] + cost
-                    prev_node[v] = u
-                    prev_edge[v] = i
-                    if not in_queue[v]:
-                        queue.append(v)
-                        in_queue[v] = True
-
-        if dist[t] == float('inf'): break   # 无增广路
-
-        # 找路径最小容量
-        flow = float('inf')
-        v = t
-        while v != s:
-            u = prev_node[v]
-            flow = min(flow, graph[u][prev_edge[v]][1])
-            v = u
-
-        # 更新残量
-        v = t
-        while v != s:
-            u = prev_node[v]
-            graph[u][prev_edge[v]][1] -= flow
-            # 更新反向边...
-            v = u
-
-        total_flow += flow
-        total_cost += flow * dist[t]
-
-    return total_flow, total_cost
-</code></pre>
-        </details>
-    </div>
-
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点</h3>
-        <p><strong>① 反向边初始容量漏加</strong></p>
+        <h3>🔴 易错点分析</h3>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 错误（忘记反向边）</p>
-<pre><code class="language-python">graph[u].append([v, cap])
-# 没有加反向边
-# 算法无法通过"撤销"找到更优路径
+                <p>❌ 忘记建反向边或者忘了在原图里初始化容量为 0</p>
+<pre><code class="language-python"># 仅添加单向边是不够的
+# capacity[v][u] 的默认值如果不是 0 就会出大问题
+adj[u].append(v)
+capacity[u][v] = c
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 正确（正向+反向成对）</p>
-<pre><code class="language-python">graph[u].append([v, cap, len(graph[v])])    # 正向
-graph[v].append([u, 0, len(graph[u])-1])   # 反向（容量0）
-# 两边通过下标互相引用
+                <p>✅ 正规的加边函数必须是双向的</p>
+<pre><code class="language-python">def add_edge(u, v, c):
+    adj[u].append(v)
+    adj[v].append(u)
+    capacity[u][v] += c  # 考虑重边要用 +=
+    capacity[v][u] += 0  # 初始反向容量为 0
 </code></pre>
             </div>
         </div>
-        <p><strong>② Dinic的层次图重复BFS没有重置level</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 错误（沿用旧level）</p>
-<pre><code class="language-python">def max_flow(self, s, t):
-    while True:
-        # 忘记重建层次图（BFS）
-        f = self.dfs(s, t, INF, iter_)
-        if f == 0: break
-        flow += f
-</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 正确（每轮重新BFS）</p>
-<pre><code class="language-python">def max_flow(self, s, t):
-    flow = 0
-    while self.bfs(s, t):      # 重建层次图
-        iter_ = [0] * self.n   # 重置当前弧
-        while f := self.dfs(s, t, INF, iter_):
-            flow += f
-    return flow
-</code></pre>
-            </div>
-        </div>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：增广路寻找与反向边回退 (纯逻辑演示)</h3>
+        <div class="demo-container" id="flowDemo"></div>
     </div>
 
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>最小费用最大流（MCMF）：</strong> 在满足最大流的条件下，使总费用最小。SPFA找最短费用路径，结合Ford-Fulkerson增广，时间 O(V × E × flow)。</p>
-        <p><strong>上下界可行流：</strong> 每条边有容量上界和下界，求满足约束的可行流。转化为无下界网络的最大流问题。</p>
-        <p><strong>全局最小割（Stoer-Wagner）：</strong> 不指定源汇的最小割，O(V³)或O(VE + V²log V)。</p>
+        <h3>🔷 竞赛拓展与模型转换</h3>
+        <p><strong>二分图最大匹配：</strong> 将二分图左侧集合全部接到一个超级源点（容量为1），右侧接到超级汇点（容量为1），中间连接也是无穷（或1）。直接跑最大流即可得最大匹配数！这是网络流最伟大的应用。</p>
+        <p><strong>最小割求互斥问题 (如图像分割)：</strong> 将属于前景的约束连向源点、属于背景的连向汇点，相邻像素冲突当作瓶颈边，最小割就是最小冲突代价。</p>
     </div>
 </section>
 
@@ -408,5 +280,88 @@ graph[v].append([u, 0, len(graph[u])-1])   # 反向（容量0）
 </main>
 <script src="../assets/js/app.js"></script>
 <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("flowDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="flex:1; background:#1e293b; border-radius:4px; max-width:600px; padding:1.5rem; display:flex; justify-content:space-between; align-items:center; position:relative" id="flCanvasBox">
+                <div style="display:flex; align-items:center; flex-direction:column"><div class="node" id="nfS" style="width:40px;height:40px;border-radius:50%;background:#3b82f6;color:#fff;line-height:40px;text-align:center;z-index:10;position:relative">S</div></div>
+                <div style="display:flex; flex-direction:column; gap:60px">
+                    <div class="node" id="nfA" style="width:40px;height:40px;border-radius:50%;background:#1e293b;border:2px solid #475569;color:#fff;line-height:40px;text-align:center;z-index:10;position:relative">A</div>
+                    <div class="node" id="nfB" style="width:40px;height:40px;border-radius:50%;background:#1e293b;border:2px solid #475569;color:#fff;line-height:40px;text-align:center;z-index:10;position:relative">B</div>
+                </div>
+                <div style="display:flex; align-items:center; flex-direction:column"><div class="node" id="nfT" style="width:40px;height:40px;border-radius:50%;background:#10b981;color:#fff;line-height:40px;text-align:center;z-index:10;position:relative">T</div></div>
+                
+                <svg width="100%" height="100%" style="position:absolute;top:0;left:0;z-index:1;pointer-events:none">
+                    <defs>
+                        <marker id="arrowHead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#94a3b8" /></marker>
+                        <marker id="arrowHeadR" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#f43f5e" /></marker>
+                        <marker id="arrowHeadG" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#10b981" /></marker>
+                    </defs>
+                    <line id="eSA" x1="10%" y1="50%" x2="40%" y2="25%" stroke="#475569" stroke-width="3" marker-end="url(#arrowHead)" />
+                    <line id="eSB" x1="10%" y1="50%" x2="40%" y2="75%" stroke="#475569" stroke-width="3" marker-end="url(#arrowHead)" />
+                    <line id="eAB" x1="50%" y1="25%" x2="50%" y2="75%" stroke="#475569" stroke-width="3" marker-end="url(#arrowHead)" />
+                    <line id="eAT" x1="60%" y1="25%" x2="90%" y2="50%" stroke="#475569" stroke-width="3" marker-end="url(#arrowHead)" />
+                    <line id="eBT" x1="60%" y1="75%" x2="90%" y2="50%" stroke="#475569" stroke-width="3" marker-end="url(#arrowHead)" />
+                    <!-- capacities label -->
+                    <text x="25%" y="30%" fill="#94a3b8" id="cSA" style="font-size:12px">20</text>
+                    <text x="25%" y="75%" fill="#94a3b8" id="cSB" style="font-size:12px">10</text>
+                    <text x="52%" y="45%" fill="#94a3b8" id="cAB" style="font-size:12px">10</text>
+                    <text x="75%" y="30%" fill="#94a3b8" id="cAT" style="font-size:12px">5</text>
+                    <text x="75%" y="75%" fill="#94a3b8" id="cBT" style="font-size:12px">20</text>
+                </svg>
+            </div>
+            <div style="display:flex; gap:0.5rem">
+                <button id="flBtnStep" style="background:#3b82f6; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">寻找增广路径推演</button>
+            </div>
+            <div id="flDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:3em;">初始状态全图总流：0。<br>边上的数字为残余容量(Residual Capacity)。</div>
+        </div>
+    `;
+
+    const descr = document.getElementById("flDescr");
+    let step = 0;
+
+    function renderLines(updates) {
+        updates.forEach(u => {
+            const l = document.getElementById(u.id);
+            if(u.color) { l.setAttribute("stroke", u.color); l.setAttribute("marker-end", u.arr? `url(#${u.arr})`:`url(#arrowHead)`); }
+            if(u.w) l.setAttribute("stroke-width", u.w);
+            if(u.val != null) document.getElementById('c'+u.id.substring(1)).innerHTML = `<tspan fill="${u.cfill||'#fff'}">${u.val}</tspan>`;
+        });
+    }
+
+    document.getElementById("flBtnStep").onclick = () => {
+        if(step === 0) {
+            descr.innerHTML = "<b>第一次 DFS/BFS：</b>找到路径 S -> A -> B -> T。瓶颈是 eAT(5)、eAB(10) 等的最小者吗？不，如果是这条路，瓶颈是 10。<br>如果走 S->A->T 呢？瓶颈为 5。我们以这副“陷阱图”为例：假设某种最差算法走了 <b>S -> A -> B -> T</b>，瓶颈水量等于 min(20, 10, 20) = 10。";
+            renderLines([
+                {id: 'eSA', color: '#10b981', w: 4, arr: 'arrowHeadG', val: "20-10=10", cfill: '#10b981'},
+                {id: 'eAB', color: '#10b981', w: 4, arr: 'arrowHeadG', val: "10-10=0", cfill: '#10b981'},
+                {id: 'eBT', color: '#10b981', w: 4, arr: 'arrowHeadG', val: "20-10=10", cfill: '#10b981'}
+            ]);
+            step++;
+        } else if (step === 1) {
+            descr.innerHTML = "刚才这条路注水10之后，建立<b>反向边</b>（红线）！<br> B 到 A 出现了容量为 10 的反向边。这为以后的“反悔退流”提供了可能！";
+            renderLines([
+                {id: 'eAB', color: '#f43f5e', w: 3, arr: 'arrowHeadR', val: "B->A 反悔能退 10", cfill: '#f43f5e'}
+            ]);
+            step++;
+        } else if (step === 2) {
+            descr.innerHTML = "<b>第二次查找：</b>我们发现还能走 <b>S -> B -> (反向走回)A -> T</b>！这条路瓶颈水流 = min(10, 10, 5) = 5。利用了刚才的红线！<br>这相当于把原先 A 流向 B 的 5 滴水给“退回”了！使得 A 在不用向 B 输水的同时把这 5 滴直接送给了 T。";
+            renderLines([
+                {id: 'eSB', color: '#10b981', w: 4, arr: 'arrowHeadG', val: "10-5=5", cfill: '#10b981'},
+                {id: 'eAB', color: '#475569', w: 3, arr: 'arrowHead', val: "10已退5剩5", cfill: '#94a3b8'},
+                {id: 'eAT', color: '#10b981', w: 4, arr: 'arrowHeadG', val: "5-5=0", cfill: '#10b981'}
+            ]);
+            step++;
+        } else {
+            descr.innerHTML = "全图再也找不到一条容积 > 0 且通往 T 的增广路径了。最大流完成！总流 = 10 + 5 = 15。<br><b>这就是反向边的核心意义：允许水流从错误的管道里撤出，借给其他人。</b>";
+            renderLines([ {id: 'eSA', color: '#475569', w:2}, {id: 'eSB', color: '#475569', w:2}, {id: 'eAB', color: '#475569', w:2}, {id: 'eAT', color: '#475569', w:2}, {id: 'eBT', color: '#475569', w:2} ]);
+        }
+    };
+});
+</script>
 </body>
 </html>

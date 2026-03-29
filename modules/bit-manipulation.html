@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -10,14 +10,17 @@
     <title>位运算模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,6 +31,38 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+
+        /* 互动位运算演示 */
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .bit-row { display: flex; gap: 3px; flex-wrap: wrap; align-items: center; margin: 0.5rem 0; }
+        .bit-label { font-size: 0.75rem; color: #64748b; width: 80px; flex-shrink: 0; font-family: monospace; text-align: right; padding-right: 8px; }
+        .bit-cell { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-family: monospace; font-size: 0.95rem; font-weight: 700; transition: all .2s; border: 1px solid #334155; background: #1e293b; }
+        .bit-cell.one  { background: rgba(99,102,241,.3); border-color: #6366f1; color: #a5b4fc; }
+        .bit-cell.zero { background: #1e293b; color: #475569; }
+        .bit-cell.highlight-cell { border-color: #f59e0b; background: rgba(245,158,11,.2); color: #fcd34d; }
+        .bit-cell.result-one  { background: rgba(16,185,129,.3); border-color: #10b981; color: #6ee7b7; }
+        .bit-cell.result-zero { background: #1e293b; border-color: #334155; color: #475569; }
+        .bit-pos { width: 30px; text-align: center; font-size: 0.6rem; color: #334155; font-family: monospace; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.8rem 0; flex-wrap: wrap; align-items: center; }
+        .demo-controls button { padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.8rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button.active { background: rgba(99,102,241,.3); border-color: #6366f1; color: #a5b4fc; }
+        .demo-input { background: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; padding: 5px 10px; font-family: monospace; font-size: 0.9rem; width: 80px; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; font-size: 0.82rem; color: #94a3b8; font-family: monospace; line-height: 1.8; }
+        .eq-row { display: flex; align-items: center; gap: 0.5rem; font-family: monospace; font-size: 0.9rem; color: #94a3b8; margin: 0.3rem 0; }
+        .eq-op { color: #f59e0b; font-weight: 700; min-width: 50px; text-align: right; }
+        .eq-val { color: #6ee7b7; font-weight: 700; }
+        .eq-dec { color: #a78bfa; margin-left: 8px; }
     </style>
 </head>
 <body data-theme="day">
@@ -36,192 +71,397 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <div class="knowledge-card kc-blue">
-        <h3>🔵 核心定义</h3>
-        <p><strong>基本位运算符与常用技巧汇总：</strong></p>
-<pre><code class="language-python"># ===== 基本操作 =====
-x & y    # 按位与：同为1才为1
-x | y    # 按位或：有1就为1
-x ^ y    # 按位异或：相同为0，不同为1
-~x       # 按位取反（Python中 ~x = -x-1）
-x << n   # 左移n位（×2^n）
-x >> n   # 右移n位（÷2^n，Python无符号）
+    <!-- 0. 前置知识 -->
+    <div class="knowledge-card kc-gray">
+        <h3>📋 前置知识</h3>
+        <span class="prereq-tag">二进制表示</span>
+        <span class="prereq-tag">补码（Two's complement）</span>
+        <span class="prereq-tag">整数的内存表示</span>
+        <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">
+            <strong>补码复习：</strong> 对于 n 位整数，<code>-x</code> 的补码 = <code>~x + 1</code>（按位取反再加1）。例：<code>x=5=0101</code>，<code>~x=1010</code>，<code>-x = 1011 = -5</code>（4位补码）。这是 <code>x & (-x)</code> = lowbit 等技巧的基础。
+        </p>
+        <p style="font-size:0.9rem; color:var(--subtle-text)">
+            <strong>Python 特殊性：</strong> Python 整数是无限精度的（无溢出），<code>~x = -x-1</code>（总是负数）。模拟 32 位运算需要 <code>& 0xFFFFFFFF</code> 掩码截断。
+        </p>
+    </div>
 
-# ===== 常用技巧 =====
-x & (x-1)          # 消去最低位的1（判断2的幂：x>0 and not x&(x-1)）
-x & (-x)           # lowbit：取最低位的1（树状数组核心）
-x ^ x = 0         # 自身异或为0（去重神器）
-x ^ 0 = x         # 与0异或不变
-(x >> i) & 1       # 取第i位（0-indexed）
-x | (1 << i)       # 将第i位置1
-x & ~(1 << i)      # 将第i位清0
-x ^ (1 << i)       # 翻转第i位
+    <!-- 1. 为什么用位运算？ -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 为什么要学位运算？不只是"快"</h3>
+
+        <p>位运算之所以重要，不仅仅是因为比乘除法快。更根本的原因是：</p>
+        <ul>
+            <li><strong>状态压缩：</strong> 用一个整数的每一位表示一个布尔状态，n 个状态只需一个 int，枚举所有子集 O(2ⁿ)。</li>
+            <li><strong>原子操作：</strong> 某些变换用位运算一行搞定（如交换两数、检测单个位），代码简洁且语义清晰。</li>
+            <li><strong>数学性质：</strong> 异或的交换律、结合律，与的单调性，使某类问题的数学推导更简洁。</li>
+        </ul>
+
+        <div class="intuition-box">
+            <strong>核心记忆口诀：</strong><br>
+            <code>&</code>（与）= 过滤/取出某些位 &nbsp;|&nbsp;
+            <code>|</code>（或）= 置位（设为1） &nbsp;|&nbsp;
+            <code>^</code>（异或）= 翻转/去重 &nbsp;|&nbsp;
+            <code>&lt;&lt;</code> = ×2ⁿ &nbsp;|&nbsp;
+            <code>&gt;&gt;</code> = ÷2ⁿ
+        </div>
+    </div>
+
+    <!-- 2. 关键技巧的推导 -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 三大技巧的推导：不要死背，理解原理</h3>
+
+        <p><strong>技巧一：x &amp; (x-1) —— 消去最低位的1</strong></p>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                设 <code>x = ...1 0 0 0...0</code>（最低位的1在某位，其右侧全是0）。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                则 <code>x-1 = ...0 1 1 1...1</code>（借位：最低位的1变0，其右侧全变1）。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <code>x &amp; (x-1)</code>：两者在最低1位及右侧完全互补，AND结果为0；左侧高位不变。
+                <strong>结论：消去最低位的1。</strong>
+            </div>
+        </div>
+        <p><strong>应用：</strong> 判断2的幂（<code>x &amp; (x-1) == 0</code>，2的幂只有1个1）；统计1的个数（Brian Kernighan）。</p>
+
+        <hr style="border-color:#1e293b; margin:1rem 0">
+
+        <p><strong>技巧二：x &amp; (-x) —— 取最低位的1（lowbit）</strong></p>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <code>-x</code> 的补码 = <code>~x + 1</code>。设 <code>x = A 1 0...0</code>（A是高位部分，最低1在某位，右侧全0）。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <code>~x = Ā 0 1...1</code>（按位取反），<code>-x = ~x+1 = Ā 1 0...0</code>（加1进位链）。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <code>x &amp; (-x)</code>：高位 <code>A &amp; Ā = 0</code>，最低1位 <code>1&1=1</code>，右侧 <code>0&0=0</code>。
+                <strong>结论：只保留最低位的1，即 lowbit(x)。</strong>
+            </div>
+        </div>
+        <p><strong>应用：</strong> 树状数组（BIT/Fenwick tree）的核心，每次 <code>i += lowbit(i)</code> 或 <code>i -= lowbit(i)</code> 跳跃。</p>
+
+        <hr style="border-color:#1e293b; margin:1rem 0">
+
+        <p><strong>技巧三：x ^ x = 0 —— 异或去重</strong></p>
+        <p>异或的本质：<strong>同位比较，相同归0，不同归1</strong>。</p>
+        <p>性质：交换律（<code>a^b = b^a</code>）+ 结合律（<code>(a^b)^c = a^(b^c)</code>）+ 自身消去（<code>a^a=0</code>）+ 零元（<code>a^0=a</code>）。</p>
+        <div class="intuition-box">
+            <strong>推论：</strong>对一组数全部异或，两两出现的数消去，只留下落单的数。<br>
+            证明：<code>a^b^b^c^a = a^a ^ b^b ^ c = 0^0^c = c</code>。顺序无关（交换律+结合律）。
+        </div>
+
+        <div class="think-block">
+            <div class="q">🤔 如何用位运算不用临时变量交换两个数？为什么这个方法有局限？</div>
+            <details>
+                <summary>展开答案</summary>
+                <p><code>a ^= b; b ^= a; a ^= b;</code></p>
+                <p>分析：第一步后 <code>a = a^b</code>；第二步 <code>b = b^(a^b) = a</code>；第三步 <code>a = (a^b)^a = b</code>。</p>
+                <p><strong>局限：</strong> 如果 <code>a</code> 和 <code>b</code> 指向同一内存地址（如 <code>swap(arr[i], arr[i])</code>），三步异或都对同一位置操作，结果变成0（自身异或归零），数据丢失。所以实际代码需要先检查 <code>if a != b</code> 或用临时变量。</p>
+            </details>
+        </div>
+
+        <div class="think-block">
+            <div class="q">🤔 为什么枚举 mask 的所有子集，对所有 mask 的总复杂度是 O(3ⁿ)？</div>
+            <details>
+                <summary>展开答案</summary>
+                <p>对于 n 位的每一位，枚举子集时该位有三种情况：①在 mask 中为0（mask 不含这位，子集也不含）；②在 mask 中为1且子集也选这位；③在 mask 中为1但子集不选这位。</p>
+                <p>所以对 n 位，总组合数 = 每位 3 种选择 = 3ⁿ（二项式定理：Σ C(n,k)·2ᵏ = (1+2)ⁿ = 3ⁿ）。</p>
+            </details>
+        </div>
+    </div>
+
+    <!-- 3. 互动演示：位运算可视化 -->
+    <div class="knowledge-card kc-purple">
+        <h3>🎮 互动演示：位运算可视化器</h3>
+        <p style="font-size:0.9rem; color:var(--subtle-text)">输入一个整数（0-255，8位），选择操作后查看每一位的变化。</p>
+
+        <div class="demo-container">
+            <div class="demo-controls">
+                <label style="color:#94a3b8; font-size:0.85rem">x = </label>
+                <input type="number" id="bit-input" class="demo-input" value="12" min="0" max="255" oninput="bitUpdate()">
+                <label style="color:#94a3b8; font-size:0.85rem; margin-left:8px">i = </label>
+                <input type="number" id="bit-i" class="demo-input" value="1" min="0" max="7" oninput="bitUpdate()" style="width:60px">
+            </div>
+            <div class="demo-controls" style="flex-wrap:wrap">
+                <button onclick="bitOp('and1')" id="btn-and1">x &amp; (x-1)</button>
+                <button onclick="bitOp('lowbit')" id="btn-lowbit">x &amp; (-x)</button>
+                <button onclick="bitOp('getbit')" id="btn-getbit">(x&gt;&gt;i)&amp;1</button>
+                <button onclick="bitOp('setbit')" id="btn-setbit">x|(1&lt;&lt;i)</button>
+                <button onclick="bitOp('clearbit')" id="btn-clearbit">x&amp;~(1&lt;&lt;i)</button>
+                <button onclick="bitOp('flipbit')" id="btn-flipbit">x^(1&lt;&lt;i)</button>
+                <button onclick="bitOp('xorself')" id="btn-xorself">x^x</button>
+            </div>
+
+            <div id="bit-display" style="margin-top:0.8rem"></div>
+            <div class="demo-log" id="bit-log">选择一个操作查看效果…</div>
+        </div>
+
+        <p style="font-size:0.85rem; color:var(--subtle-text)">
+            <span style="color:#a5b4fc">■</span> x 中为1的位 &nbsp;
+            <span style="color:#fcd34d">■</span> 操作涉及的位 &nbsp;
+            <span style="color:#6ee7b7">■</span> 结果中为1的位
+        </p>
+    </div>
+
+    <!-- 4. 核心模板 -->
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 核心技巧速查表</h3>
+<pre><code class="language-python"># ===== 基本操作 =====
+x & y     # 按位与：过滤（取出想要的位）
+x | y     # 按位或：置位（设为1）
+x ^ y     # 按位异或：翻转/去重
+~x        # 按位取反（Python：~x = -x-1）
+x << n    # 左移n位（× 2^n）
+x >> n    # 右移n位（÷ 2^n，Python保持符号位）
+
+# ===== 单位操作 =====
+(x >> i) & 1      # 取第i位（0或1）
+x | (1 << i)      # 将第i位置1
+x & ~(1 << i)     # 将第i位清0
+x ^ (1 << i)      # 翻转第i位
+
+# ===== 经典技巧 =====
+x & (x - 1)       # 消去最低位的1
+x & (-x)          # lowbit：取最低位的1（值，非位置）
+x & (x - 1) == 0  # 判断x是2的幂（且x>0）
+bin(x).count('1') # 统计1的个数（Python 内置）
 
 # ===== 子集枚举 =====
-n = 4
-for mask in range(1 << n):        # 枚举n位的所有子集
-    # mask是0到2^n-1的每个状态
-    bits = bin(mask).count('1')   # 统计1的个数
+for mask in range(1 << n):       # 枚举n元素的所有子集
     for i in range(n):
-        if mask >> i & 1:         # 第i位是否选中
+        if (mask >> i) & 1:      # 第i个元素是否被选中
             pass
 
-# 枚举mask的所有子集（subset of subset）
-sub = mask
+sub = mask                        # 枚举mask的所有子集（含空集）
 while sub:
-    # sub是mask的一个子集
-    sub = (sub - 1) & mask        # Brian Kernighan技巧获取下一个子集
+    # 处理 sub
+    sub = (sub - 1) & mask       # 下一个子集
+
+# ===== 32位运算（Python需掩码）=====
+MASK = 0xFFFFFFFF
+MAX  = 0x7FFFFFFF
+result = (a + b) & MASK          # 截断到32位
+if result > MAX: result = ~(result ^ MASK)  # 还原有符号数
 </code></pre>
     </div>
 
+    <!-- 5. 复杂度速查 -->
     <div class="knowledge-card kc-blue">
         <h3>📊 复杂度速查</h3>
         <table>
-            <tr><th>操作</th><th>时间复杂度</th><th>说明</th></tr>
-            <tr><td>基本位运算（&, |, ^, ~, <<, >>）</td><td>O(1)</td><td>单次操作</td></tr>
-            <tr><td>统计1的个数（bin().count）</td><td>O(log n)</td><td>Python内置</td></tr>
-            <tr><td>枚举n位所有子集</td><td>O(2ⁿ)</td><td>共2ⁿ个状态</td></tr>
-            <tr><td>枚举mask的所有子集</td><td>O(2^|mask|)</td><td>对所有mask总计3^n</td></tr>
-            <tr><td>状压DP（n个状态）</td><td>O(2ⁿ × n)</td><td>n≤20时可接受</td></tr>
+            <tr><th>操作</th><th>时间</th><th>原因</th></tr>
+            <tr><td>基本位运算（&, |, ^, ~, &lt;&lt;, &gt;&gt;）</td><td>O(1)</td><td>单指令，CPU 原生支持</td></tr>
+            <tr><td>Brian Kernighan 统计1个数</td><td>O(popcount(x))</td><td>循环次数 = 1的个数，最多 32/64 次</td></tr>
+            <tr><td>枚举n位所有子集</td><td>O(2ⁿ)</td><td>共 2ⁿ 个状态</td></tr>
+            <tr><td>枚举 mask 的所有子集</td><td>O(2^|mask|)</td><td>对所有 mask 总计 O(3ⁿ)（三项式定理）</td></tr>
+            <tr><td>状压 DP</td><td>O(2ⁿ × n)</td><td>n ≤ 20 时约 2×10⁷，可接受</td></tr>
+            <tr><td>01-Trie 最大异或对</td><td>O(32n) 建表，O(32) 查询</td><td>固定32层，每层 O(1)</td></tr>
         </table>
     </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🖼 结构图示：位运算可视化</h3>
-<pre class="ascii-art">
-x = 12 = 0b 1 1 0 0
-                位: 3 2 1 0
-
-x & (x-1): 消去最低位的1
-  12 = 1100
-  11 = 1011
-  & →  1000 = 8  (最低位的1被消去)
-
-lowbit(x) = x & (-x):
-  12  = 0...01100
-  -12 = 1...10100   (补码)
-  &  = 0...00100 = 4  (最低位的1)
-
-子集枚举 mask=0b1010 的所有子集:
-  0b1010 → 选{1,3}
-  0b1000 → 选{3}
-  0b0010 → 选{1}
-  0b0000 → 空集
-  下一个子集: (sub-1)&mask
-
-异或去重:
-  a ^ b ^ b = a   (b自消除)
-  应用: 只出现一次的数字
-  [2,2,3,3,4] → 2^2^3^3^4 = 0^0^4 = 4 ✓
-</pre>
-    </div>
-
+    <!-- 6. 典型例题 -->
     <div class="knowledge-card kc-green">
         <h3>🟢 典型例题详解</h3>
+
         <details>
-            <summary>例题1：只出现一次的数字（LeetCode 136）— 异或</summary>
-            <p><strong>题意：</strong> 除一个数外其余都出现两次，找出只出现一次的数。</p>
+            <summary>例题1：只出现一次的数字（LeetCode 136）—— 异或自消</summary>
+            <p><strong>直觉：</strong> 出现两次的数异或自身为0消去，只剩单次出现的数。</p>
+            <p><strong>为什么 O(1) 空间？</strong> 不需要哈希表记录频率，用 XOR 的代数性质直接消除成对元素。</p>
 <pre><code class="language-python">def singleNumber(nums):
     result = 0
     for num in nums:
-        result ^= num    # 两次异或抵消为0，剩下的就是只出现一次的
+        result ^= num   # 相同数对消，剩下唯一数
     return result
-    # 时间O(n)，空间O(1) — 比哈希表方法节省空间
-</code></pre>
+# 例：[2,2,3,3,4] → 2^2^3^3^4 = 0^0^4 = 4</code></pre>
+            <p><strong>扩展（LeetCode 137，出现三次找单次）：</strong> 用两个变量模拟"三进制计数器"，每位单独统计模3的余数。</p>
         </details>
 
         <details>
-            <summary>例题2：两整数之和（不用+/-，LeetCode 371）— 位运算模拟加法</summary>
-            <p><strong>题意：</strong> 不使用+/-，用位运算计算两整数之和。</p>
-<pre><code class="language-python">def getSum(a, b):
-    # Python整数无固定位宽，需要掩码处理
-    MASK = 0xFFFFFFFF
-    MAX  = 0x7FFFFFFF
-    while b != 0:
-        carry = (a & b) << 1    # 进位 = 两数都为1的位，左移一位
-        a = (a ^ b) & MASK      # 无进位的和（XOR），截断32位
-        b = carry & MASK         # 新的进位
-    # 处理负数（32位补码转Python负数）
-    return a if a <= MAX else ~(a ^ MASK)
-</code></pre>
-            <p><strong>时间：</strong> O(1)（最多32次循环）；<strong>空间：</strong> O(1)</p>
-        </details>
-
-        <details>
-            <summary>例题3：数组中数字出现的次数（两个只出现一次的数）</summary>
-            <p><strong>题意：</strong> 数组中两个数只出现一次，其余都出现两次，找出这两个数。</p>
+            <summary>例题2：两个出现一次的数（LeetCode 260）—— lowbit 分组</summary>
+            <p><strong>推导过程：</strong></p>
+            <div class="derive-step">
+                <div class="derive-num">1</div>
+                <div class="derive-body">全部异或得 <code>xor = a ^ b</code>（a, b 是两个单次数）。</div>
+            </div>
+            <div class="derive-step">
+                <div class="derive-num">2</div>
+                <div class="derive-body"><code>xor != 0</code>，说明 a 和 b 至少有一位不同。取 <code>mask = xor & (-xor)</code>（lowbit），找到 a, b 在这一位的差异位。</div>
+            </div>
+            <div class="derive-step">
+                <div class="derive-num">3</div>
+                <div class="derive-body">用 mask 把数组分成两组：该位为1的和该位为0的。a 在一组，b 在另一组。成对的数同时在某组，异或自消，每组剩下一个答案。</div>
+            </div>
 <pre><code class="language-python">def singleNumbers(nums):
     xor = 0
-    for n in nums: xor ^= n    # a ^ b（两个单数的异或）
+    for n in nums: xor ^= n         # a ^ b
 
-    # 找到xor中任意一个为1的位（a和b在该位不同）
-    mask = xor & (-xor)        # lowbit：取最低位的1
-
+    mask = xor & (-xor)              # 找到a,b在某位的差异
     a = b = 0
     for n in nums:
-        if n & mask:            # 根据该位将数组分成两组
-            a ^= n             # 每组内相同数消除，剩下a或b
-        else:
-            b ^= n
-    return [a, b]
-</code></pre>
-            <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
+        if n & mask: a ^= n          # 该位为1的组
+        else:        b ^= n          # 该位为0的组
+    return [a, b]</code></pre>
+        </details>
+
+        <details>
+            <summary>例题3：位运算加法（LeetCode 371）—— 模拟半加器</summary>
+            <p><strong>半加器原理：</strong> 无进位和 = <code>a ^ b</code>（XOR），进位 = <code>(a & b) &lt;&lt; 1</code>（AND左移）。</p>
+            <p><strong>迭代模拟：</strong> 反复计算无进位和 + 进位，直到进位为0。</p>
+<pre><code class="language-python">def getSum(a, b):
+    MASK = 0xFFFFFFFF; MAX = 0x7FFFFFFF
+    while b:
+        carry = (a & b) << 1        # 进位
+        a = (a ^ b) & MASK          # 无进位和（截断32位）
+        b = carry & MASK
+    return a if a <= MAX else ~(a ^ MASK)  # 负数还原</code></pre>
+        </details>
+
+        <details>
+            <summary>例题4：状压 DP —— 旅行商问题（TSP）最短路</summary>
+            <p><strong>状态设计：</strong> <code>dp[mask][i]</code> = 已访问集合为 mask，当前在城市 i 的最短路。</p>
+            <p><strong>mask 的意义：</strong> 第 j 位为1表示城市 j 已访问，这样 n 个城市的所有子集用 2ⁿ 个整数完美表示。</p>
+<pre><code class="language-python">import math
+def tsp(dist, n):
+    INF = float('inf')
+    dp = [[INF] * n for _ in range(1 << n)]
+    dp[1][0] = 0   # 从城市0出发，mask = 0b...0001（只访问了0）
+
+    for mask in range(1 << n):
+        for u in range(n):
+            if not (mask >> u & 1): continue   # u未被访问
+            if dp[mask][u] == INF: continue
+            for v in range(n):
+                if mask >> v & 1: continue     # v已访问
+                new_mask = mask | (1 << v)     # 标记v为已访问
+                dp[new_mask][v] = min(dp[new_mask][v], dp[mask][u] + dist[u][v])
+
+    full = (1 << n) - 1   # 所有城市都访问的mask
+    return min(dp[full][i] + dist[i][0] for i in range(n))</code></pre>
         </details>
     </div>
 
-    <div class="knowledge-card kc-red">
-        <h3>🔴 易错点</h3>
-        <p><strong>① 位运算优先级低，忘加括号</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 错误（& 比 == 优先级低）</p>
-<pre><code class="language-python">if x & 1 == 0:    # 等价于 x & (1==0) = x&False = x&0
-    pass          # 条件永远为False！
-</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 正确（加括号）</p>
-<pre><code class="language-python">if (x & 1) == 0:  # 先算x&1，再与0比较
-    pass
-# 或更简洁：
-if not x & 1:     # x&1==0 即x为偶数
-    pass
-</code></pre>
-            </div>
-        </div>
-        <p><strong>② Python ~取反与C不同（结果为负数）</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 误解（~x不是无符号取反）</p>
-<pre><code class="language-python">x = 5             # 0b00000101
-~x                # Python: -6（无限精度补码）
-                  # 不是0b11111010
-</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 正确（用掩码模拟32位）</p>
-<pre><code class="language-python">MASK = 0xFFFFFFFF
-result = (~x) & MASK   # 模拟32位无符号取反
-# 或：x ^ MASK         # 同等效果
-</code></pre>
-            </div>
-        </div>
+    <!-- 7. 变种对比 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 变种对比：同一问题的不同位运算解法</h3>
+        <table>
+            <tr><th>问题</th><th>暴力</th><th>位运算</th><th>复杂度优势</th></tr>
+            <tr><td>判断奇偶</td><td><code>x % 2 == 0</code></td><td><code>x & 1 == 0</code></td><td>等价，但&更快</td></tr>
+            <tr><td>判断2的幂</td><td>循环整除</td><td><code>x & (x-1) == 0</code></td><td>O(1) vs O(log x)</td></tr>
+            <tr><td>统计1个数</td><td>逐位检查 O(32)</td><td>Brian Kernighan O(popcount)</td><td>稀疏时更快</td></tr>
+            <tr><td>去重找单数</td><td>哈希表 O(n) 空间</td><td>全部异或 O(1) 空间</td><td>空间 O(n)→O(1)</td></tr>
+            <tr><td>x/2（整数）</td><td><code>x // 2</code></td><td><code>x >> 1</code></td><td>等价，>>更快</td></tr>
+            <tr><td>交换两数</td><td>临时变量</td><td><code>a^=b;b^=a;a^=b</code></td><td>同地址时危险！</td></tr>
+        </table>
     </div>
 
+    <!-- 8. 易错点 -->
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+
+        <p><strong>① 位运算优先级低，必须加括号</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 优先级陷阱</p>
+<pre><code class="language-python">if x & 1 == 0:
+    pass
+# 等价于 x & (1 == 0) = x & False = 0
+# 条件永远为 False！</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 加括号</p>
+<pre><code class="language-python">if (x & 1) == 0:
+    pass
+# 或：
+if not (x & 1):
+    pass</code></pre>
+            </div>
+        </div>
+
+        <p><strong>② Python 的 ~x 不等于 C 的无符号取反</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 误解</p>
+<pre><code class="language-python">x = 5       # 0b0101
+~x          # Python: -6（无限精度补码）
+            # 不是 0b11111010</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 用掩码模拟</p>
+<pre><code class="language-python">MASK = 0xFFFFFFFF
+(~x) & MASK   # 模拟32位取反
+# 等价于：
+x ^ MASK      # 翻转所有32位</code></pre>
+            </div>
+        </div>
+
+        <p><strong>③ 子集枚举：(sub-1)&mask 在 sub=0 时会死循环</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 未处理 sub=0</p>
+<pre><code class="language-python">sub = mask
+while sub:     # sub=0时退出，但0是子集！
+    process(sub)
+    sub = (sub-1) & mask</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 也处理空集</p>
+<pre><code class="language-python">sub = mask
+while True:
+    process(sub)
+    if sub == 0: break
+    sub = (sub-1) & mask</code></pre>
+            </div>
+        </div>
+
+        <p><strong>④ 左移溢出（Python 无影响，C/Java 需注意）</strong></p>
+        <p style="font-size:0.9rem"><code>1 &lt;&lt; 31</code> 在 Python 中安全（大整数），但在 Java/C 的 int 中会变成负数（符号位变1）。状压 DP 中 n 较大时，用 <code>1 &lt;&lt; n</code> 要确认语言位宽。</p>
+    </div>
+
+    <!-- 9. 竞赛拓展 -->
     <div class="knowledge-card kc-cyan">
         <h3>🔷 竞赛拓展</h3>
-        <p><strong>按位DP：</strong> 枚举每一位的贡献，O(n log max_val) 计算所有对的AND/OR/XOR总和。</p>
+
+        <p><strong>按位贡献法（汉明距离总和）：</strong> 各位独立计算，O(32n) 求所有对的 XOR/AND/OR 之和。</p>
 <pre><code class="language-python">def totalHammingDistance(nums):
-    # 所有对的汉明距离之和（各位独立计算）
     total = 0
     for bit in range(32):
-        ones = sum((n >> bit) & 1 for n in nums)  # 该位为1的个数
+        ones = sum((n >> bit) & 1 for n in nums)
         zeros = len(nums) - ones
-        total += ones * zeros   # 一个1与一个0构成一对汉明距离
-    return total
-</code></pre>
-        <p><strong>布隆过滤器（Bloom Filter）：</strong> 多个哈希函数 + 位数组，O(k)查询，有一定假阳性率但无假阴性。适合大数据集合的快速存在性判断。</p>
-        <p><strong>Gray码：</strong> 相邻数字只有一位不同，n位Gray码 = n XOR (n>>1)。用于减少状态切换次数。</p>
+        total += ones * zeros   # 每对(一个1, 一个0)贡献1
+    return total</code></pre>
+
+        <p><strong>01-Trie 求最大异或对：</strong> 将所有数的二进制高位到低位插入 Trie，查询时在每一位贪心选择与当前位相反的分支（使 XOR 最大）。建 Trie O(32n)，每次查询 O(32)。</p>
+
+        <p><strong>Gray 码：</strong> <code>g(n) = n XOR (n >> 1)</code>，相邻数字恰好差一位。逆变换（Gray→binary）：<code>b = g; b ^= g>>1; b ^= g>>2; ...</code>。用于减少状态切换次数（工业电路、循环码）。</p>
+
+        <p><strong>Gosper's Hack（枚举所有 popcount=k 的 mask）：</strong></p>
+<pre><code class="language-python">def next_mask(mask):
+    # 找下一个popcount相同的更大mask
+    c = mask & -mask
+    r = mask + c
+    return (((r ^ mask) >> 2) // c) | r
+
+# 枚举n位中恰好选k个的所有mask
+mask = (1 << k) - 1   # 初始：最低k位全1
+while mask < (1 << n):
+    process(mask)
+    mask = next_mask(mask)</code></pre>
     </div>
 </section>
 
@@ -328,5 +568,183 @@ result = (~x) & MASK   # 模拟32位无符号取反
 </main>
 <script src="../assets/js/app.js"></script>
 <script>hljs.highlightAll();</script>
+<script>
+// ===== 位运算可视化器 =====
+(function(){
+    const BITS = 8;
+    let curOp = null;
+
+    function toBin8(x){
+        let s = (x & 0xFF).toString(2);
+        while(s.length < BITS) s = '0' + s;
+        return s;
+    }
+
+    function renderBitRow(containerId, label, value, highlightBits, isResult){
+        const c = document.getElementById(containerId);
+        if(!c) return;
+        c.innerHTML = '';
+        // Label
+        const lb = document.createElement('div');
+        lb.className = 'bit-label';
+        lb.textContent = label;
+        c.appendChild(lb);
+        const bin = toBin8(value);
+        for(let i=0; i<BITS; i++){
+            const pos = BITS-1-i;
+            const cell = document.createElement('div');
+            cell.className = 'bit-cell';
+            const bit = (value >> pos) & 1;
+            if(isResult){
+                cell.classList.add(bit ? 'result-one' : 'result-zero');
+            } else {
+                cell.classList.add(bit ? 'one' : 'zero');
+            }
+            if(highlightBits && highlightBits.includes(pos)){
+                cell.classList.add('highlight-cell');
+            }
+            cell.textContent = bit;
+            c.appendChild(cell);
+        }
+        // decimal
+        const dec = document.createElement('div');
+        dec.className = 'eq-dec';
+        dec.style.marginLeft = '8px';
+        dec.style.color = '#64748b';
+        dec.style.fontSize = '0.8rem';
+        dec.style.fontFamily = 'monospace';
+        dec.textContent = '= ' + value + (value < 0 ? '' : '');
+        c.appendChild(dec);
+    }
+
+    function renderPosRow(){
+        const c = document.getElementById('bit-pos-row');
+        if(!c) return;
+        c.innerHTML = '';
+        const lb = document.createElement('div'); lb.className='bit-label'; lb.textContent='bit pos'; c.appendChild(lb);
+        for(let i=0;i<BITS;i++){
+            const pos=BITS-1-i;
+            const cell=document.createElement('div'); cell.className='bit-pos'; cell.textContent=pos; c.appendChild(cell);
+        }
+    }
+
+    function getX(){ return parseInt(document.getElementById('bit-input').value)||0; }
+    function getI(){ return parseInt(document.getElementById('bit-i').value)||0; }
+
+    function buildDisplay(){
+        const d = document.getElementById('bit-display');
+        d.innerHTML = `
+            <div class="bit-row" id="bit-pos-row"></div>
+            <div class="bit-row" id="bit-row-x"></div>
+            <div class="bit-row" id="bit-row-b" style="display:none"></div>
+            <div class="bit-row" id="bit-row-sep" style="display:none; align-items:center">
+                <div class="bit-label" style="color:#f59e0b" id="bit-op-label"></div>
+                <hr style="flex:1; border-color:#1e293b; margin:0">
+            </div>
+            <div class="bit-row" id="bit-row-result" style="display:none"></div>
+        `;
+        renderPosRow();
+    }
+
+    function showRows(showB, showResult){
+        document.getElementById('bit-row-b').style.display = showB ? 'flex' : 'none';
+        document.getElementById('bit-row-sep').style.display = showResult ? 'flex' : 'none';
+        document.getElementById('bit-row-result').style.display = showResult ? 'flex' : 'none';
+    }
+
+    window.bitUpdate = function(){
+        buildDisplay();
+        const x = getX();
+        renderBitRow('bit-row-x', 'x = ' + x, x, [], false);
+        if(curOp) window.bitOp(curOp);
+    };
+
+    window.bitOp = function(op){
+        curOp = op;
+        const x = getX(); const i = getI();
+        buildDisplay();
+        renderBitRow('bit-row-x', 'x = ' + x, x, [], false);
+        let result, bVal, bLabel, opLabel, log, highlight=[];
+
+        switch(op){
+            case 'and1':
+                bVal = (x-1) & 0xFF; bLabel = 'x-1 = '+(x-1);
+                result = x & bVal; opLabel = '& →';
+                log = `x & (x-1) = ${x} & ${x-1} = ${result}\n消去了最低位的1。`;
+                // find lowest bit position
+                for(let b=0;b<BITS;b++){ if((x>>b)&1){ highlight=[b]; break; } }
+                renderBitRow('bit-row-b', bLabel, bVal, highlight, false);
+                showRows(true, true);
+                document.getElementById('bit-op-label').textContent = opLabel;
+                renderBitRow('bit-row-result', '结果 = '+result, result, [], true);
+                break;
+            case 'lowbit':
+                bVal = (-x) & 0xFF; bLabel = '-x = '+(-x & 0xFF);
+                result = x & (-x) & 0xFF; opLabel = '& →';
+                log = `lowbit(x) = x & (-x) = ${x} & ${-x & 0xFF} = ${result}\n取最低位的1，值为 ${result}（第${Math.log2(result)}位）。`;
+                for(let b=0;b<BITS;b++){ if((x>>b)&1){ highlight=[b]; break; } }
+                renderBitRow('bit-row-b', bLabel, bVal, highlight, false);
+                showRows(true, true);
+                document.getElementById('bit-op-label').textContent = opLabel;
+                renderBitRow('bit-row-result', '结果 = '+result, result, [], true);
+                break;
+            case 'getbit':
+                result = (x >> i) & 1; opLabel = '→';
+                log = `(x >> ${i}) & 1 = 第${i}位的值 = ${result}`;
+                highlight = [i];
+                renderBitRow('bit-row-x', 'x = '+x, x, highlight, false);
+                showRows(false, true);
+                document.getElementById('bit-op-label').textContent = opLabel;
+                renderBitRow('bit-row-result', `bit[${i}] = ${result}`, result, [0], true);
+                break;
+            case 'setbit':
+                result = (x | (1 << i)) & 0xFF; opLabel = '| →';
+                log = `x | (1 << ${i}) = ${x} | ${1<<i} = ${result}\n第${i}位置为1。`;
+                highlight = [i];
+                renderBitRow('bit-row-b', `1<<${i} = ${1<<i}`, 1<<i, highlight, false);
+                showRows(true, true);
+                document.getElementById('bit-op-label').textContent = opLabel;
+                renderBitRow('bit-row-result', '结果 = '+result, result, [i], true);
+                break;
+            case 'clearbit':
+                result = (x & ~(1 << i)) & 0xFF; opLabel = '& →';
+                log = `x & ~(1<<${i}) = ${x} & ${(~(1<<i))&0xFF} = ${result}\n第${i}位清0。`;
+                highlight = [i];
+                renderBitRow('bit-row-b', `~(1<<${i}) = ${(~(1<<i))&0xFF}`, (~(1<<i))&0xFF, highlight, false);
+                showRows(true, true);
+                document.getElementById('bit-op-label').textContent = opLabel;
+                renderBitRow('bit-row-result', '结果 = '+result, result, [], true);
+                break;
+            case 'flipbit':
+                result = (x ^ (1 << i)) & 0xFF; opLabel = '^ →';
+                log = `x ^ (1<<${i}) = ${x} ^ ${1<<i} = ${result}\n第${i}位翻转：${(x>>i)&1} → ${((x^(1<<i))>>i)&1}。`;
+                highlight = [i];
+                renderBitRow('bit-row-b', `1<<${i} = ${1<<i}`, 1<<i, highlight, false);
+                showRows(true, true);
+                document.getElementById('bit-op-label').textContent = opLabel;
+                renderBitRow('bit-row-result', '结果 = '+result, result, [i], true);
+                break;
+            case 'xorself':
+                result = 0; opLabel = '^ →';
+                log = `x ^ x = ${x} ^ ${x} = 0\n每一位：相同位异或为0，全部归零。`;
+                renderBitRow('bit-row-b', 'x = '+x, x, [], false);
+                showRows(true, true);
+                document.getElementById('bit-op-label').textContent = opLabel;
+                renderBitRow('bit-row-result', '结果 = 0', 0, [], true);
+                break;
+        }
+        document.getElementById('bit-log').innerHTML = `<span style="color:#6ee7b7; white-space:pre-line">${log}</span>`;
+
+        // highlight active button
+        document.querySelectorAll('.demo-controls button').forEach(b=>b.classList.remove('active'));
+        const btn = document.getElementById('btn-'+op);
+        if(btn) btn.classList.add('active');
+    };
+
+    buildDisplay();
+    const x = getX();
+    renderBitRow('bit-row-x', 'x = '+x, x, [], false);
+})();
+</script>
 </body>
 </html>

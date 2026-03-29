@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -41,224 +56,119 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <!-- 1. 核心定义 -->
-            <div class="knowledge-card kc-blue">
-                <h3>🔵 核心定义</h3>
-                <p><strong>DP四步法：</strong></p>
-                <ol>
-                    <li><strong>定义状态：</strong> <code>dp[i]</code> 表示什么（需要精确定义语义）</li>
-                    <li><strong>写状态转移：</strong> <code>dp[i] = f(dp[i-1], dp[i-2], ...)</code></li>
-                    <li><strong>初始化：</strong> 边界条件 <code>dp[0]</code>, <code>dp[1]</code> 等</li>
-                    <li><strong>确定遍历顺序：</strong> 保证转移时子问题已解决</li>
-                </ol>
-                <p><strong>01背包转移方程：</strong></p>
-<pre><code class="language-python"># dp[j] = 容量j时的最大价值
-# 01背包：每件物品只能选一次 → 容量从大到小遍历
-for i in range(n):                         # 遍历物品
-    for j in range(W, weight[i]-1, -1):    # 从大到小！防止重复使用
-        dp[j] = max(dp[j], dp[j - weight[i]] + value[i])
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">递归与记忆化</span>
+        <span class="prereq-tag">大问题拆解</span>
+        <p>动态规划本质上是带备忘录的最优搜索。核心思维模型是：<strong>寻找重复子问题，并将其缓存。</strong></p>
+    </div>
 
-# 完全背包：每件物品可重复选 → 容量从小到大遍历
-for i in range(n):
-    for j in range(weight[i], W+1):        # 从小到大！允许重复使用
-        dp[j] = max(dp[j], dp[j - weight[i]] + value[i])
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：动态规划四大核心模式</h3>
+        
+        <div class="naive-vs-smart">
+            <div class="naive"><h4 class="label">暴力搜索 (Naive)</h4><p>画出完整的递归树，包含大量重复计算，指数级时间复杂度。</p></div>
+            <div class="smart"><h4 class="label">动态规划 (Smart)</h4><p>将重复树化为有向无环图 (DAG)，多项式时间求解。</p></div>
+        </div>
+
+        <h4>1. 线性 DP（最长递增子序列 LIS, Kadane）</h4>
+        <div class="intuition-box">
+            <strong>核心思想：</strong>从“最后一个元素”的视角看待整个问题。假设我们已经有了前面的所有状态，如何推导加入当前元素后的状态？
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>状态定义：</strong> <code>dp[i]</code> 表示以 <code>nums[i]</code> 为结尾的最长子序列长度。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>状态转移：</strong> 遍历前面的所有 $j < i$，如果 <code>nums[j] < nums[i]</code>，则 <code>dp[i] = max(dp[i], dp[j] + 1)</code>。
+            </div>
+        </div>
+
+        <div class="think-block">
+            <div class="q">Q: 为什么不能直接定义 dp[i] = 前 i 个元素的答案？</div>
+            <details>
+                <summary>查看答疑</summary>
+                对于 LIS 来说，如果你只知道“前 i 个元素的区间上的 LIS 长度”，当你面对第 i+1 个元素时，由于你不知道之前最大长度的子序列最后是以哪个数字结尾的，就无法判断第 i+1 个数字能不能接上去。因此我们必须强制定义“以当前元素结尾”来保留这个关键的“右边界状态信息”以保证转移顺畅！
+            </details>
+        </div>
+
+        <h4>2. 背包 DP（0/1 背包 vs 完全背包）</h4>
+        <div class="think-block">
+            <div class="q">Q: 为什么一维优化的 0/1 背包必须逆序遍历容量 j？而完全背包是正序？</div>
+            <details>
+                <summary>查看答疑</summary>
+                0/1 背包每件物品只能选一次。我们在更新当前物品的 <code>dp[j] = max(dp[j], dp[j-W] + V)</code> 时，需要借用<strong>上一圈（没有放这个物品之前）</strong>的 <code>dp[j-W]</code>。如果正序遍历，小的 <code>dp[j-W]</code> 会先被更新，相当于这个物品被用了两次。完全背包恰恰相反，物品可以无尽用，正序刚好！
+            </details>
+        </div>
+
+        <h4>3. 区间 DP 与 4. 状态机 DP</h4>
+        <div class="intuition-box">
+            <strong>区间DP直觉：</strong>合并石子、矩阵连乘、戳气球。从小区间逐渐拼凑出大区间答案。通常是 O(n^3) 时间。<br>
+            <strong>状态机直觉：</strong>买股票问题。每天有“持仓”、“空仓”、“冷冻期”互相流动，画出图极易得出递推式。
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>💻 模板代码：从背包与状态机出发</h3>
+<pre><code class="language-python"># 1. 0/1 背包一维优化模板
+def knapsack_01(W, weights, values):
+    dp = [0] * (W + 1)
+    for wt, val in zip(weights, values):
+        # 必须逆序，防止正序遍历导致当前物品被多次放入
+        for j in range(W, wt - 1, -1):
+            dp[j] = max(dp[j], dp[j - wt] + val)
+    return dp[W]
+
+# 2. 状态机 DP：买卖股票包含冷冻期
+def maxProfit(prices):
+    if not prices: return 0
+    # 状态0: 持股, 状态1: 空仓(可买), 状态2: 处于冷冻期
+    dp0, dp1, dp2 = -prices[0], 0, 0
+    for i in range(1, len(prices)):
+        new_dp0 = max(dp0, dp1 - prices[i]) 
+        new_dp1 = max(dp1, dp2)             
+        new_dp2 = dp0 + prices[i]           
+        dp0, dp1, dp2 = new_dp0, new_dp1, new_dp2
+    return max(dp1, dp2)
 </code></pre>
-                <p><strong>最长公共子序列（LCS）转移：</strong></p>
-<pre><code class="language-python"># dp[i][j] = text1[:i] 与 text2[:j] 的LCS长度
-if text1[i-1] == text2[j-1]:
-    dp[i][j] = dp[i-1][j-1] + 1
-else:
-    dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+        <table>
+            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>线性 DP</td><td>O(n^2)</td><td>O(n)</td><td>大部分由于只需要比较前方 N 个状态，故有嵌套。</td></tr>
+            <tr><td>背包优化</td><td>O(n*W)</td><td>O(W)</td><td>采用一维滚动数组覆盖之前结果直接降低一个维度的空间。</td></tr>
+            <tr><td>区间 DP</td><td>O(n^3)</td><td>O(n^2)</td><td>三层循环：长度、左端点、分割点位置。</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点分析</h3>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误的 0/1 背包一维化（正序）</p>
+<pre><code class="language-python">for wt, val in items:
+    for j in range(wt, W + 1):
+        # 它被退化成了完全背包
+        dp[j] = max(dp[j], dp[j - wt] + val)
 </code></pre>
             </div>
-
-            <!-- 2. 复杂度速查 -->
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查</h3>
-                <table>
-                    <tr><th>DP类型</th><th>时间复杂度</th><th>空间复杂度</th><th>典型题</th></tr>
-                    <tr><td>线性DP（爬楼梯）</td><td>O(n)</td><td>O(1) 滚动</td><td>Fibonacci、爬楼梯</td></tr>
-                    <tr><td>01背包</td><td>O(nW)</td><td>O(W) 一维</td><td>分割等和子集</td></tr>
-                    <tr><td>完全背包</td><td>O(nW)</td><td>O(W)</td><td>零钱兑换</td></tr>
-                    <tr><td>区间DP</td><td>O(n³)</td><td>O(n²)</td><td>戳气球、矩阵连乘</td></tr>
-                    <tr><td>LCS / LIS</td><td>O(n²) / O(n log n)</td><td>O(n²) / O(n)</td><td>编辑距离、最长递增子序列</td></tr>
-                    <tr><td>状压DP</td><td>O(2ⁿ × n)</td><td>O(2ⁿ)</td><td>TSP旅行商</td></tr>
-                </table>
+            <div class="right">
+                <p>✅ 正确的 0/1 背包逆序</p>
+<pre><code class="language-python">for wt, val in items:
+    for j in range(W, wt - 1, -1):
+        dp[j] = max(dp[j], dp[j - wt] + val)
+</code></pre>
             </div>
+        </div>
+    </div>
 
-            <!-- 3. 结构图示 -->
-            <div class="knowledge-card kc-purple">
-                <h3>🖼 结构图示：DP状态转移可视化</h3>
-<pre class="ascii-art">
-【爬楼梯 dp[i] = dp[i-1] + dp[i-2]】
-  i:   0   1   2   3   4   5
-dp[]: [1] [1] [2] [3] [5] [8]
-       ↑   ↑   ↑   ↑   ↑   ↑
-       基  基  ←←←←+←←←←  (每格依赖前两格)
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：二维 0/1 背包填表过程 (W=5)</h3>
+        <div class="demo-container" id="dpDemo"></div>
+    </div>
 
-【01背包二维→一维优化（容量从大到小）】
-二维: dp[i][j] = max(dp[i-1][j], dp[i-1][j-w]+v)
-       ↑滚动↑      (覆盖掉上一行)
-一维: 从右向左遍历，保证使用的是"上一行"的值
-
-【LCS DP 矩阵】
-      ""  a  b  c
-   "" [0][0][0][0]
-   a  [0][1][1][1]
-   c  [0][1][1][2]
-</pre>
-            </div>
-
-            <!-- 4. 典型例题 -->
-            <div class="knowledge-card kc-green">
-                <h3>🟢 典型例题详解</h3>
-
-                <details>
-                    <summary>例题1：零钱兑换（LeetCode 322）— 完全背包</summary>
-                    <p><strong>题意：</strong> 给定硬币面额数组和目标金额，求最少硬币数，不能凑成返回−1。</p>
-                    <p><strong>思路：</strong> 完全背包变形，dp[j] = 凑成金额j所需最少硬币数。</p>
-<pre><code class="language-python">def coinChange(coins, amount):
-    INF = float('inf')
-    dp = [INF] * (amount + 1)
-    dp[0] = 0                                # 凑成0元需要0枚硬币
-
-    for coin in coins:                       # 遍历每种硬币
-        for j in range(coin, amount + 1):    # 从小到大（完全背包）
-            if dp[j - coin] != INF:
-                dp[j] = min(dp[j], dp[j - coin] + 1)  # 选这枚硬币
-
-    return dp[amount] if dp[amount] != INF else -1
-</code></pre>
-                    <p><strong>时间：</strong> O(amount × len(coins))；<strong>空间：</strong> O(amount)</p>
-                </details>
-
-                <details>
-                    <summary>例题2：最长递增子序列 LIS（LeetCode 300）— O(n log n)</summary>
-                    <p><strong>题意：</strong> 求最长严格递增子序列的长度。</p>
-                    <p><strong>思路：</strong> 维护一个单调递增的 tails 数组，每个新元素用二分查找找到其应插入位置。</p>
-<pre><code class="language-python">import bisect
-
-def lengthOfLIS(nums):
-    tails = []                        # tails[i] = 长度为i+1的递增子序列末尾最小值
-    for num in nums:
-        pos = bisect.bisect_left(tails, num)   # 二分找第一个 >= num 的位置
-        if pos == len(tails):
-            tails.append(num)         # num比所有末尾都大，LIS长度+1
-        else:
-            tails[pos] = num          # 替换，让末尾尽量小（贪心）
-    return len(tails)                 # tails长度即为LIS长度
-</code></pre>
-                    <p><strong>时间：</strong> O(n log n)；<strong>空间：</strong> O(n)</p>
-                </details>
-
-                <details>
-                    <summary>例题3：编辑距离（LeetCode 72）— 二维DP</summary>
-                    <p><strong>题意：</strong> 求将 word1 转换为 word2 的最少操作数（插入、删除、替换）。</p>
-                    <p><strong>思路：</strong> dp[i][j] = word1[:i] 转换为 word2[:j] 的最小操作数。</p>
-<pre><code class="language-python">def minDistance(word1, word2):
-    m, n = len(word1), len(word2)
-    dp = [[0]*(n+1) for _ in range(m+1)]
-
-    # 初始化：空字符串与另一字符串的编辑距离
-    for i in range(m+1): dp[i][0] = i   # 全删除
-    for j in range(n+1): dp[0][j] = j   # 全插入
-
-    for i in range(1, m+1):
-        for j in range(1, n+1):
-            if word1[i-1] == word2[j-1]:
-                dp[i][j] = dp[i-1][j-1]       # 字符相同，无需操作
-            else:
-                dp[i][j] = 1 + min(
-                    dp[i-1][j],    # 删除 word1[i-1]
-                    dp[i][j-1],    # 在 word1 插入 word2[j-1]
-                    dp[i-1][j-1]   # 替换
-                )
-    return dp[m][n]
-</code></pre>
-                    <p><strong>时间：</strong> O(m×n)；<strong>空间：</strong> O(m×n)，可优化至 O(n)</p>
-                </details>
-            </div>
-
-            <!-- 5. 易错点 -->
-            <div class="knowledge-card kc-red">
-                <h3>🔴 易错点</h3>
-
-                <p><strong>① 01背包与完全背包循环方向写反</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（01背包顺序遍历）</p>
-<pre><code class="language-python"># 01背包却从小到大
-for j in range(weight[i], W+1):
-    dp[j] = max(dp[j], dp[j-w]+v)
-# 物品会被重复使用！变成完全背包
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（01背包逆序）</p>
-<pre><code class="language-python"># 01背包必须从大到小
-for j in range(W, weight[i]-1, -1):
-    dp[j] = max(dp[j], dp[j-w]+v)
-# 逆序确保每件物品只用一次
-</code></pre>
-                    </div>
-                </div>
-
-                <p><strong>② DP初始化遗漏导致全局错误</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（忘记初始化边界）</p>
-<pre><code class="language-python">dp = [0] * (amount + 1)
-# dp[0]没有设置，或dp全为0
-# 导致所有状态计算错误
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（明确初始化）</p>
-<pre><code class="language-python">dp = [float('inf')] * (amount + 1)
-dp[0] = 0   # 凑成0元需要0枚，显式设置
-</code></pre>
-                    </div>
-                </div>
-
-                <p><strong>③ 贪心 vs DP 判断错误</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（零钱兑换用贪心）</p>
-<pre><code class="language-python">coins = [1, 3, 4]; amount = 6
-# 贪心：4+1+1=3枚
-# 正确：3+3=2枚，贪心得到次优解！
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（用DP）</p>
-<pre><code class="language-python"># 贪心不适用于非标准面额
-# 必须用DP枚举所有可能
-# 贪心只适合面额为倍数关系的情况
-</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 6. 竞赛拓展 -->
-            <div class="knowledge-card kc-cyan">
-                <h3>🔷 竞赛拓展</h3>
-                <p><strong>状态压缩DP（Bitmask DP）：</strong> 用整数的二进制位表示集合状态，常用于 TSP 和图着色。时间 O(2ⁿ × n²)。</p>
-<pre><code class="language-python">def tsp(dist, n):
-    # dp[mask][i] = 访问了mask集合中的城市，当前在i，的最短路
-    INF = float('inf')
-    dp = [[INF]*n for _ in range(1<<n)]
-    dp[1][0] = 0                          # 从城市0出发
-    for mask in range(1<<n):
-        for u in range(n):
-            if not (mask >> u & 1): continue  # u不在mask中
-            for v in range(n):
-                if mask >> v & 1: continue    # v已在mask中
-                new_mask = mask | (1 << v)
-                dp[new_mask][v] = min(dp[new_mask][v], dp[mask][u] + dist[u][v])
-    return min(dp[(1<<n)-1][i] + dist[i][0] for i in range(n))
-</code></pre>
-                <p><strong>树形DP：</strong> 在树上定义状态，通常 dp[u][0/1] 表示以u为根选/不选时的最优解，后序遍历更新。</p>
-            </div>
         </section>
 
         <section class="card" data-quiz data-module="dp">
@@ -364,5 +274,71 @@ dp[0] = 0   # 凑成0元需要0枚，显式设置
     </main>
     <script src="../assets/js/app.js"></script>
     <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("dpDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; gap: 0.5rem; flex-wrap:wrap">
+                <div style="background:#1e293b; padding:1rem; border-radius:4px; max-width:800px; overflow-x:auto;">
+                    <table id="dpTable" style="margin:0; border-collapse:collapse; text-align:center; font-family:monospace; color:#cbd5e1; white-space:nowrap;"></table>
+                </div>
+            </div>
+            <div style="display:flex; gap:0.5rem">
+                <button id="dpBtnNext" style="background:#3b82f6; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">下一步</button>
+                <button id="dpBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置</button>
+            </div>
+            <div id="dpDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:3em;">点击“下一步”进行推导。</div>
+        </div>
+    `;
+
+    const items = [ {w:1, v:2}, {w:2, v:4}, {w:3, v:5} ];
+    const maxW = 5;
+    let dp = [], curI = 1, curJ = 1;
+    const tableEl = document.getElementById("dpTable"), descrEl = document.getElementById("dpDescr");
+    for(let i=0; i<=items.length; i++) dp.push(new Array(maxW+1).fill(0));
+
+    function renderTable() {
+        let h = "<tr><th style='border:1px solid #334155; padding:4px 8px; color:#94a3b8;'>物品(W,V)</th>";
+        for(let j=0; j<=maxW; j++) h += `<th style='border:1px solid #334155; padding:4px 8px; color:#94a3b8;'>容量${j}</th>`;
+        h += "</tr>";
+        for(let i=0; i<=items.length; i++) {
+            h += "<tr>";
+            let rowL = i===0 ? "初始(全0)" : `物品${i}(${items[i-1].w}, ${items[i-1].v})`;
+            h += `<td style='border:1px solid #334155; padding:4px 8px; font-weight:bold'>${rowL}</td>`;
+            for(let j=0; j<=maxW; j++) {
+                let bg="", col="#cbd5e1";
+                if(i===curI && j===curJ) { bg="#6366f1"; col="#fff"; }
+                else if(i===curI && j<curJ) { bg="#10b981"; col="#fff"; }
+                else if(i===curI-1 && j===curJ) { bg="#f59e0b"; col="#000"; }
+                else if(i===curI-1 && items[i] && j===curJ-items[i].w) { bg="#f43f5e"; col="#000"; }
+                h += `<td style='border:1px solid #334155; padding:4px 8px; background:${bg}; color:${col};'>${dp[i][j]}</td>`;
+            }
+            h += "</tr>";
+        }
+        tableEl.innerHTML = h;
+    }
+
+    document.getElementById("dpBtnNext").onclick = () => {
+        if(curI > items.length) { descrEl.innerHTML = "填写完毕！右下角即为最大价值。"; return; }
+        let it = items[curI-1];
+        if(curJ < it.w) { dp[curI][curJ] = dp[curI-1][curJ]; descrEl.innerHTML = `容量不足${it.w}。继承上方=${dp[curI][curJ]}`; }
+        else {
+            let s = dp[curI-1][curJ], t = dp[curI-1][curJ - it.w] + it.v;
+            dp[curI][curJ] = Math.max(s, t);
+            descrEl.innerHTML = `取max(不装[上方${s}], 装[左上的红色区${dp[curI-1][curJ-it.w]}+物品价值${it.v}]) = ${dp[curI][curJ]}`;
+        }
+        curJ++; if(curJ > maxW) { curJ = 1; curI++; }
+        renderTable();
+    };
+    document.getElementById("dpBtnReset").onclick = () => {
+        dp = []; for(let i=0; i<=items.length; i++) dp.push(new Array(maxW+1).fill(0));
+        curI = 1; curJ = 1; descrEl.innerHTML = "点击“下一步”进行推导。"; renderTable();
+    };
+    renderTable();
+});
+</script>
 </body>
 </html>

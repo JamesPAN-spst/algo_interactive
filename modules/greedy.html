@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -41,200 +56,127 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <div class="knowledge-card kc-blue">
-                <h3>🔵 核心定义</h3>
-                <p><strong>贪心适用条件：</strong></p>
-                <ul>
-                    <li><strong>贪心选择性质：</strong> 全局最优解可由局部最优解得到（不需要回溯）</li>
-                    <li><strong>最优子结构：</strong> 问题的最优解包含子问题的最优解</li>
-                </ul>
-                <p><strong>区间调度（选最多不重叠区间）模板：</strong></p>
-<pre><code class="language-python">def eraseOverlapIntervals(intervals):
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">排序算法</span>
+        <span class="prereq-tag">局部最优思考</span>
+        <p>贪心算法（Greedy）的核心疑问永远是：“何时我能信任一个短视的贪心选择？”它没有动态规划那样通过全方面尝试并记忆化保底，贪心是一条路走到黑，只有严格证明其拥有“贪心选择性质”时才可用。</p>
+    </div>
+
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：交换论证法（Exchange Argument）证明贪心</h3>
+
+        <div class="intuition-box">
+            <strong>核心思想：</strong>要证明贪心产生的解 $G$ 是最优的，我们可以假设存在一个最优解 $O$。如果我们将 $O$ 逐步调整（往往是交换两个决策位置），直到变成 $G$，且在这个过程中“结果没有变坏”，那么 $G$ 的得分一定不差于最优解 $O$，即证明了贪心就是神！
+        </div>
+
+        <h4>区间调度问题 (Interval Scheduling)</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>策略提出：</strong>有多个区间要尽量多地选择且不重叠。我们提出贪心策略：<strong>总是选择结束时间最早</strong> 的区间。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>交换论证：</strong>假设某最优解 $O$ 选取的第一个区间不是结束最早的区间 $A$，而是区间 $B$。因为 $A$ 结束得比 $B$ 还要早，如果我们在 $O$ 中用 $A$ 替换掉 $B$，$A$ 绝不可能和 $O$ 中的后续区间冲突（因为腾出的空白时间更多了）。这证明了“早结束”的替换操作<strong>永远不会使能容纳的区间变少</strong>。贪心成立。
+            </div>
+        </div>
+
+        <div class="think-block">
+            <div class="q">Q: 为什么按“开始时间最早”贪心是错的？</div>
+            <details>
+                <summary>查看答疑</summary>
+                因为一个包含全天的超长区间开始得很早，如果你贪心地选了它，它就会霸占这一整天，导致你错过了中间的许多短区间任务。贪心必须兼顾“不影响后续决策”，结束早意味着把更多的时间让给了未来。
+            </details>
+        </div>
+        
+        <div class="think-block">
+            <div class="q">Q: 我怎么在笔试面试中证明我的贪心是正确的？</div>
+            <details>
+                <summary>查看答疑</summary>
+                严格的数学证明可能来不及。实用的套路是：1. 提出贪心（按某个排序）。2. “强行换位思考”：如果我不这么选，选了别的，情况会变好吗？3. 寻找反例：随手画几组极端数据，如果找不到反例，且感觉满足“交换不亏”，通常就可以大胆写了。
+            </details>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>💻 模板代码：跳跃游戏与区间调度</h3>
+<pre><code class="language-python"># 1. 区间调度问题 (最多互不重叠区间数)
+def max_non_overlapping_intervals(intervals):
     if not intervals: return 0
-    # 按结束时间升序排序（贪心核心）
+    # 核心：按结束时间排序
     intervals.sort(key=lambda x: x[1])
-
-    count = 0              # 需要移除的区间数
-    end = float('-inf')    # 上一个被选中区间的结束时间
-
-    for start, finish in intervals:
-        if start >= end:   # 当前区间与已选区间不重叠
-            end = finish   # 更新结束时间（贪心：选结束最早的）
-        else:
-            count += 1     # 重叠，该区间需要被移除
+    count = 1
+    end = intervals[0][1]
+    
+    for i in range(1, len(intervals)):
+        if intervals[i][0] >= end: # 如果不重叠
+            count += 1
+            end = intervals[i][1]  # 更新可用时间的边界
     return count
-</code></pre>
-                <p><strong>跳跃游戏（贪心维护最远可达位置）：</strong></p>
-<pre><code class="language-python">def canJump(nums):
-    max_reach = 0          # 当前能到达的最远下标
-    for i, jump in enumerate(nums):
-        if i > max_reach:  # 当前位置不可达
+
+# 2. 跳跃游戏 (能否到达数组末尾)
+def canJump(nums):
+    farthest = 0
+    for i in range(len(nums)):
+        # 如果当前位置已经走不到了
+        if i > farthest:
             return False
-        max_reach = max(max_reach, i + jump)
-    return True
+        # 贪心：时刻维护我们能到达的最远跳跃边界
+        farthest = max(farthest, i + nums[i])
+        if farthest >= len(nums) - 1:
+            return True
+    return farthest >= len(nums) - 1
+</code></pre>
+        <table>
+            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>基于排序的贪心</td><td>O(N log N)</td><td>O(1)/O(N)</td><td>主要耗时在于对数据集合的排序。</td></tr>
+            <tr><td>一遍扫描贪心(如 Jump Game)</td><td>O(N)</td><td>O(1)</td><td>状态转移不依赖历史或全局，仅依靠常数个边界指针线性扫描。</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题变种比对</h3>
+        <details>
+            <summary>变种：如果我们要用最少的箭射爆所有气球呢？</summary>
+            <p><strong>其实也是区间重叠问题：</strong> 一支箭实际上选定了一个 $X$ 坐标，它能穿透所有覆盖该坐标的区间。贪心策略：将气球按右边界排序，每次在当前尚未引爆的气球的“最右侧”射出一支箭，这样能有最大的机会引爆右侧靠后的气球。与区间调度逻辑一致！</p>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点分析</h3>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 错误的贪心标准</p>
+<pre><code class="language-python"># 按开始时间排序试图做区间调度
+intervals.sort(key=lambda x: x[0])
+# ... 这是错的，因为可能有一个区间覆盖所有时间
 </code></pre>
             </div>
-
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查</h3>
-                <table>
-                    <tr><th>问题类型</th><th>贪心策略</th><th>时间复杂度</th><th>典型题</th></tr>
-                    <tr><td>区间调度（最多不重叠）</td><td>按结束时间升序</td><td>O(n log n)</td><td>LeetCode 435</td></tr>
-                    <tr><td>区间覆盖（最少区间）</td><td>按起点升序，选覆盖最远的</td><td>O(n log n)</td><td>LeetCode 1024</td></tr>
-                    <tr><td>跳跃游戏</td><td>维护最远可达</td><td>O(n)</td><td>LeetCode 45</td></tr>
-                    <tr><td>分糖果/任务分配</td><td>排序+双向扫描</td><td>O(n log n)</td><td>LeetCode 135</td></tr>
-                    <tr><td>Huffman编码</td><td>每次合并最小两棵树</td><td>O(n log n)</td><td>压缩编码</td></tr>
-                </table>
+            <div class="right">
+                <p>✅ 正确的贪心标准</p>
+<pre><code class="language-python"># 总是给未来的选择留出最大的空间
+intervals.sort(key=lambda x: x[1])
+</code></pre>
             </div>
+        </div>
+    </div>
 
-            <div class="knowledge-card kc-purple">
-                <h3>🖼 结构图示：区间调度贪心示例</h3>
-<pre class="ascii-art">
-区间: [1,4], [2,3], [3,5], [4,6], [5,7]
-按结束时间排序: [2,3], [1,4], [3,5], [4,6], [5,7]
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：区间调度贪心选择过程</h3>
+        <div class="demo-container" id="greedyDemo"></div>
+    </div>
 
-选区间（end=-∞）:
-  [2,3]: start=2>=-∞✓ 选择！end=3  chosen=1
-  [1,4]: start=1<3   重叠，跳过
-  [3,5]: start=3>=3✓ 选择！end=5  chosen=2
-  [4,6]: start=4<5   重叠，跳过
-  [5,7]: start=5>=5✓ 选择！end=7  chosen=3
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>Huffman 编码：</strong> 经典的高级贪心。为什么合并频率最小的两个节点是对的？因为深度越深，编码越长，频率最低的叶子理应呆在最底部。由于每次合并都缩小了集合大小，可用优先队列（最小堆）来实现 O(N log N) 的编码构建。</p>
+        <p><strong>贪心与 DP 的界限 (找零钱问题)：</strong> 经典的硬币如果面额是 1, 5, 10, 25 (日常硬币)，由于各面额之间倍数关系良好（即“拟阵”结构），贪心每次找最大的是最优的；但如果面额是 1, 3, 4，找 6 块钱贪心会得出 4+1+1 (3枚)，而最佳答案是 3+3 (2枚)。此时贪心失效，必须退回背包 DP。</p>
+    </div>
+</section>
 
-最多可选3个不重叠区间：[2,3],[3,5],[5,7] ✓
-
-为什么按结束时间而非开始时间？
-  按开始时间贪心 [1,4]第一个选 → 排除了[2,3]这个更短的
-  按结束时间贪心 [2,3]第一个选 → 给后面留下更多空间
-</pre>
-            </div>
-
-            <div class="knowledge-card kc-green">
-                <h3>🟢 典型例题详解</h3>
-                <details>
-                    <summary>例题1：分发糖果（LeetCode 135）— 双向贪心</summary>
-                    <p><strong>题意：</strong> 每个孩子至少1颗糖，评分高的孩子比相邻孩子多。求最少糖果总数。</p>
-<pre><code class="language-python">def candy(ratings):
-    n = len(ratings)
-    candies = [1] * n          # 初始每人1颗
-
-    # 第一遍：从左到右，右>左则+1
-    for i in range(1, n):
-        if ratings[i] > ratings[i-1]:
-            candies[i] = candies[i-1] + 1
-
-    # 第二遍：从右到左，左>右且糖不够则调整
-    for i in range(n-2, -1, -1):
-        if ratings[i] > ratings[i+1]:
-            candies[i] = max(candies[i], candies[i+1] + 1)
-
-    return sum(candies)
-</code></pre>
-                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
-                </details>
-
-                <details>
-                    <summary>例题2：跳跃游戏 II（LeetCode 45）— 贪心求最少跳跃次数</summary>
-<pre><code class="language-python">def jump(nums):
-    jumps = 0
-    cur_end = 0      # 当前跳跃次数能到达的最远位置
-    farthest = 0     # 下一次跳跃能到达的最远位置
-
-    for i in range(len(nums) - 1):   # 不用处理最后一个位置
-        farthest = max(farthest, i + nums[i])  # 更新下次可达最远
-        if i == cur_end:             # 到达当前跳跃的边界
-            jumps += 1               # 必须再跳一次
-            cur_end = farthest       # 边界更新为下次可达最远
-            if cur_end >= len(nums) - 1:
-                break
-    return jumps
-</code></pre>
-                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
-                </details>
-
-                <details>
-                    <summary>例题3：任务调度器（LeetCode 621）— 数学贪心</summary>
-                    <p><strong>题意：</strong> CPU执行任务，相同任务间需冷却时间n，求最少时间。</p>
-<pre><code class="language-python">from collections import Counter
-
-def leastInterval(tasks, n):
-    freq = Counter(tasks)
-    max_freq = max(freq.values())            # 最高频次
-    max_count = sum(1 for v in freq.values() if v == max_freq)  # 有几个最高频
-
-    # 公式：(max_freq - 1) * (n + 1) + max_count
-    # 解释：最高频任务将时间分成 max_freq-1 个间隔，每个间隔n+1个槽
-    #       如果有多个最高频任务，末尾还需加上它们的数量
-    result = (max_freq - 1) * (n + 1) + max_count
-    return max(result, len(tasks))           # 任务数多时无需冷却等待
-</code></pre>
-                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)（固定字符集大小）</p>
-                </details>
-            </div>
-
-            <div class="knowledge-card kc-red">
-                <h3>🔴 易错点</h3>
-                <p><strong>① 未验证贪心正确性就使用</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（零钱兑换用贪心）</p>
-<pre><code class="language-python">coins = [1, 3, 4]
-amount = 6
-# 贪心：4+1+1=3枚
-# 正确：3+3=2枚
-# 贪心得到次优解！非标准面额不能用贪心
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 核实后才用（标准面额可用）</p>
-<pre><code class="language-python">coins = [1, 5, 10, 25]  # 标准美分面额
-# 贪心有效：选最大不超过的面额
-# 因为大面额是小面额倍数关系
-# 一般情况用DP保证正确
-</code></pre>
-                    </div>
-                </div>
-                <p><strong>② 区间调度排序关键字选错</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（按开始时间排序）</p>
-<pre><code class="language-python">intervals.sort(key=lambda x: x[0])
-# 按起点排序选最大数量不重叠区间 → 错误
-# 例：[1,10],[2,3] 选了[1,10]就漏了更多机会
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（按结束时间排序）</p>
-<pre><code class="language-python">intervals.sort(key=lambda x: x[1])
-# 结束最早的优先选 → 给后续留更多空间
-# 这是区间调度最优性的关键
-</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <div class="knowledge-card kc-cyan">
-                <h3>🔷 竞赛拓展</h3>
-                <p><strong>Huffman编码（最优前缀码）：</strong> 贪心策略：每次合并权值最小的两棵子树，构建最优二叉树使编码期望长度最小。</p>
-<pre><code class="language-python">import heapq
-
-def huffman_cost(frequencies):
-    heap = list(frequencies)
-    heapq.heapify(heap)
-    total_cost = 0
-    while len(heap) > 1:
-        a = heapq.heappop(heap)    # 最小
-        b = heapq.heappop(heap)    # 次小
-        merged = a + b
-        total_cost += merged       # 合并代价
-        heapq.heappush(heap, merged)
-    return total_cost
-</code></pre>
-                <p><strong>拟阵理论：</strong> 若问题满足"拟阵"结构，则贪心（按权重降序选，不破坏独立性）一定能得到最优解。最小生成树（Kruskal）是拟阵贪心的典型应用。</p>
-                <p><strong>反悔贪心：</strong> 贪心过程中允许"撤回"之前的选择。例如：用堆维护已选集合，当发现更优选择时，弹出最差的换入新选项。</p>
-            </div>
-        </section>
-
-        <section class="card" data-quiz data-module="greedy">
+<section class="card" data-quiz data-module="greedy">
 <h2>练习题（Practice）</h2>
 <div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="GR3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
 <p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
@@ -337,5 +279,85 @@ def huffman_cost(frequencies):
     </main>
     <script src="../assets/js/app.js"></script>
     <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("greedyDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; flex-direction:column; gap:8px; background:#1e293b; padding:1rem; border-radius:4px" id="gdContainer">
+            </div>
+            <div style="display:flex; gap:0.5rem">
+                <button id="gdBtnStep" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">下一步</button>
+                <button id="gdBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置演示</button>
+            </div>
+            <div id="gdDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:3em;">已将所有任务按照结束时间(右边缘)排序。点击下一步执行最早结束优先策略。</div>
+        </div>
+    `;
+
+    // 默认按照右边界从小到大排列好的区间。 [start, end, text_label]
+    const initial_intervals = [
+        [1, 3, "A (1-3)"], [2, 5, "B (2-5)"], [4, 6, "C (4-6)"], [6, 8, "D (6-8)"], [5, 9, "E (5-9)"], [8, 10, "F (8-10)"]
+    ];
+
+    let intervals = [...initial_intervals];
+    let curEnd = 0, stepIdx = 0;
+    const view = document.getElementById("gdContainer"), descr = document.getElementById("gdDescr");
+
+    function render() {
+        view.innerHTML = "";
+        intervals.forEach((it, i) => {
+            const w = (it[1] - it[0]) * 10;
+            const l = (it[0] - 1) * 10;
+            // State visual
+            let bg = "#334155"; let op = 1;
+            if (i < stepIdx) {
+                if (it.selected) bg = "#3b82f6"; // accepted
+                else { bg = "#f43f5e"; op = 0.3; } // rejected
+            } else if (i === stepIdx) {
+                bg = "#f59e0b"; // analyzing
+            }
+            
+            view.innerHTML += `
+                <div style="position:relative; height:24px; border-radius:3px; font-size:0.75rem; color:#fff; line-height:24px; text-align:center; transition:all 0.3s;
+                    margin-left:${l}%; width:${w}%; background:${bg}; opacity:${op};">
+                    ${it[2]}
+                </div>
+            `;
+        });
+        
+        if(stepIdx <= intervals.length && curEnd > 0) {
+            view.innerHTML += `
+                <div style="position:absolute; top:0; bottom:0; left:${(curEnd-1)*10}%; width:2px; background:#10b981; z-index:10; "></div>
+            `;
+        }
+    }
+
+    document.getElementById("gdBtnStep").onclick = () => {
+        if(stepIdx >= intervals.length) { descr.innerHTML = "所有区间判定完毕。蓝色为保留的不重叠区间。"; return; }
+        let it = intervals[stepIdx];
+        if(it[0] >= curEnd) {
+            it.selected = true;
+            curEnd = it[1];
+            descr.innerHTML = `决定选取 ${it[2]}。<br>它的开始时间 ${it[0]} 大于等于当前可用时间边界，完美兼容并且它结束得目前最早（为未来的任务腾出了最多空间）。`;
+        } else {
+            it.selected = false;
+            descr.innerHTML = `放弃 ${it[2]}。<br>它的开始时间 ${it[0]} 和我们已安排的区间发生冲突（当前边界在 ${curEnd}）。`;
+        }
+        stepIdx++;
+        render();
+    };
+
+    document.getElementById("gdBtnReset").onclick = () => {
+        intervals = initial_intervals.map(x=>[...x]);
+        curEnd = 0; stepIdx = 0;
+        descr.innerHTML = "已重置。可重新点击下一步观察。";
+        render();
+    };
+    
+    render();
+});
+</script>
 </body>
 </html>

@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -47,280 +62,161 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <!-- 1. 核心定义 -->
-            <div class="knowledge-card kc-blue">
-                <h3>🔵 核心定义</h3>
-                <p><strong>邻接表建图（推荐）：</strong></p>
-<pre><code class="language-python">from collections import defaultdict
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">树的遍历</span>
+        <span class="prereq-tag">邻接表表示法</span>
+        <p>图是从树经过松弛泛化而来的更复杂的非线性结构。掌握图的关键是将“网状结构”转化为一颗可以通过特定规则生长的<strong>搜索树</strong>。</p>
+    </div>
 
-graph = defaultdict(list)
-# 无向图
-graph[u].append(v)
-graph[v].append(u)
-# 有权有向图
-graph[u].append((v, weight))
-</code></pre>
-                <p><strong>BFS 模板（无权最短路）：</strong></p>
-<pre><code class="language-python">from collections import deque
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：核心图算法直觉</h3>
+        
+        <h4>1. BFS vs DFS 的本质</h4>
+        <div class="intuition-box">
+            <strong>核心思想：</strong> BFS 像水波纹一样逐层向外扩散，因此它总是优先到达最近的节点。DFS 像走迷宫，不撞南墙不回头。
+        </div>
+        <div class="think-block">
+            <div class="q">Q: 为什么无权图中 DFS 找到的不是最短路径，而 BFS 是？</div>
+            <details>
+                <summary>查看答疑</summary>
+                DFS 沿着一条路一直深挖，可能绕了一个大圈才第一次到达目标点。而 BFS 严格按照“经过边数”从小到大层的顺序进行搜索，所以第一个触碰到目标点的波纹，就是跳数最少的路径。
+            </details>
+        </div>
 
-def bfs(graph, start, end):
-    queue = deque([(start, 0)])       # (当前节点, 距离)
-    visited = {start}
-    while queue:
-        node, dist = queue.popleft()
-        if node == end:
-            return dist
-        for neighbor in graph[node]:
-            if neighbor not in visited:
-                visited.add(neighbor) # 入队时即标记，防重复
-                queue.append((neighbor, dist + 1))
-    return -1
-</code></pre>
-                <p><strong>Dijkstra 模板（非负权最短路）：</strong></p>
-<pre><code class="language-python">import heapq
+        <h4>2. Dijkstra 最短路贪心推演</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>贪心选择：</strong> 为什么每次从优先队列弹出的距离最小的点，它的距离就已经确定，无需再修改了？
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>反证法证明：</strong> 假设存在一条更短的路径前往这个最小点 `u`，那这条路径必然要经过其他尚未确认的中间点 `v`。但是在非负边图里，去 `v` 的代价目前已经 >= 去 `u` 的代价。再从 `v` 绕路去 `u` 只会增加距离，不可能变得更短！
+            </div>
+        </div>
+        <div class="think-block">
+            <div class="q">Q: 为什么 Dijkstra 在有负权边时会失效？</div>
+            <details>
+                <summary>查看答疑</summary>
+                上面的反证法建立在“边权 >= 0，越走越长”的前提下。如果存在负权边，绕路去更远的 `v`，可能会通过一条负数代价的边让最终距离变小，这就打破了“弹出即最终极值”的贪心法则。（注：需使用 Bellman-Ford 解决）
+            </details>
+        </div>
 
-def dijkstra(graph, start, n):
-    dist = [float('inf')] * n
+        <h4>3. 拓扑排序 (Topological Sort)</h4>
+        <div class="intuition-box">
+            从“剥洋葱”的直觉理解：如果 A 依赖 B，那 B 必须先做。谁不依赖任何人？入度 (in-degree) 为 0 的节点！所以算法就是：不断移除入度为 0 的点并输出，同时把它发出的边剪断（即被指向的节点入度 -1）。
+        </div>
+
+        <h4>4. 并查集 (Union-Find) 从朴素到高效</h4>
+        <div class="naive-vs-smart">
+            <div class="naive"><h4 class="label">朴素链表结构</h4><p>Find 是 O(n)，退化成一跳一跳的单链表。合并只改根的指针。</p></div>
+            <div class="smart"><h4 class="label">路径压缩与按秩合并</h4><p>搜索根的同时把沿途所有节点直接指向根。合并时总是把浅树接到深树下。Find 趋近 O(1)。</p></div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>💻 模板代码：Dijkstra 与并查集</h3>
+<pre><code class="language-python"># 1. Dijkstra 堆优化 (O(E log V))
+import heapq
+def dijkstra(n, graph, start):
+    # graph: {u: [(v, weight), ...]}
+    dist = {i: float('inf') for i in range(n)}
     dist[start] = 0
-    heap = [(0, start)]              # (距离, 节点)
-
-    while heap:
-        d, u = heapq.heappop(heap)
-        if d > dist[u]: continue     # 已找到更短路，跳过
-        for v, w in graph[u]:
-            if dist[u] + w < dist[v]:
-                dist[v] = dist[u] + w
-                heapq.heappush(heap, (dist[v], v))
+    pq = [(0, start)]  # (distance, node)
+    
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]: continue # 若非最新则剪枝
+        
+        for v, weight in graph[u]:
+            new_v_dist = d + weight
+            if new_v_dist < dist[v]:
+                dist[v] = new_v_dist
+                heapq.heappush(pq, (new_v_dist, v))
     return dist
+
+# 2. 并查集 (路径压缩 + 按秩合并)
+class UnionFind:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [1] * n
+
+    def find(self, i):
+        if self.parent[i] == i:
+            return i
+        # 路径压缩：直接挂到根节点
+        self.parent[i] = self.find(self.parent[i])
+        return self.parent[i]
+
+    def union(self, i, j):
+        root_i = self.find(i)
+        root_j = self.find(j)
+        if root_i != root_j:
+            # 按秩合并：小树挂到大树
+            if self.rank[root_i] < self.rank[root_j]:
+                self.parent[root_i] = root_j
+            elif self.rank[root_i] > self.rank[root_j]:
+                self.parent[root_j] = root_i
+            else:
+                self.parent[root_j] = root_i
+                self.rank[root_i] += 1
+</code></pre>
+        <table>
+            <tr><th>算法</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>Dijkstra(PQ)</td><td>O(E log V)</td><td>O(V + E)</td><td>每条边尝试松弛一次，优先队列操作最多 E 次。</td></tr>
+            <tr><td>拓扑排序(BFS)</td><td>O(V + E)</td><td>O(V + E)</td><td>遍历每个点与每条边一次。</td></tr>
+            <tr><td>并查集</td><td>O(α(N))≈O(1)</td><td>O(N)</td><td>阿克曼函数的反函数极小，平摊视为常数。</td></tr>
+        </table>
+    </div>
+
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题变种比对</h3>
+        <details>
+            <summary>变种：如果我们要找所有权值只有 0 和 1 的最短路？</summary>
+            <p><strong>常规思路：</strong> 使用 Dijkstra (O(E log V))。<br> 
+            <strong>变种优化：</strong> 由于只有 0 和 1 的边权，优先队列里的距离差不会超过 1，可以直接使用 <strong>0-1 BFS (双端队列 Deque)</strong>！遇到 0 边权的节点插入队头，遇到 1 边权的节点插入队尾。时间复杂度降维打击为 O(V+E)！</p>
+        </details>
+    </div>
+
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点分析</h3>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 漏掉 Dijkstra 中的僵尸节点剪枝</p>
+<pre><code class="language-python">d, u = heapq.heappop(pq)
+# 直接拓展邻居，导致重复处理过时的坏数据
+for v, w in graph[u]:
+    ...
 </code></pre>
             </div>
-
-            <!-- 2. 复杂度速查 -->
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查</h3>
-                <table>
-                    <tr><th>算法</th><th>时间复杂度</th><th>适用场景</th><th>备注</th></tr>
-                    <tr><td>BFS</td><td>O(V+E)</td><td>无权图最短路、层序遍历</td><td>队列实现</td></tr>
-                    <tr><td>DFS</td><td>O(V+E)</td><td>连通性、拓扑排序、环检测</td><td>栈/递归</td></tr>
-                    <tr><td>Dijkstra（堆）</td><td>O((V+E) log V)</td><td>非负权单源最短路</td><td>不能处理负权</td></tr>
-                    <tr><td>Bellman-Ford</td><td>O(VE)</td><td>含负权单源最短路</td><td>可检测负权环</td></tr>
-                    <tr><td>Floyd-Warshall</td><td>O(V³)</td><td>全源最短路</td><td>节点数 ≤ 500</td></tr>
-                    <tr><td>Prim / Kruskal</td><td>O(E log E)</td><td>最小生成树</td><td>Kruskal用并查集</td></tr>
-                    <tr><td>拓扑排序</td><td>O(V+E)</td><td>有向无环图排序</td><td>Kahn算法：BFS</td></tr>
-                </table>
-            </div>
-
-            <!-- 3. 结构图示 -->
-            <div class="knowledge-card kc-purple">
-                <h3>🖼 结构图示：BFS vs DFS 遍历顺序</h3>
-<pre class="ascii-art">
-图结构:
-    1
-   / \
-  2   3
- / \   \
-4   5   6
-
-BFS（层序）: 1 → 2 → 3 → 4 → 5 → 6
-             队列: [1] → [2,3] → [3,4,5] → [4,5,6]
-
-DFS（深度优先）: 1 → 2 → 4 → 5 → 3 → 6
-                 栈/递归: 1进→2进→4进→4出→5进→5出→2出→3进→6进
-
-Dijkstra示例：
-  0 --1-- 1 --3-- 3
-  |               |
-  4      2 --1-- 2
-  |
-  (权重)
-
-起点0的最短路: dist[0]=0, dist[1]=1, dist[2]=3, dist[3]=4
-</pre>
-            </div>
-
-            <!-- 4. 典型例题 -->
-            <div class="knowledge-card kc-green">
-                <h3>🟢 典型例题详解</h3>
-
-                <details>
-                    <summary>例题1：岛屿数量（LeetCode 200）— DFS/BFS</summary>
-                    <p><strong>题意：</strong> 给二维网格，'1'为陆地'0'为水，求岛屿数量（相连'1'的连通块数）。</p>
-                    <p><strong>思路：</strong> 遍历每个格子，遇到'1'进行DFS/BFS标记所有相连陆地，每次触发=一个岛屿。</p>
-<pre><code class="language-python">def numIslands(grid):
-    if not grid: return 0
-    rows, cols = len(grid), len(grid[0])
-    count = 0
-
-    def dfs(r, c):
-        # 越界或是水，停止
-        if r < 0 or r >= rows or c < 0 or c >= cols or grid[r][c] != '1':
-            return
-        grid[r][c] = '0'        # 标记已访问（原地修改）
-        dfs(r+1,c); dfs(r-1,c); dfs(r,c+1); dfs(r,c-1)
-
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == '1':
-                count += 1       # 发现新岛屿
-                dfs(r, c)        # 淹没整个岛屿
-    return count
-</code></pre>
-                    <p><strong>时间：</strong> O(m×n)；<strong>空间：</strong> O(m×n)（递归栈）</p>
-                </details>
-
-                <details>
-                    <summary>例题2：课程表（LeetCode 207）— 拓扑排序（Kahn算法）</summary>
-                    <p><strong>题意：</strong> n门课程，有前置要求，判断能否完成所有课程。</p>
-                    <p><strong>思路：</strong> 建有向图，BFS拓扑排序，若存在环则无法完成。</p>
-<pre><code class="language-python">from collections import deque
-
-def canFinish(numCourses, prerequisites):
-    graph = [[] for _ in range(numCourses)]
-    in_degree = [0] * numCourses
-
-    for a, b in prerequisites:         # b → a（先修b才能学a）
-        graph[b].append(a)
-        in_degree[a] += 1
-
-    queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
-    completed = 0
-
-    while queue:
-        node = queue.popleft()
-        completed += 1                 # 完成该课程
-        for neighbor in graph[node]:
-            in_degree[neighbor] -= 1
-            if in_degree[neighbor] == 0:
-                queue.append(neighbor) # 前置都完成了，可学
-
-    return completed == numCourses     # 全部完成则无环
-</code></pre>
-                    <p><strong>时间：</strong> O(V+E)；<strong>空间：</strong> O(V+E)</p>
-                </details>
-
-                <details>
-                    <summary>例题3：网络延迟时间（LeetCode 743）— Dijkstra</summary>
-                    <p><strong>题意：</strong> n个节点有向加权图，从k出发，求所有节点收到信号的最短时间。</p>
-<pre><code class="language-python">import heapq
-from collections import defaultdict
-
-def networkDelayTime(times, n, k):
-    graph = defaultdict(list)
-    for u, v, w in times:
-        graph[u].append((v, w))        # 有向带权图
-
-    dist = {i: float('inf') for i in range(1, n+1)}
-    dist[k] = 0
-    heap = [(0, k)]                    # (距离, 节点)
-
-    while heap:
-        d, u = heapq.heappop(heap)
-        if d > dist[u]: continue       # 旧路径，跳过
-        for v, w in graph[u]:
-            if dist[u] + w < dist[v]:
-                dist[v] = dist[u] + w
-                heapq.heappush(heap, (dist[v], v))
-
-    max_dist = max(dist.values())
-    return max_dist if max_dist < float('inf') else -1
-</code></pre>
-                    <p><strong>时间：</strong> O(E log V)；<strong>空间：</strong> O(V+E)</p>
-                </details>
-            </div>
-
-            <!-- 5. 易错点 -->
-            <div class="knowledge-card kc-red">
-                <h3>🔴 易错点</h3>
-
-                <p><strong>① visited 标记时机错误导致重复入队</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（出队时才标记）</p>
-<pre><code class="language-python">while queue:
-    node = queue.popleft()
-    visited.add(node)          # 出队才标记，太晚了！
-    for nb in graph[node]:
-        if nb not in visited:
-            queue.append(nb)   # 同一节点可能多次入队
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（入队时即标记）</p>
-<pre><code class="language-python">visited = {start}
-while queue:
-    node = queue.popleft()
-    for nb in graph[node]:
-        if nb not in visited:
-            visited.add(nb)    # 入队时立即标记
-            queue.append(nb)
-</code></pre>
-                    </div>
-                </div>
-
-                <p><strong>② 无向图只添加单向边</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（单向）</p>
-<pre><code class="language-python">for u, v in edges:
-    graph[u].append(v)  # 只有u→v
-    # 忘记 graph[v].append(u)
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（双向）</p>
-<pre><code class="language-python">for u, v in edges:
-    graph[u].append(v)  # u→v
-    graph[v].append(u)  # v→u（无向图必须）
-</code></pre>
-                    </div>
-                </div>
-
-                <p><strong>③ Dijkstra用于含负权边</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（负权用Dijkstra）</p>
-<pre><code class="language-python"># 存在边权 -5
-# Dijkstra贪心选最小，但负权边
-# 可能让后来的路径更短，得到错误答案
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（负权用Bellman-Ford）</p>
-<pre><code class="language-python"># Bellman-Ford: 松弛V-1次
-for _ in range(n - 1):
-    for u, v, w in edges:
-        if dist[u] + w < dist[v]:
-            dist[v] = dist[u] + w
-</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 6. 竞赛拓展 -->
-            <div class="knowledge-card kc-cyan">
-                <h3>🔷 竞赛拓展</h3>
-                <p><strong>A* 搜索：</strong> Dijkstra + 启发式函数 h(n)（如曼哈顿距离），优先扩展 f(n)=g(n)+h(n) 最小的节点，比Dijkstra快但需要可接受启发式。</p>
-                <p><strong>强连通分量（SCC）：</strong> Kosaraju/Tarjan 算法，O(V+E)。用于缩点、DAG转化。</p>
-                <p><strong>欧拉路径：</strong> 一笔画问题。无向图：所有节点度数为偶数（欧拉回路）或恰好2个奇数度节点（欧拉路径）。</p>
-<pre><code class="language-python"># Hierholzer算法求欧拉路径（O(E)）
-from collections import defaultdict
-
-def findItinerary(tickets):
-    graph = defaultdict(list)
-    for src, dst in sorted(tickets, reverse=True):
-        graph[src].append(dst)   # 逆序排序，pop()取字典序最小
-    result = []
-    def dfs(node):
-        while graph[node]:
-            dfs(graph[node].pop())   # 深度优先
-        result.append(node)          # 后序加入即为逆序路径
-    dfs("JFK")
-    return result[::-1]
+            <div class="right">
+                <p>✅ 必须加入剪枝</p>
+<pre><code class="language-python">d, u = heapq.heappop(pq)
+if d > dist[u]:
+    continue  # 这个数据是旧的，忽略
+for v, w in graph[u]:
+    ...
 </code></pre>
             </div>
-        </section>
+        </div>
+    </div>
 
-        <section class="card" data-quiz data-module="graphs">
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：Dijkstra 最短路过程 (5节点)</h3>
+        <div class="demo-container" id="graphDemo"></div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>SPFA算法：</strong>基于队列的 Bellman-Ford 优化算法，可处理负权边。但在极端构造图下会退化成 `O(V * E)`。</p>
+        <p><strong>Floyd-Warshall：</strong> 多源最短路径。巧妙利用状态转移方程 <code>dp[k][i][j]</code> —— 使得允许途经节点不超过 k 的松弛操作，O(N^3) 解决全图距离问题且极其简短。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="graphs">
 <h2>练习题（Practice）</h2>
 <div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 G3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
 <p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
@@ -424,5 +320,115 @@ def findItinerary(tickets):
 
     <script src="../assets/js/app.js"></script>
     <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("graphDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; gap: 1rem; flex-wrap:wrap">
+                <div style="flex:1; background:#1e293b; padding:1rem; border-radius:4px; max-width:400px; display:flex; justify-content:center; position:relative;">
+                    <canvas id="grCanvas" width="300" height="250"></canvas>
+                </div>
+                <div style="flex:1; background:#0f172a; border-radius:4px; padding:1rem;">
+                    <h4 style="margin-top:0; color:#38bdf8; font-size:0.9rem">距离统计表 (从 A 出发)</h4>
+                    <table style="width:100%; text-align:center; color:#cbd5e1; border-collapse:collapse; margin-bottom:1rem;" id="grTable">
+                        <tr><th style="border-bottom:1px solid #334155">节点</th><th style="border-bottom:1px solid #334155">当前距离</th><th style="border-bottom:1px solid #334155">状态</th></tr>
+                        <tr><td>A</td><td id="d_a">0</td><td id="s_a">未定</td></tr>
+                        <tr><td>B</td><td id="d_b">∞</td><td id="s_b">待发现</td></tr>
+                        <tr><td>C</td><td id="d_c">∞</td><td id="s_c">待发现</td></tr>
+                        <tr><td>D</td><td id="d_d">∞</td><td id="s_d">待发现</td></tr>
+                        <tr><td>E</td><td id="d_e">∞</td><td id="s_e">待发现</td></tr>
+                    </table>
+                    <div style="display:flex; gap:0.5rem">
+                        <button id="grBtnStep" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">执行下一步</button>
+                        <button id="grBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置</button>
+                    </div>
+                </div>
+            </div>
+            <div id="grDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:3em;">点击“执行下一步”开始 Dijkstra 贪心探索。</div>
+        </div>
+    `;
+
+    // nodes and graph
+    const nodes = [{id:'A',x:50,y:125}, {id:'B',x:150,y:50}, {id:'C',x:150,y:200}, {id:'D',x:250,y:80}, {id:'E',x:250,y:180}];
+    const edges = [[0,1,4],[0,2,2],[1,2,1],[1,3,5],[2,3,8],[2,4,10],[3,4,2]];
+    
+    let dist = [0, Infinity, Infinity, Infinity, Infinity];
+    let confirmed = [false, false, false, false, false];
+    let pq = [], state = 'init', poppedU = -1, neighborIdx = 0, edgesCur = [];
+    
+    const cvs = document.getElementById("grCanvas"), ctx = cvs.getContext("2d"), descr = document.getElementById("grDescr");
+
+    function renderGraph() {
+        ctx.clearRect(0,0,cvs.width,cvs.height);
+        ctx.font = "12px sans-serif";
+        edges.forEach(e => {
+            const u = nodes[e[0]], v = nodes[e[1]];
+            ctx.beginPath(); ctx.moveTo(u.x, u.y); ctx.lineTo(v.x, v.y);
+            if (state === 'relax_neighbors' && ((e[0]==poppedU && e[1]==edgesCur[Math.max(0,neighborIdx-1)][1]) || (e[1]==poppedU && e[0]==edgesCur[Math.max(0,neighborIdx-1)][1]))) {
+                ctx.strokeStyle = "#f59e0b"; ctx.lineWidth = 4;
+            } else { ctx.strokeStyle = "#334155"; ctx.lineWidth = 2; }
+            ctx.stroke();
+            ctx.fillStyle = "#94a3b8"; ctx.fillText(e[2], (u.x+v.x)/2, (u.y+v.y)/2-5);
+        });
+
+        nodes.forEach((n,i) => {
+            ctx.beginPath(); ctx.arc(n.x, n.y, 16, 0, Math.PI*2);
+            ctx.fillStyle = confirmed[i] ? "#10b981" : (i == poppedU ? "#6366f1" : "#1e293b");
+            ctx.fill(); ctx.strokeStyle = "#475569"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(n.id, n.x, n.y);
+            ctx.fillStyle = "#38bdf8"; ctx.font = "bold 13px sans-serif";
+            ctx.fillText(dist[i]===Infinity ? "∞" : dist[i], n.x, n.y - 25);
+        });
+        
+        ['a','b','c','d','e'].forEach((id, i) => {
+            document.getElementById(`d_${id}`).innerText = dist[i]===Infinity ? "∞" : dist[i];
+            const ts = document.getElementById(`s_${id}`);
+            if(confirmed[i]) { ts.innerText = "已固定"; ts.style.color="#10b981"; }
+            else if(i==poppedU) { ts.innerText = "出队中"; ts.style.color="#6366f1"; }
+            else if(dist[i]!==Infinity) { ts.innerText = "有距离"; ts.style.color="#f59e0b"; }
+            else { ts.innerText = "未知"; ts.style.color="#64748b"; }
+        });
+    }
+
+    document.getElementById("grBtnStep").onclick = () => {
+        if(state === 'init') {
+            dist = [0, Infinity, Infinity, Infinity, Infinity];
+            confirmed = [false, false, false, false, false]; pq = [{u:0,d:0}];
+            state = 'pop'; descr.innerText = "起步。";
+        } else if (state === 'pop') {
+            while(pq.length && confirmed[pq[0].u]) pq.shift();
+            if(!pq.length) { state='done'; descr.innerText = "全部固定！结束。"; return; }
+            const curr = pq.shift();
+            poppedU = curr.u; confirmed[poppedU] = true;
+            descr.innerText = `弹出 ${nodes[poppedU].id} (距 ${curr.d}) 并固定。`;
+            state = 'relax_neighbors'; neighborIdx = 0;
+            edgesCur = [...edges.filter(e=>e[0]==poppedU), ...edges.filter(e=>e[1]==poppedU).map(e=>[e[1],e[0],e[2]])];
+            if(edgesCur.length===0) state='pop';
+        } else if (state === 'relax_neighbors') {
+            if(neighborIdx >= edgesCur.length) { poppedU = -1; state = 'pop'; descr.innerText = "邻居遍历完，准备弹下个。"; }
+            else {
+                const curE = edgesCur[neighborIdx++];
+                if(!confirmed[curE[1]]) {
+                    if(dist[poppedU] + curE[2] < dist[curE[1]]) {
+                        dist[curE[1]] = dist[poppedU] + curE[2];
+                        pq.push({u:curE[1], d:dist[curE[1]]}); pq.sort((a,b)=>a.d-b.d);
+                        descr.innerText = `发现更短到 ${nodes[curE[1]].id}: ${dist[curE[1]]}，入队列。`;
+                    } else descr.innerText = `到 ${nodes[curE[1]].id} 的 ${dist[poppedU]+curE[2]} 大于等于原距离，忽略。`;
+                } else descr.innerText = `${nodes[curE[1]].id} 已固定，无视。`;
+            }
+        }
+        renderGraph();
+    };
+
+    document.getElementById("grBtnReset").onclick = () => {
+        state='init'; poppedU=-1; dist = [0, Infinity, Infinity, Infinity, Infinity];
+        confirmed = [false, false, false, false, false]; pq=[]; descr.innerText="已重置。"; renderGraph();
+    };
+    renderGraph();
+});
+</script>
 </body>
 </html>

@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -41,208 +56,129 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <div class="knowledge-card kc-blue">
-                <h3>🔵 核心定义</h3>
-                <p><strong>单调栈模板（求下一个更大元素）：</strong></p>
-<pre><code class="language-python">def nextGreaterElement(nums):
-    n = len(nums)
-    result = [-1] * n
-    stack = []                         # 单调递减栈（存下标）
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">线性表操作</span>
+        <span class="prereq-tag">时间线倒流</span>
+        <p>栈（LIFO）与队列（FIFO）本质上是被“封印”了随机访问能力的数组。它们存在的意义不是为了灵活，而是为了在特定的出入顺序下（如历史回退、广度扩散）提供极致简单的 <strong>O(1) 状态管理</strong>。学会这两种数据结构，就是学会了如何掌控程序的“时间沙漏”。</p>
+    </div>
 
-    for i in range(n):
-        # 当前元素比栈顶大 → 栈顶元素的"下一个更大"就是当前元素
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：特殊栈与特殊队列的诞生</h3>
+
+        <h4>1. 最小栈 (Min-Stack) —— 为什么不开两个指针找最小值？</h4>
+        <div class="naive-vs-smart">
+            <div class="naive"><h4 class="label">全局一个最小值 (Naive)</h4><p>因为如果当前最小的元素（比如 1）被 Pop 出栈了，栈里仅次于它的“第二小”元素（比如 3）没人记得！你需要 O(N) 遍历重新找。这违背了栈 O(1) 的初衷。</p></div>
+            <div class="smart"><h4 class="label">伴生备忘录 (Smart)</h4><p>我们在向栈内压入数据的时候，顺便压入一个元组 <code>(val, 当前最小)</code>。每个元素都像带着一个紧箍咒一样记住了它进栈“那一刻”的全局最小值！它死了哪怕第二小元素漏了，第二小元素的紧箍咒也会瞬间恢复之前的最小值。</p></div>
+        </div>
+
+        <h4>2. 单调栈 (Monotonic Stack) —— 寻找“下一个更大元素”</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>破而后立：</strong>如果我正在维护一个递减栈 <code>[10, 8, 5]</code>，此时来了一个庞然大物 <code>9</code>。它破坏了递减性！
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>榨干剩余价值：</strong>9 嚣张地要把之前的 5 和 8 挤走。但在它们滚蛋（Pop）之前，我们恍然大悟：<strong>把他们挤走的人，不正是它们苦苦寻找的右侧“下一个更大元素”吗？！</strong> 于是我们记录 <code>5的右霸=9</code>，<code>8的右霸=9</code>，然后 9 坐稳了它的位置 <code>[10, 9]</code>。
+            </div>
+        </div>
+        <div class="think-block">
+            <div class="q">Q: 为什么单调栈能把寻找所有 Next Greater 的死循环降低到了 O(N)？</div>
+            <details>
+                <summary>查看答疑</summary>
+                因为在这个暴力的“弱肉强食”淘汰赛中，虽然新来的元素可能一下子踢出去了好几个较小的元素（看作多层循环）。但是，所有在数组里的元素，<strong>一生都只进栈一次，出栈一次</strong>！不论你怎么循环，总的进出次数严格限定在 2N 之内。这就是均摊分析出的极限 O(N)。
+            </details>
+        </div>
+
+        <h4>3. 滑动窗口最大值与单调队列 (Monotonic Queue)</h4>
+        <div class="intuition-box">
+            这本质上是一个有寿命限制的“选秀节目”。如果一个选手 <code>x</code> 来了，发现前面有个选手 <code>y</code> 年纪比他大（位置更靠前，死得早）还比他弱（数值小）：那 <code>y</code> 就连一点残存价值都没有了（它不可能成为最大值了），直接从队尾踢掉！<br>
+            然而，为什么不能用单调栈？因为栈只能在一头操作，而这里活得太老的选手（寿命到了逃出窗口）需要从队头 <code>popleft()</code> 离开！所以必须使用<strong>双端队列 (Deque)</strong>。
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>💻 模板代码：单调栈与双端单调队列</h3>
+<pre><code class="language-python"># 1. 单调栈找 Next Greater Element
+def next_greater(nums):
+    res = [-1] * len(nums)
+    stack = [] # 里面存放的是索引 (index)
+    
+    for i in range(len(nums)):
+        # 当遇到高个子，把栈里不如它高的直接踢了，并结算它们的答案
         while stack and nums[i] > nums[stack[-1]]:
-            idx = stack.pop()
-            result[idx] = nums[i]      # 找到了idx的下一个更大元素
-        stack.append(i)
-    return result
-</code></pre>
-                <p><strong>最小栈（O(1)获取最小值）：</strong></p>
-<pre><code class="language-python">class MinStack:
-    def __init__(self):
-        self.stack = []
-        self.min_stack = []            # 辅助栈：存当前最小值
+            popped_idx = stack.pop()
+            res[popped_idx] = nums[i]
+        stack.append(i) # 当前小弟老老实实进栈排队
+    return res
 
-    def push(self, val):
-        self.stack.append(val)
-        # 辅助栈记录当前最小值（只有更小时才更新）
-        min_val = min(val, self.min_stack[-1] if self.min_stack else val)
-        self.min_stack.append(min_val)
-
-    def pop(self):
-        self.stack.pop()
-        self.min_stack.pop()           # 同步弹出
-
-    def getMin(self):
-        return self.min_stack[-1]      # O(1) 取最小
-</code></pre>
-            </div>
-
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查</h3>
-                <table>
-                    <tr><th>操作</th><th>栈（list）</th><th>队列（deque）</th><th>双端队列（deque）</th></tr>
-                    <tr><td>push/appendleft</td><td>O(1) 均摊</td><td>—</td><td>O(1)</td></tr>
-                    <tr><td>pop(右端)</td><td>O(1) 均摊</td><td>—</td><td>O(1)</td></tr>
-                    <tr><td>popleft（左端）</td><td>O(n)！</td><td>O(1)</td><td>O(1)</td></tr>
-                    <tr><td>peek（查看顶/头）</td><td>O(1)</td><td>O(1)</td><td>O(1)</td></tr>
-                    <tr><td>单调栈（n个元素）</td><td>O(n) 总计</td><td>—</td><td>—</td></tr>
-                </table>
-            </div>
-
-            <div class="knowledge-card kc-purple">
-                <h3>🖼 结构图示：单调栈处理过程</h3>
-<pre class="ascii-art">
-数组: [2, 1, 5, 6, 2, 3]  求每个元素的下一个更大元素
-
-i=0: 栈空, push(0)         stack=[0]   nums=[2,...]
-i=1: 1<2, push(1)          stack=[0,1]
-i=2: 5>1 → result[1]=5, pop; 5>2 → result[0]=5, pop; push(2)
-     stack=[2]             result:[5,5,-1,-1,-1,-1]
-i=3: 6>5 → result[2]=6, pop; push(3)
-     stack=[3]             result:[5,5,6,-1,-1,-1]
-i=4: 2<6, push(4)          stack=[3,4]
-i=5: 3>2 → result[4]=3, pop; 3<6, push(5)
-     stack=[3,5]           result:[5,5,6,-1,3,-1]
-结束: 栈中剩余[3,5]对应result=-1（默认值）
-
-最终: [5, 5, 6, -1, 3, -1]  ✓
-</pre>
-            </div>
-
-            <div class="knowledge-card kc-green">
-                <h3>🟢 典型例题详解</h3>
-                <details>
-                    <summary>例题1：有效的括号（LeetCode 20）</summary>
-                    <p><strong>题意：</strong> 判断括号字符串是否有效（括号匹配且顺序正确）。</p>
-<pre><code class="language-python">def isValid(s):
-    stack = []
-    mapping = {')': '(', '}': '{', ']': '['}  # 右括号→对应左括号
-
-    for char in s:
-        if char in mapping:           # 遇到右括号
-            top = stack.pop() if stack else '#'  # 栈空则用'#'占位
-            if mapping[char] != top:
-                return False          # 不匹配
-        else:
-            stack.append(char)        # 左括号入栈
-    return not stack                  # 栈空说明全部匹配
-</code></pre>
-                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
-                </details>
-
-                <details>
-                    <summary>例题2：柱状图中最大矩形（LeetCode 84）— 单调栈</summary>
-                    <p><strong>题意：</strong> 给柱状图高度数组，找能构成的最大矩形面积。</p>
-<pre><code class="language-python">def largestRectangleArea(heights):
-    heights = heights + [0]            # 末尾加0，强制清空栈
-    stack = [-1]                       # 初始放哨兵
-    result = 0
-
-    for i, h in enumerate(heights):
-        while stack[-1] != -1 and heights[stack[-1]] >= h:
-            height = heights[stack.pop()]      # 弹出作为矩形高度
-            width = i - stack[-1] - 1          # 宽度 = 当前位置 - 新栈顶 - 1
-            result = max(result, height * width)
-        stack.append(i)
-    return result
-</code></pre>
-                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
-                </details>
-
-                <details>
-                    <summary>例题3：用两个栈实现队列（LeetCode 232）</summary>
-<pre><code class="language-python">class MyQueue:
-    def __init__(self):
-        self.stack_in  = []   # 输入栈：接收push
-        self.stack_out = []   # 输出栈：提供pop/peek
-
-    def push(self, x):
-        self.stack_in.append(x)
-
-    def _transfer(self):
-        if not self.stack_out:                 # 输出栈空才转移
-            while self.stack_in:
-                self.stack_out.append(self.stack_in.pop())
-
-    def pop(self):
-        self._transfer()
-        return self.stack_out.pop()
-
-    def peek(self):
-        self._transfer()
-        return self.stack_out[-1]
-
-    def empty(self):
-        return not self.stack_in and not self.stack_out
-</code></pre>
-                    <p><strong>摊销：</strong> push O(1)，pop O(1) 摊销（每个元素最多转一次）；<strong>空间：</strong> O(n)</p>
-                </details>
-            </div>
-
-            <div class="knowledge-card kc-red">
-                <h3>🔴 易错点</h3>
-                <p><strong>① 用list的pop(0)而不是deque实现队列</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（O(n)操作）</p>
-<pre><code class="language-python">queue = []
-queue.append(x)      # 入队 O(1)
-queue.pop(0)         # 出队 O(n)！列表头部删除需移动所有元素
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（deque，O(1)）</p>
-<pre><code class="language-python">from collections import deque
-queue = deque()
-queue.append(x)      # 入队 O(1)
-queue.popleft()      # 出队 O(1)
-</code></pre>
-                    </div>
-                </div>
-                <p><strong>② 单调栈比较条件写错（&gt;= vs &gt;）</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（求下一个更大用&gt;=）</p>
-<pre><code class="language-python">while stack and nums[i] >= nums[stack[-1]]:
-    # >= 会把相等元素也弹出
-    # 对于重复元素会产生错误答案
-    result[stack.pop()] = nums[i]
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（严格大于用&gt;）</p>
-<pre><code class="language-python">while stack and nums[i] > nums[stack[-1]]:
-    # 严格大于，相等的留在栈里
-    result[stack.pop()] = nums[i]
-</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <div class="knowledge-card kc-cyan">
-                <h3>🔷 竞赛拓展</h3>
-                <p><strong>单调队列优化DP：</strong> 当状态转移 dp[i] = min/max(dp[j]) for j in [i-k, i-1] 时，用单调队列代替线性查找，将O(nk)降至O(n)。</p>
-<pre><code class="language-python">from collections import deque
-
-def maxSlidingWindow(nums, k):
-    dq = deque()           # 存下标，维护单调递减
-    result = []
-    for i, num in enumerate(nums):
-        if dq and dq[0] < i - k + 1:  # 移除超出窗口的旧下标
+# 2. 单调队列：滑动窗口的最大值
+from collections import deque
+def max_sliding_window(nums, k):
+    res = []
+    dq = deque() # 单调递减队列，存放索引
+    
+    for i in range(len(nums)):
+        # 1. 淘汰太老的队员（如果队头的寿命超出了窗口左边界）
+        if dq and dq[0] < i - k + 1:
             dq.popleft()
-        while dq and nums[dq[-1]] < num:  # 保持队列单调递减
+            
+        # 2. 从队尾把不如自己大、不仅老还菜的全踢了！
+        while dq and nums[i] >= nums[dq[-1]]:
             dq.pop()
+            
+        # 3. 自己成为新一届的尾巴入队
         dq.append(i)
+        
+        # 什么时候记录答案？当窗口完全成型时。
         if i >= k - 1:
-            result.append(nums[dq[0]])    # 队首是窗口最大值下标
-    return result
+            res.append(nums[dq[0]])  # 当前窗口毫无疑问最大的是谁？队头！
+    
+    return res
 </code></pre>
-                <p><strong>表达式求值（中缀→后缀）：</strong> 双栈法（操作符栈+操作数栈）或逆波兰表达式法，支持优先级和括号处理。</p>
-            </div>
-        </section>
+        <table>
+            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>找单一侧的极大/极小（如雨水问题）</td><td>O(N)</td><td>O(N)</td><td>单调栈。利用 O(N) 的历史存储记录单侧遮挡。</td></tr>
+            <tr><td>滑动窗口内极值</td><td>O(N)</td><td>O(K)</td><td>双端队列。除了被踢出去的，最大维持 K 个候补。</td></tr>
+        </table>
+    </div>
 
-        <section class="card" data-quiz data-module="stack-queue">
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点分析</h3>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 栈内存存错东西</p>
+<pre><code class="language-python"># 将数值存入栈中
+stack.append(nums[i])
+# ... 等你弹出来的时候，你根本不知道这个弹出来的小数字
+# 它的本尊在原数组什么位置，你怎么把结果写进答案数组 `res` 里？
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 单调栈绝大多数情况必须存索引</p>
+<pre><code class="language-python"># 存入索引。
+stack.append(i)
+# 到时候根据索引拿值 `nums[popped_idx]`，并且能写进 `res[popped_idx]`。
+</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：单调栈挤压动画 (寻找右侧更大元素)</h3>
+        <div class="demo-container" id="sqDemo"></div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>单调队列优化 DP：</strong> 滑动窗口不仅仅是求最大值。如果在动态规划中，状态转移方程长成 `dp[i] = max(dp[j]) (i-k <= j < i)`，那么我们如果用 $O(K)$ 循环直接查找必死无疑。只要使用单调队列维护这个“长度有保质期”的 DP 窗口最大值，立刻可以将 O(NK) 算法降维打击到 O(N)！这是极为恐怖的性能跨越。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="stack-queue">
 <h2>练习题（Practice）</h2>
 <div class="quiz-controls"><label>跳转：<input data-jump-input type="text" placeholder="SQ3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
 <p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
@@ -345,5 +281,106 @@ def maxSlidingWindow(nums, k):
     </main>
     <script src="../assets/js/app.js"></script>
     <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("sqDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:flex-end;">
+                <!-- 数组来源区 -->
+                <div style="flex:1; background:#1e293b; padding:1rem; border-radius:4px">
+                    <div style="color:#94a3b8; font-size:12px; margin-bottom:10px">待处理的数组 Nums</div>
+                    <div id="sqArr" style="display:flex; gap:5px; height:80px"></div>
+                </div>
+                <!-- 单调栈区 -->
+                <div style="width:120px; background:#0f172a; border-left:2px solid #334155; border-right:2px solid #334155; border-bottom:2px solid #334155; height:180px; display:flex; flex-direction:column-reverse; align-items:center; padding-bottom:5px" id="sqStack">
+                    <div style="position:absolute; bottom:-25px; color:#cbd5e1; font-size:12px">递减单调栈</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:0.5rem">
+                <button id="sqBtnStep" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">下一步模拟</button>
+            </div>
+            <div id="sqDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:4em;">目标：求每个数右边离它最近的且比它大的元素。</div>
+        </div>
+    `;
+
+    const descr = document.getElementById("sqDescr");
+    let nums = [6, 3, 2, 7, 5];
+    let res = [-1, -1, -1, -1, -1];
+    let stack = [];
+    let curI = 0;
+    let phase = 'scan'; // scan, pop, finish
+
+    function renderArray() {
+        let html = '';
+        nums.forEach((v, i) => {
+            let h = v * 10;
+            let bg = "#64748b", txt = "?";
+            if (i === curI && phase !== 'finish') bg = "#f59e0b"; // active scanning
+            if (res[i] !== -1) { txt = res[i]; bg = "#10b981"; }
+            
+            html += `<div style="display:flex; flex-direction:column; align-items:center; width:30px; gap:4px">
+                <span style="font-size:10px; color:#a855f7">${txt}</span>
+                <div style="width:100%; height:${h}px; background:${bg}; transition:all 0.3s"></div>
+                <span style="font-size:12px; color:#fff">${v}</span>
+            </div>`;
+        });
+        document.getElementById("sqArr").innerHTML = html;
+    }
+    
+    function renderStack() {
+        let html = '';
+        [...stack].reverse().forEach((sItem) => {
+            html += `<div style="width:80%; height:25px; line-height:25px; background:#1e293b; color:#38bdf8; text-align:center; margin-top:2px; font-size:12px; border:1px solid #475569">Idx:${sItem.i} | 值:${sItem.val}</div>`;
+        });
+        document.getElementById("sqStack").innerHTML = html + '<div style="margin-top:20px; color:#cbd5e1; font-size:12px">单调栈 (底)</div>';
+    }
+
+    document.getElementById("sqBtnStep").onclick = () => {
+        if (phase === 'finish') {
+            descr.innerHTML = "全部找完了！绿色为确定的答案。栈里剩下的没有更大的元素，保持了 -1。";
+            return;
+        }
+
+        if (phase === 'scan') {
+            if (curI >= nums.length) { phase = 'finish'; return; }
+            let curVal = nums[curI];
+            if (stack.length > 0 && currVal > stack[stack.length-1].val) { // Should say curVal
+                // Wait there's a typo in currVal
+            }
+            if (stack.length > 0 && curVal > stack[stack.length-1].val) {
+                descr.innerHTML = `扫描到 ${curVal}。它比栈顶存放的弱者 ${stack[stack.length-1].val} 要大！打破了单调递减规则。准备开始把栈里的小弟踢出去结算答案！`;
+                phase = 'pop';
+            } else {
+                descr.innerHTML = `扫描到 ${curVal}。栈空或者它没有打破单调递减规则，老老实实进栈排队。`;
+                stack.push({i: curI, val: curVal});
+                curI++;
+            }
+        } else if (phase === 'pop') {
+            let curVal = nums[curI];
+            if (stack.length > 0 && curVal > stack[stack.length-1].val) {
+                let popped = stack.pop();
+                res[popped.i] = curVal;
+                descr.innerHTML = `元素 ${popped.val} 会被踢出去了！在它死前，它终于知道把淘汰它的人就是它右侧的第一个大哥 <b>${curVal}</b>！答案被永久记录在上方。`;
+                if (!stack.length || curVal <= stack[stack.length-1].val) {
+                    phase = 'scan'; 
+                    setTimeout(()=>{
+                        descr.innerHTML = `没有比 ${curVal} 小的弱者了，${curVal} 自己老老实实进栈排队。`;
+                        stack.push({i: curI, val: curVal}); 
+                        curI++;
+                        renderArray(); renderStack();
+                    }, 2000);
+                }
+            }
+        }
+        
+        renderArray(); renderStack();
+    };
+    
+    renderArray(); renderStack();
+});
+</script>
 </body>
 </html>

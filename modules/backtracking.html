@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -10,14 +10,17 @@
     <title>回溯算法模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,6 +31,33 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+
+        /* 互动演示 */
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; flex-wrap: wrap; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; line-height: 1.6; }
+        .demo-log .log-new { color: #6ee7b7; }
+        .demo-log .log-backtrack { color: #fb923c; }
+        .demo-log .log-result { color: #a78bfa; }
+
+        /* 递归树SVG区域 */
+        #bt-tree-svg { width: 100%; max-width: 640px; display: block; margin: 0 auto; }
+        .bt-result-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0.5rem 0; }
+        .bt-result-item { padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; background: rgba(139,92,246,.2); color: #c4b5fd; border: 1px solid rgba(139,92,246,.4); }
+        .path-display { font-family: monospace; font-size: 1rem; color: #fcd34d; margin: 0.4rem 0; font-weight: 700; }
     </style>
 </head>
 <body data-theme="day">
@@ -41,132 +71,224 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <div class="knowledge-card kc-blue">
-                <h3>🔵 核心定义</h3>
-                <p><strong>回溯通用框架：</strong></p>
-<pre><code class="language-python">def backtrack(path, choices):
-    # 终止条件：达到目标
-    if 满足结束条件:
-        result.append(path[:])   # 注意：要拷贝path，不能直接引用
-        return
-
-    for choice in choices:
-        # 剪枝：提前排除无效分支
-        if 不合法: continue
-
-        # 做选择
-        path.append(choice)
-        mark_used(choice)
-
-        # 递归进入下一层
-        backtrack(path, new_choices)
-
-        # 撤销选择（回溯）
-        path.pop()
-        unmark_used(choice)
-</code></pre>
-                <p><strong>三类经典问题的starter index控制：</strong></p>
-                <ul>
-                    <li><strong>子集/组合：</strong> 从 <code>start</code> 开始，每次传 <code>start+1</code>（不重复使用）</li>
-                    <li><strong>排列：</strong> 用 <code>used[]</code> 数组标记已用元素，每次从0开始遍历</li>
-                    <li><strong>含重复元素：</strong> 先排序，同一层跳过 <code>nums[i]==nums[i-1]</code> 且未使用的</li>
-                </ul>
+            <!-- 0. 前置知识 -->
+            <div class="knowledge-card kc-gray">
+                <h3>📋 前置知识</h3>
+                <span class="prereq-tag">Python 递归</span>
+                <span class="prereq-tag">函数调用栈</span>
+                <span class="prereq-tag">DFS 基础</span>
+                <span class="prereq-tag">列表的引用 vs 拷贝</span>
+                <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">
+                    <strong>关键前置：</strong>回溯依赖"可撤销的状态变更"。如果你对 <code>path.append(x)</code> 之后 <code>path.pop()</code> 能恢复原状还不确定，先用 Python 手动试一下再继续。
+                </p>
             </div>
 
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查</h3>
+            <!-- 1. 什么是回溯？从暴力枚举说起 -->
+            <div class="knowledge-card kc-amber">
+                <h3>💡 回溯是什么？本质是「有撤销机制的 DFS」</h3>
+
+                <p>许多问题的暴力解法是：<strong>枚举所有可能的答案，检查每个是否合法</strong>。</p>
+                <p>问题：对于全排列 [1,2,3]，有 3! = 6 种答案，枚举并不难。但对于 N 皇后（N=15），暴力方法要枚举 N^N ≈ 4千亿种情况，完全不可行。</p>
+                <p><strong>回溯的改进：</strong>不先生成完整答案再验证，而是在<em>构建过程中</em>实时检查约束，一旦发现当前路径已经违规，<strong>立即停止向下搜索，回退到上一个决策点</strong>，尝试另一条路。</p>
+
+                <div class="intuition-box">
+                    <strong>回溯 = DFS + 剪枝 + 撤销</strong><br>
+                    DFS：按某种顺序逐层做选择，递归到底。<br>
+                    剪枝：在递归之前判断当前选择是否合法，不合法就跳过。<br>
+                    撤销：递归返回后恢复状态，让下一个选择可以从相同起点出发。
+                </div>
+
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body">
+                        <strong>为什么要撤销？</strong> 想象你有一块公共黑板 <code>path</code>，每次做选择就在上面写字。写完进入下一层，回来时<strong>必须擦掉</strong>，否则下一个分支会看到脏数据。这就是 <code>path.pop()</code> 的意义。
+                    </div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body">
+                        <strong>为什么要拷贝结果？</strong> <code>result.append(path)</code> 只追加了一个引用，后续 <code>path.pop()</code> 会同时修改已收集的结果。必须用 <code>path[:]</code> 或 <code>list(path)</code> 做浅拷贝。
+                    </div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">3</div>
+                    <div class="derive-body">
+                        <strong>为什么剪枝有效？</strong> 每次剪掉一个分支，就消除了该分支下所有子节点——指数级削减。N 皇后从 N^N 降到近似 N!，就是因为每行只放一个皇后、同列/对角线直接跳过。
+                    </div>
+                </div>
+
+                <div class="think-block">
+                    <div class="q">🤔 如果把 path.pop() 删掉，代码还会运行但结果错误，为什么？</div>
+                    <details>
+                        <summary>展开答案</summary>
+                        <p>因为 <code>path</code> 是共享的列表对象。删掉 <code>pop()</code> 后，每次递归返回时 <code>path</code> 保留了上一层的选择。比如选了 1 → 2，返回后 path 还是 [1,2]，接着选 3 时变成 [1,2,3]，但下一个本应是从 1 → 3 出发的 [1,3]，却因为没有撤销而基于 [1,2] 继续——产生 [1,2,3]（重复）或 [1,2,...未撤销残余...] 等错误结果。</p>
+                    </details>
+                </div>
+
+                <div class="think-block">
+                    <div class="q">🤔 回溯和 DP 有什么根本区别？什么情况下优先选 DP？</div>
+                    <details>
+                        <summary>展开答案</summary>
+                        <ul>
+                            <li><strong>DP：</strong>有重叠子问题 + 最优子结构，只求最优值（数量/最大/最小），不需要所有具体方案。通过记忆化避免重复计算。</li>
+                            <li><strong>回溯：</strong>需要枚举所有方案、约束复杂无法分解为子问题、n 很小（通常 n ≤ 20）。</li>
+                            <li><strong>经验：</strong>看到"所有组合/排列/子集"→回溯；看到"最多几种方式"或"最短路径"→优先想 DP 或 BFS。</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
+
+            <!-- 2. 三类问题的 start 控制 -->
+            <div class="knowledge-card kc-amber">
+                <h3>💡 三类问题的关键差异：start 和 used 的不同</h3>
+                <p>回溯题 80% 属于三类：子集、组合、排列。它们的框架几乎一样，关键在"避免重复的方式"不同。</p>
                 <table>
-                    <tr><th>问题类型</th><th>时间复杂度</th><th>结果数量</th><th>典型题</th></tr>
-                    <tr><td>n个元素的全排列</td><td>O(n × n!)</td><td>n!</td><td>LeetCode 46</td></tr>
-                    <tr><td>从n选k的组合</td><td>O(k × C(n,k))</td><td>C(n,k)</td><td>LeetCode 77</td></tr>
-                    <tr><td>所有子集</td><td>O(n × 2ⁿ)</td><td>2ⁿ</td><td>LeetCode 78</td></tr>
-                    <tr><td>N皇后</td><td>O(n!)（近似）</td><td>≤n!</td><td>LeetCode 51</td></tr>
-                    <tr><td>数独求解</td><td>O(9^(空格数))</td><td>1（唯一解）</td><td>LeetCode 37</td></tr>
+                    <tr><th>类型</th><th>去重方式</th><th>递归传参</th><th>典型题</th></tr>
+                    <tr><td>子集 / 组合</td><td>从 <code>start</code> 开始，不往回走</td><td><code>backtrack(start+1, ...)</code></td><td>LeetCode 78, 77</td></tr>
+                    <tr><td>排列（无重复）</td><td><code>used[]</code> 数组标记</td><td><code>backtrack(0, ...)</code>（每次从头）</td><td>LeetCode 46</td></tr>
+                    <tr><td>含重复元素</td><td>先排序 + 同层跳过</td><td>组合用 start+1；排列用 used[i-1]</td><td>LeetCode 40, 47</td></tr>
+                    <tr><td>可重复使用</td><td>start 不加 1，允许停留</td><td><code>backtrack(i, ...)</code>（不是 i+1）</td><td>LeetCode 39</td></tr>
+                </table>
+
+                <div class="think-block">
+                    <div class="q">🤔 含重复元素时，为什么先排序、再跳过 nums[i]==nums[i-1]？</div>
+                    <details>
+                        <summary>展开答案</summary>
+                        <p>排序把相同元素聚在一起。同一层递归中，如果 <code>nums[i] == nums[i-1]</code> 且 <code>nums[i-1]</code> 没有被使用（<code>used[i-1]==False</code>），说明以 <code>nums[i-1]</code> 为起点的所有组合已经被之前的分支枚举过了，以 <code>nums[i]</code> 为起点会产生完全相同的子树——跳过。</p>
+                        <p>如果 <code>used[i-1]==True</code>，说明 <code>nums[i-1]</code> 已在当前路径中，两者不同层，不构成重复，不应跳过。</p>
+                    </details>
+                </div>
+            </div>
+
+            <!-- 3. 核心模板 -->
+            <div class="knowledge-card kc-blue">
+                <h3>🔵 通用框架（含完整注释）</h3>
+<pre><code class="language-python">def backtrack(path, start, choices):
+    # ① 终止条件：路径已满足目标
+    if 满足结束条件:
+        result.append(path[:])   # 必须深拷贝！path 会被后续修改
+        return
+
+    for i in range(start, len(choices)):
+        # ② 剪枝：提前排除不合法的选择
+        if 不合法(choices[i]):
+            continue
+        # ③ 做选择
+        path.append(choices[i])
+        mark_used(i)
+        # ④ 进入下一层（start 的传值是三类问题的关键区别）
+        backtrack(path, i + 1, choices)   # 组合：i+1；排列：0；可重用：i
+        # ⑤ 撤销选择（回溯的核心：让状态回到进入本层之前）
+        path.pop()
+        unmark_used(i)
+</code></pre>
+
+                <p><strong>N 皇后中的剪枝优化（集合替代数组）：</strong></p>
+<pre><code class="language-python">cols  = set()    # 已占用的列
+diag1 = set()    # 主对角线：row-col 相同的格子在同一条
+diag2 = set()    # 副对角线：row+col 相同的格子在同一条
+
+# 检查 (row, col) 是否安全：
+if col in cols or (row-col) in diag1 or (row+col) in diag2:
+    continue     # 被攻击，跳过
+</code></pre>
+                <p style="font-size:0.85rem; color:var(--subtle-text)">用集合判断冲突 O(1)，比扫描整个棋盘 O(n) 快得多。</p>
+            </div>
+
+            <!-- 4. 互动演示：全排列搜索树 -->
+            <div class="knowledge-card kc-purple">
+                <h3>🎮 互动演示：全排列 [1,2,3] 的搜索树</h3>
+                <p style="font-size:0.9rem; color:var(--subtle-text)">点击"下一步"逐步推进 DFS。<span style="color:#fcd34d">黄色</span>= 当前路径，<span style="color:#a78bfa">紫色</span>= 已完成结果，<span style="color:#fb923c">橙色</span>= 回溯。</p>
+                <div class="demo-container">
+                    <svg id="bt-tree-svg" height="320" viewBox="0 0 640 320"></svg>
+                    <div class="demo-controls">
+                        <button id="bt-prev" onclick="btPrev()" disabled>← 上一步</button>
+                        <button id="bt-next" onclick="btNext()">下一步 →</button>
+                        <button onclick="btReset()">重置</button>
+                        <span style="margin-left:auto; font-size:0.82rem; color:#64748b" id="bt-step-label">步骤 0</span>
+                    </div>
+                    <div class="path-display" id="bt-path-display">当前路径：[]</div>
+                    <div class="demo-log" id="bt-log">点击"下一步"开始…</div>
+                    <div style="margin-top:0.6rem; font-size:0.82rem; color:#64748b">已收集结果：</div>
+                    <div class="bt-result-list" id="bt-results"></div>
+                </div>
+            </div>
+
+            <!-- 5. 复杂度 -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查（含分析方法）</h3>
+                <p style="font-size:0.9rem"><strong>分析方法：</strong> 时间 = 搜索树节点数 × 每节点操作数。节点数 = 枚举的状态数（即不被剪枝消除的节点），每节点操作 = 路径构造、约束检查、拷贝等。</p>
+                <table>
+                    <tr><th>问题</th><th>时间</th><th>结果数</th><th>分析</th></tr>
+                    <tr><td>全排列（n 个不同）</td><td>O(n × n!)</td><td>n!</td><td>n! 个叶节点，每个用 O(n) 拷贝</td></tr>
+                    <tr><td>组合 C(n,k)</td><td>O(k × C(n,k))</td><td>C(n,k)</td><td>C(n,k) 个结果，每个长 k</td></tr>
+                    <tr><td>所有子集</td><td>O(n × 2ⁿ)</td><td>2ⁿ</td><td>2ⁿ 个子集，每个拷贝均摊 O(n)</td></tr>
+                    <tr><td>N 皇后</td><td>O(n!)</td><td>≤ n!</td><td>列/对角线剪枝大幅削减，上界 n!</td></tr>
+                    <tr><td>数独</td><td>O(9^m)（m=空格数）</td><td>1</td><td>约束传播实际非常快</td></tr>
+                    <tr><td>括号生成（n 对）</td><td>O(4ⁿ/√n)</td><td>Catalan(n)</td><td>Catalan 数 ≈ 4ⁿ/(n^1.5 × √π)</td></tr>
                 </table>
             </div>
 
-            <div class="knowledge-card kc-purple">
-                <h3>🖼 结构图示：回溯搜索树</h3>
-<pre class="ascii-art">
-全排列 [1,2,3] 搜索树示意:
-
-                     []
-          /          |          \
-        [1]         [2]         [3]
-       /   \       /   \       /   \
-    [1,2] [1,3] [2,1] [2,3] [3,1] [3,2]
-      |     |     |     |     |     |
-  [1,2,3][1,3,2][2,1,3][2,3,1][3,1,2][3,2,1]
-
-每个叶节点都是一个完整排列，共 3!=6 个
-回溯：到达叶节点后，沿路径返回，"撤销"最后的选择
-
-含重复元素去重 [1,1,2]（排序后）:
-  同层中，若 nums[i]==nums[i-1] 且 used[i-1]==False
-  则跳过（因为上一个相同元素已经生成过）
-</pre>
-            </div>
-
+            <!-- 6. 典型例题 -->
             <div class="knowledge-card kc-green">
                 <h3>🟢 典型例题详解</h3>
+
                 <details>
                     <summary>例题1：全排列（LeetCode 46）</summary>
-                    <p><strong>题意：</strong> 给不含重复数字的数组，返回所有全排列。</p>
+                    <p><strong>推导：</strong> 第一个位置有 n 种选择，第二个有 n-1 种（已用一个），以此类推。用 <code>used[]</code> 标记哪些已在路径中。</p>
 <pre><code class="language-python">def permute(nums):
     result = []
     used = [False] * len(nums)
 
     def backtrack(path):
         if len(path) == len(nums):
-            result.append(path[:])   # 必须拷贝！
+            result.append(path[:])   # 拷贝！
             return
         for i in range(len(nums)):
-            if used[i]: continue     # 跳过已使用元素
+            if used[i]: continue     # 跳过已用的
             used[i] = True
-            path.append(nums[i])     # 做选择
+            path.append(nums[i])
             backtrack(path)
-            path.pop()               # 撤销选择
+            path.pop()               # 撤销
             used[i] = False          # 恢复标记
 
     backtrack([])
     return result
 </code></pre>
-                    <p><strong>时间：</strong> O(n × n!)；<strong>空间：</strong> O(n)</p>
+                    <p><strong>变种（LeetCode 47，含重复元素）：</strong> 排序后，同层中若 <code>nums[i]==nums[i-1] and not used[i-1]</code> 则跳过。</p>
                 </details>
 
                 <details>
-                    <summary>例题2：组合总和（LeetCode 39）— 可重复使用</summary>
-                    <p><strong>题意：</strong> 从candidates中找和为target的所有组合，数字可重复使用。</p>
+                    <summary>例题2：组合总和（LeetCode 39）—— 可重复使用</summary>
+                    <p><strong>关键：</strong> 元素可重复使用，所以递归时传 <code>i</code> 而不是 <code>i+1</code>。</p>
+                    <p><strong>剪枝：</strong> 排序后，若当前元素已超过 remaining，后面更大的也超，break。</p>
 <pre><code class="language-python">def combinationSum(candidates, target):
     result = []
-    candidates.sort()                # 排序方便剪枝
+    candidates.sort()
 
     def backtrack(start, path, remaining):
         if remaining == 0:
             result.append(path[:])
             return
         for i in range(start, len(candidates)):
-            if candidates[i] > remaining:
-                break                # 剪枝：后面的更大，不可能凑成
+            if candidates[i] > remaining: break   # 剪枝
             path.append(candidates[i])
-            backtrack(i, path, remaining - candidates[i])  # i不是i+1，可重复
+            backtrack(i, path, remaining - candidates[i])   # 注意：i 不是 i+1
             path.pop()
 
     backtrack(0, [], target)
     return result
 </code></pre>
-                    <p><strong>时间：</strong> O(N^(T/M))，T为target，M为最小元素；<strong>空间：</strong> O(T/M)</p>
+                    <p><strong>复杂度：</strong> O(N^(T/M))，T 为 target，M 为最小候选值。</p>
                 </details>
 
                 <details>
-                    <summary>例题3：N皇后（LeetCode 51）</summary>
-                    <p><strong>题意：</strong> 在N×N棋盘放N个皇后，使之互不攻击。</p>
+                    <summary>例题3：N 皇后（LeetCode 51）—— 多约束剪枝</summary>
+                    <p><strong>关键洞察：</strong> 每行恰好放一个皇后（按行 DFS），将 N×N 的搜索空间从 N^N 降到 N!。</p>
+                    <p><strong>对角线检测：</strong> 同一主对角线（\）上所有格 (r,c) 满足 r-c 相同；副对角线（/）满足 r+c 相同。</p>
 <pre><code class="language-python">def solveNQueens(n):
     result = []
-    cols  = set()   # 已占用的列
-    diag1 = set()   # 主对角线 row-col
-    diag2 = set()   # 副对角线 row+col
-
+    cols = set(); diag1 = set(); diag2 = set()
     board = [['.']*n for _ in range(n)]
 
     def backtrack(row):
@@ -175,66 +297,120 @@
             return
         for col in range(n):
             if col in cols or (row-col) in diag1 or (row+col) in diag2:
-                continue             # 该位置被攻击
-            # 放置皇后
+                continue
             board[row][col] = 'Q'
             cols.add(col); diag1.add(row-col); diag2.add(row+col)
             backtrack(row + 1)
-            # 撤销
             board[row][col] = '.'
             cols.discard(col); diag1.discard(row-col); diag2.discard(row+col)
 
     backtrack(0)
     return result
 </code></pre>
-                    <p><strong>时间：</strong> O(n!)；<strong>空间：</strong> O(n)</p>
+                </details>
+
+                <details>
+                    <summary>例题4：括号生成（LeetCode 22）—— 自然约束</summary>
+                    <p><strong>约束推导：</strong> 合法括号串需满足：任意前缀中左括号数 ≥ 右括号数。所以：
+                    <ul>
+                        <li>左括号数 <code>open &lt; n</code> 时可以加 <code>(</code></li>
+                        <li>右括号数 <code>close &lt; open</code> 时可以加 <code>)</code></li>
+                        <li>这两个约束天然保证合法性，不需要回头检验</li>
+                    </ul>
+                    </p>
+<pre><code class="language-python">def generateParenthesis(n):
+    result = []
+    def backtrack(s, open, close):
+        if len(s) == 2*n:
+            result.append(s); return
+        if open < n:
+            backtrack(s+'(', open+1, close)
+        if close < open:
+            backtrack(s+')', open, close+1)
+    backtrack('', 0, 0)
+    return result
+</code></pre>
+                    <p>这里不需要 pop，因为字符串是不可变的，<code>s+'('</code> 创建新对象，不修改 <code>s</code>。</p>
                 </details>
             </div>
 
+            <!-- 7. 易错点 -->
             <div class="knowledge-card kc-red">
                 <h3>🔴 易错点</h3>
-                <p><strong>① 遗漏状态恢复导致污染后续分支</strong></p>
+
+                <p><strong>① 遗漏撤销（最常见）</strong></p>
                 <div class="code-compare">
                     <div class="wrong">
-                        <p>❌ 错误（忘记pop）</p>
+                        <p>❌ 忘记 pop / unmark</p>
 <pre><code class="language-python">path.append(nums[i])
+used[i] = True
 backtrack(path)
 # 忘记 path.pop()
-# 后续分支看到污染的path
-</code></pre>
+# 忘记 used[i] = False
+# → 后续分支看到污染状态</code></pre>
                     </div>
                     <div class="right">
-                        <p>✅ 正确（做-递归-撤）</p>
-<pre><code class="language-python">path.append(nums[i])    # 做选择
-backtrack(path)         # 递归
-path.pop()              # 撤销（必须！）
-</code></pre>
+                        <p>✅ 做-递归-撤（三件套）</p>
+<pre><code class="language-python">path.append(nums[i])   # 做选择
+used[i] = True
+backtrack(path)        # 递归
+path.pop()             # 撤销
+used[i] = False        # 恢复</code></pre>
                     </div>
                 </div>
-                <p><strong>② 结果收集时直接引用path而非拷贝</strong></p>
+
+                <p><strong>② 收集结果时未拷贝</strong></p>
                 <div class="code-compare">
                     <div class="wrong">
-                        <p>❌ 错误（引用同一对象）</p>
+                        <p>❌ 直接引用（所有结果共享同一对象）</p>
 <pre><code class="language-python">result.append(path)
-# path后续会被修改
-# 所有result中的path都指向同一个列表
-</code></pre>
+# 后续 path.pop() 会改变已收集的结果</code></pre>
                     </div>
                     <div class="right">
-                        <p>✅ 正确（深拷贝）</p>
-<pre><code class="language-python">result.append(path[:])  # 切片拷贝
-# 或 result.append(list(path))
-# 或 result.append(path.copy())
-</code></pre>
+                        <p>✅ 浅拷贝</p>
+<pre><code class="language-python">result.append(path[:])
+# 或 result.append(list(path))</code></pre>
                     </div>
                 </div>
+
+                <p><strong>③ 子集/组合 start 传错导致重复</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 每次从 0 开始（产生重复）</p>
+<pre><code class="language-python">backtrack(0, path)     # 导致[1,2]和[2,1]都被收集</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 从 i+1 开始（防止重复）</p>
+<pre><code class="language-python">backtrack(i+1, path)   # 不往回走</code></pre>
+                    </div>
+                </div>
+
+                <p><strong>④ 剪枝条件放错位置（应在循环内、递归前）</strong></p>
+<pre><code class="language-python"># ❌ 放在外面：只剪了一次
+if candidates[start] > remaining: return
+
+# ✅ 放在循环内：对每个候选都检查
+for i in range(start, len(candidates)):
+    if candidates[i] > remaining: break   # 有序时可以break</code></pre>
             </div>
 
+            <!-- 8. 竞赛拓展 -->
             <div class="knowledge-card kc-cyan">
                 <h3>🔷 竞赛拓展</h3>
-                <p><strong>Dancing Links（DLX）：</strong> 精确覆盖问题高效解法，用双向链表实现"删除-恢复"的O(1)回溯。适合数独、精确覆盖问题。</p>
-                <p><strong>迭代加深IDDFS：</strong> 深度限制从1开始逐渐增大的DFS，兼顾BFS找最优和DFS低空间的优点。</p>
-                <p><strong>启发式剪枝：</strong> 预计算"最优情况"，若当前剩余量在最优情况下也无法达标则剪枝。例如组合总和剪枝：<code>if remaining &lt; min_candidate: break</code></p>
+                <p><strong>Dancing Links（DLX）：</strong> 精确覆盖问题的高效解法。用双向链表表示稀疏约束矩阵，选中/撤销某行都是 O(1) 指针操作（而非矩阵遍历）。实践中比朴素回溯快 10-100x。适合数独、精确覆盖等问题。</p>
+                <p><strong>迭代加深 IDDFS：</strong> 深度上限从 1 逐渐增大，每次做 DFS。兼顾 BFS 找最短路径和 DFS 低空间的优点。适合最小步数/最少操作类问题。</p>
+                <p><strong>记忆化回溯（转 DP）：</strong> 若回溯中存在大量重复子状态（相同参数→相同结果），可加 <code>@lru_cache</code> 或手动 memo。前提：状态必须可哈希、无副作用。</p>
+<pre><code class="language-python">from functools import lru_cache
+
+@lru_cache(maxsize=None)
+def backtrack(start, remaining):   # 参数必须可哈希（不含列表）
+    if remaining == 0: return 1
+    count = 0
+    for i in range(start, n):
+        if candidates[i] <= remaining:
+            count += backtrack(i, remaining - candidates[i])
+    return count</code></pre>
+                <p><strong>启发式剪枝：</strong> 预估当前分支在最优情况下能得到的最好结果，若不如当前已知最优解则剪枝（branch and bound）。</p>
             </div>
         </section>
 
@@ -337,9 +513,223 @@ path.pop()              # 撤销（必须！）
 <button data-reset-question="BT15" class="secondary" style="margin-top:5px;font-size:0.74rem;padding:4px 8px">重置</button>
 </div>
 <h3 style="margin-top:1.4rem">错题整理</h3><ul class="wrong-list" data-wrong-list style="padding-left:0"><li>当前没有错题，继续保持！</li></ul>
-</section>
+        </section>
     </main>
     <script src="../assets/js/app.js"></script>
     <script>hljs.highlightAll();</script>
+    <script>
+    // ===== 全排列搜索树互动演示 =====
+    (function(){
+        const nums = [1, 2, 3];
+        // 预先生成所有步骤
+        const steps = [];
+        const results = [];
+
+        // 树节点定义（用于SVG渲染）
+        // 节点: {id, label, parentId, path, x, y, active, done}
+        const nodes = {};
+        let nodeId = 0;
+
+        function genTree(path, used, parentId) {
+            const curId = nodeId++;
+            const label = path.length === 0 ? '[]' : '[' + path.join(',') + ']';
+            nodes[curId] = { id: curId, label, parentId, path: [...path], used: [...used], x: 0, y: 0, active: false, done: false };
+            if(path.length === nums.length) {
+                steps.push({ type: 'result', nodeId: curId, path: [...path], log: `✅ 找到排列 [${path}]，加入结果！`, phase: 'collect' });
+                steps.push({ type: 'backtrack', nodeId: curId, parentId, log: `↩ 回溯：从 [${path}] 返回到 [${path.slice(0,-1)}]，撤销选择 ${path[path.length-1]}`, phase: 'backtrack' });
+                return curId;
+            }
+            for(let i=0; i<nums.length; i++){
+                if(used[i]) continue;
+                used[i] = true;
+                path.push(nums[i]);
+                const childId = nodeId++;
+                const childLabel = '[' + path.join(',') + ']';
+                nodes[childId] = { id: childId, label: childLabel, parentId: curId, path: [...path], used: [...used], x: 0, y: 0 };
+                steps.push({ type: 'enter', nodeId: childId, parentId: curId, path: [...path], log: `→ 选择 ${nums[i]}，进入路径 [${path}]`, phase: 'expand' });
+                // 递归
+                const sub = recurse(path, used, childId);
+                path.pop();
+                used[i] = false;
+                if(path.length > 0){
+                    steps.push({ type: 'backtrack', nodeId: childId, parentId: curId, log: `↩ 回溯：从 [${[...path, nums[i]]}] 返回，撤销 ${nums[i]}，路径回到 [${path}]`, phase: 'backtrack' });
+                }
+            }
+            return curId;
+        }
+
+        // 生成步骤（不用递归返回值，直接push steps）
+        function buildSteps(){
+            steps.length = 0;
+            steps.push({ type: 'init', log: '初始状态：路径为空，开始搜索…', path: [], phase: 'init', results: [] });
+            const used = [false, false, false];
+            const path = [];
+            dfs(path, used, -1);
+            steps.push({ type: 'done', log: '✅ 搜索完毕！共找到 6 个排列。', path: [], phase: 'done' });
+        }
+
+        const resultsSoFar = [];
+        function dfs(path, used, parentId){
+            if(path.length === nums.length){
+                resultsSoFar.push([...path]);
+                steps.push({ type:'result', path:[...path], parentId, log:`✅ 完整排列 [${path}]，收集！`, results:[...resultsSoFar.map(r=>[...r])], phase:'collect' });
+                steps.push({ type:'backtrack', path:[...path], parentId, log:`↩ 回溯：撤销 ${path[path.length-1]}，路径回到 [${path.slice(0,-1)}]`, results:[...resultsSoFar.map(r=>[...r])], phase:'backtrack' });
+                return;
+            }
+            for(let i=0;i<3;i++){
+                if(used[i]) continue;
+                used[i]=true; path.push(nums[i]);
+                steps.push({ type:'enter', path:[...path], choice:nums[i], log:`→ 选择 ${nums[i]}，当前路径 [${path.join(',')}]`, results:[...resultsSoFar.map(r=>[...r])], phase:'expand' });
+                dfs(path, used, i);
+                path.pop(); used[i]=false;
+                if(path.length>0){
+                    steps.push({ type:'backtrack-mid', path:[...path], log:`↩ 撤销 ${nums[i]}，路径回到 [${path.join(',')}]，尝试下一个选择`, results:[...resultsSoFar.map(r=>[...r])], phase:'backtrack' });
+                }
+            }
+        }
+
+        buildSteps();
+        let cur = 0;
+
+        // SVG rendering
+        // Layout: 3 levels + root
+        // Root: (320, 30)
+        // Level 1: 3 nodes at x=110,320,530 y=100
+        // Level 2: 6 nodes at roughly x=50,170,260,380,480,590 y=180
+        // Level 3 (leaves): 6 nodes y=260
+        const layout = {
+            root: {x:320, y:30},
+            L1: [{x:120,y:100},{x:320,y:100},{x:520,y:100}],     // chose 1, 2, 3
+            L2: [
+                {x:65,y:190},{x:170,y:190},    // under "chose 1": chose 2, chose 3
+                {x:270,y:190},{x:375,y:190},   // under "chose 2": chose 1, chose 3
+                {x:475,y:190},{x:575,y:190},   // under "chose 3": chose 1, chose 2
+            ],
+            L3: [
+                {x:65,y:275},   // [1,2,3]
+                {x:170,y:275},  // [1,3,2]
+                {x:270,y:275},  // [2,1,3]
+                {x:375,y:275},  // [2,3,1]
+                {x:475,y:275},  // [3,1,2]
+                {x:575,y:275},  // [3,2,1]
+            ]
+        };
+        // Map path → coords
+        function pathToCoords(path){
+            if(path.length===0) return layout.root;
+            if(path.length===1){
+                const idx=[1,2,3].indexOf(path[0]);
+                return layout.L1[idx];
+            }
+            if(path.length===2){
+                // figure out which L1, then which sub
+                const l1=[1,2,3].indexOf(path[0]);
+                const remaining=[1,2,3].filter(x=>x!==path[0]);
+                const l2sub=remaining.indexOf(path[1]);
+                return layout.L2[l1*2+l2sub];
+            }
+            if(path.length===3){
+                const perms=[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]];
+                const idx=perms.findIndex(p=>p[0]===path[0]&&p[1]===path[1]&&p[2]===path[2]);
+                return layout.L3[idx];
+            }
+        }
+
+        function renderTree(){
+            const svg = document.getElementById('bt-tree-svg');
+            const st = steps[cur];
+            svg.innerHTML = '';
+            const ns = 'http://www.w3.org/2000/svg';
+
+            // Draw all edges first (faint)
+            const allPaths=[
+                [[],[1]],[[],[2]],[[],[3]],
+                [[1],[1,2]],[[1],[1,3]],
+                [[2],[2,1]],[[2],[2,3]],
+                [[3],[3,1]],[[3],[3,2]],
+                [[1,2],[1,2,3]],[[1,3],[1,3,2]],
+                [[2,1],[2,1,3]],[[2,3],[2,3,1]],
+                [[3,1],[3,1,2]],[[3,2],[3,2,1]],
+            ];
+            for(const [p,c] of allPaths){
+                const pc=pathToCoords(p), cc=pathToCoords(c);
+                const line=document.createElementNS(ns,'line');
+                line.setAttribute('x1',pc.x); line.setAttribute('y1',pc.y+14);
+                line.setAttribute('x2',cc.x); line.setAttribute('y2',cc.y-14);
+                line.setAttribute('stroke','#1e293b'); line.setAttribute('stroke-width','1.5');
+                svg.appendChild(line);
+            }
+
+            // Determine current path and active node
+            const curPath = st.path || [];
+            const results = st.results || [];
+            const isBacktrack = st.phase==='backtrack';
+
+            // Draw nodes
+            const allNodes=[
+                [],
+                [1],[2],[3],
+                [1,2],[1,3],[2,1],[2,3],[3,1],[3,2],
+                [1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]
+            ];
+            for(const np of allNodes){
+                const coords=pathToCoords(np);
+                const isActive = JSON.stringify(np)===JSON.stringify(curPath);
+                const isOnPath = np.length<=curPath.length && JSON.stringify(np)===JSON.stringify(curPath.slice(0,np.length));
+                const isDone = results.some(r=>JSON.stringify(r)===JSON.stringify(np));
+                const label = np.length===0?'[]':'['+np.join(',')+']';
+
+                // circle
+                const circ=document.createElementNS(ns,'circle');
+                circ.setAttribute('cx',coords.x); circ.setAttribute('cy',coords.y); circ.setAttribute('r','18');
+                let fill='#1e293b', stroke='#334155', strokeW='1.5';
+                if(isActive && isBacktrack){ fill='rgba(251,146,60,.3)'; stroke='#fb923c'; strokeW='2.5'; }
+                else if(isActive){ fill='rgba(245,158,11,.25)'; stroke='#f59e0b'; strokeW='2.5'; }
+                else if(isDone){ fill='rgba(139,92,246,.25)'; stroke='#8b5cf6'; strokeW='2'; }
+                else if(isOnPath){ fill='rgba(99,102,241,.15)'; stroke='#6366f1'; strokeW='1.5'; }
+                circ.setAttribute('fill',fill); circ.setAttribute('stroke',stroke); circ.setAttribute('stroke-width',strokeW);
+                svg.appendChild(circ);
+
+                // label
+                const txt=document.createElementNS(ns,'text');
+                txt.setAttribute('x',coords.x); txt.setAttribute('y',coords.y+4);
+                txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size','9');
+                txt.setAttribute('font-family','monospace');
+                let txtColor='#475569';
+                if(isActive) txtColor=isBacktrack?'#fb923c':'#fcd34d';
+                else if(isDone) txtColor='#a78bfa';
+                else if(isOnPath) txtColor='#818cf8';
+                txt.setAttribute('fill',txtColor);
+                txt.textContent = np.length===0?'root':np.length===3?np.join(''):'['+np+']';
+                svg.appendChild(txt);
+            }
+        }
+
+        function render(){
+            renderTree();
+            const st=steps[cur];
+            document.getElementById('bt-path-display').textContent='当前路径：['+((st.path||[]).join(','))+']';
+            const logEl=document.getElementById('bt-log');
+            const cls=st.phase==='backtrack'?'log-backtrack':st.phase==='collect'?'log-result':'log-new';
+            logEl.innerHTML=`<span class="${cls}">${st.log}</span>`;
+            document.getElementById('bt-step-label').textContent=`步骤 ${cur} / ${steps.length-1}`;
+            document.getElementById('bt-prev').disabled=cur===0;
+            document.getElementById('bt-next').disabled=cur===steps.length-1;
+            const resEl=document.getElementById('bt-results');
+            resEl.innerHTML='';
+            for(const r of (st.results||[])){
+                const span=document.createElement('span');
+                span.className='bt-result-item';
+                span.textContent='['+r.join(',')+']';
+                resEl.appendChild(span);
+            }
+        }
+
+        window.btNext=function(){ if(cur<steps.length-1){ cur++; render(); } };
+        window.btPrev=function(){ if(cur>0){ cur--; render(); } };
+        window.btReset=function(){ cur=0; render(); };
+        render();
+    })();
+    </script>
 </body>
 </html>

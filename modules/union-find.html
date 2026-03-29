@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -36,216 +51,116 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <div class="knowledge-card kc-blue">
-        <h3>🔵 核心定义</h3>
-        <p><strong>并查集完整实现（路径压缩 + 按秩合并）：</strong></p>
-<pre><code class="language-python">class UnionFind:
-    def __init__(self, n):
-        self.parent = list(range(n))   # 初始每个节点是自己的根
-        self.rank   = [0] * n          # 树的高度估计（按秩合并用）
-        self.count  = n                # 连通分量数量
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">集合的合并</span>
+        <span class="prereq-tag">树的根节点定义</span>
+        <p>并查集（Disjoint Set Union，常常用来做克鲁斯卡尔最小生成树的核心逻辑）。它诞生的使命高度唯一：判断社交网络森林中，“小明”和“老王”到底在不在同一个派系网络内？如果小明吞并了老王的岛屿资源，如何用最快的速度 O(1) 修改系统的领从属结构。</p>
+    </div>
 
-    def find(self, x):
-        # 路径压缩：递归找根，并将沿途所有节点直接连到根
-        if self.parent[x] != x:
-            self.parent[x] = self.find(self.parent[x])  # 关键：压缩路径
-        return self.parent[x]
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：并查集的血缘压缩战术</h3>
+        
+        <h4>1. 极简的“认爹”机制</h4>
+        <div class="intuition-box">
+            起初，全世界都是一座座孤岛：大写数组 <code>parent[i] = i</code>，每个人都是自己的老大。<br>
+            当 <code>union(A, B)</code>：我们去找出 A 的终极老大 <code>RootA</code>，和 B 的终极老大 <code>RootB</code>。如果他俩不是同一个人，那么让 <code>RootB.parent = RootA</code>。仅仅修改一行指针！小明整个长长长达千人的网络直接挂接到了大明的网络树下，彻底成为一家人。
+        </div>
 
-    def union(self, x, y):
-        rx, ry = self.find(x), self.find(y)
-        if rx == ry: return False       # 已在同一集合
-        # 按秩合并：把秩小的树接到秩大的树下面
-        if self.rank[rx] < self.rank[ry]:
-            rx, ry = ry, rx
-        self.parent[ry] = rx            # ry的根挂到rx下
-        if self.rank[rx] == self.rank[ry]:
-            self.rank[rx] += 1          # 只有两树等高时，新树高度+1
-        self.count -= 1
-        return True
+        <h4>2. 悲剧：退化成单链</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                如果数据特别讨厌地构造出 <code>union(1,2), union(2,3), union(3,4)...</code>。这棵帮派关系树会变成一根光秃秃的长面条！这时你如果执行一次 <code>find(100)</code> 去找老大，你需要顺着面条藤蔓向上一级一级打听 100 次。O(N) 性能。
+            </div>
+        </div>
+        
+        <h4>3. 战术 1：路径压缩 (Path Compression) - 最强魔法</h4>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                既然我们做 <code>find(100)</code> 时花了大价钱顺着层层代理找到了终极 BOSS，为什么我们不顺手把沿途的所有人（它的爹，它的爷爷...）全都直接强制提拔成 <strong>BOSS的直系手下（认干爹）</strong> 呢？<br>以后任何从这条藤蔓下打听消息的人都是一步 O(1) 直接指向老大，树高被彻底压平为完全扁平的星状射图。代码仅仅一行之差！
+            </div>
+        </div>
 
-    def connected(self, x, y):
-        return self.find(x) == self.find(y)
-</code></pre>
-        <p><strong>摊销时间复杂度：</strong> 路径压缩 + 按秩合并后，每次 find/union 操作的摊销时间为 <strong>O(α(n))</strong>（Ackermann逆函数），实际上极接近 O(1)。</p>
+        <div class="think-block">
+            <div class="q">Q: 那战术 2：按秩合并 (Union By Rank) 怎么说？</div>
+            <details>
+                <summary>查看答疑</summary>
+                按秩（树深或大小）指的是：不要把大黑帮挂在几个人的小黑帮下面，这样很容易增加所有帮众去通报老大的成本。一定要把“小树根”接在“大树根”的底部。然而，**极其重要的是**，在绝大多数工业界实战与算法题中，只要使用了无向的、究极暴力的“路径压缩”，树就永远不可能变得很高，其时间复杂度已经逼近 阿克曼函数的反函数 $O(α(N)) pprox O(1)$ 了。因为极少会退化，加上按秩合并反而徒增数十行代码增加错误率，比赛通常只背“带路径压缩”的简明版本。
+            </details>
+        </div>
     </div>
 
     <div class="knowledge-card kc-blue">
-        <h3>📊 复杂度速查</h3>
+        <h3>💻 模板代码：十秒手敲并查集</h3>
+<pre><code class="language-python"># 这是力扣刷题背诵的绝对标准格式
+class UnionFind:
+    def __init__(self, size):
+        self.parent = list(range(size))
+        # self.count = size (如果在统计孤岛数量题里，可用来表示目前的连通分量总数)
+
+    def find(self, i):
+        if self.parent[i] == i:         # 找到顶级 BOSS 了！
+            return i
+            
+        # 魔法所在：递归寻找爹的最终 BOSS，并且把返回的那个最终极 BOSS
+        # 强制塞给当前被坑了在底层干活的人的头上。
+        # 等这次极其漫长的递归返回之后，一路上所有底层人全部越级指向了 BOSS！
+        self.parent[i] = self.find(self.parent[i])
+        
+        return self.parent[i]
+
+    def union(self, x, y):
+        rootX = self.find(x)
+        rootY = self.find(y)
+        
+        if rootX != rootY:
+            # 帮派黑虎掏心互相连通（无脑版，不进行按秩合并也很快）
+            self.parent[rootY] = rootX
+            # self.count -= 1 (连通两个块，世界上就少了一个独立的区块)
+            return True
+        return False
+</code></pre>
         <table>
-            <tr><th>操作</th><th>朴素实现</th><th>路径压缩</th><th>路径压缩+按秩合并</th></tr>
-            <tr><td>find</td><td>O(n)</td><td>O(log n) 摊销</td><td>O(α(n)) ≈ O(1)</td></tr>
-            <tr><td>union</td><td>O(n)</td><td>O(log n) 摊销</td><td>O(α(n)) ≈ O(1)</td></tr>
-            <tr><td>connected</td><td>O(n)</td><td>O(log n) 摊销</td><td>O(α(n)) ≈ O(1)</td></tr>
-            <tr><td>初始化</td><td>O(n)</td><td>O(n)</td><td>O(n)</td></tr>
-            <tr><td>m次操作总计</td><td>O(mn)</td><td>O(m log n)</td><td>O(mα(n))</td></tr>
+            <tr><th>技能点</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>找老总查户口 Find</td><td>O(常数)</td><td>无</td><td>即使是几亿节点的图，使用路径压缩，搜索也就两三层。</td></tr>
+            <tr><td>结盟 Union</td><td>O(常数)</td><td>无</td><td>基于并查集的边合并只是将两个找出来的老总指针对齐了一下，仅需赋值。</td></tr>
+            <tr><td>整体架构</td><td>-</td><td>O(N)</td><td>只需要分配一个长度和全村人一样多的 parent 数组就能完成庞然大物的维系。极简的美学。</td></tr>
         </table>
     </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🖼 结构图示：路径压缩过程</h3>
-<pre class="ascii-art">
-【未压缩的深层树】
-  0←1←2←3←4    find(4): 0←1←2←3←4 需要遍历5步
-
-【路径压缩后】
-  parent[4]=find(3)=find(2)=find(1)=find(0)=0
-  所有节点直接指向根：
-       0
-     / | \ \
-    1  2  3  4   下次find任意节点只需1步！
-
-【按秩合并示意】
-  集合A: 0←1←2 (rank=2)
-  集合B:    3   (rank=0)
-  union(2,3): rank[A]>rank[B], 将B接到A:
-       0←1←2←3   rank不变
-  
-  如果rank相等:
-  集合A: 0←1 (rank=1)
-  集合B: 2←3 (rank=1)
-  union: 3接到1下，新rank=2
-       0←1←3←2
-</pre>
-    </div>
-
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题详解</h3>
-        <details>
-            <summary>例题1：朋友圈数量（LeetCode 547）</summary>
-            <p><strong>题意：</strong> n个学生，isConnected[i][j]=1表示i和j是朋友（传递），求朋友圈总数。</p>
-<pre><code class="language-python">def findCircleNum(isConnected):
-    n = len(isConnected)
-    uf = UnionFind(n)
-    for i in range(n):
-        for j in range(i+1, n):
-            if isConnected[i][j]:
-                uf.union(i, j)     # 合并为同一朋友圈
-    return uf.count                # 剩余连通分量数即为朋友圈数
-</code></pre>
-            <p><strong>时间：</strong> O(n² α(n))；<strong>空间：</strong> O(n)</p>
-        </details>
-
-        <details>
-            <summary>例题2：冗余连接（LeetCode 684）— 找成环的边</summary>
-            <p><strong>题意：</strong> 无向图中有n个节点和n条边（树+1条多余边），找出多余的边。</p>
-<pre><code class="language-python">def findRedundantConnection(edges):
-    n = len(edges)
-    uf = UnionFind(n + 1)          # 节点从1开始
-    for u, v in edges:
-        if not uf.union(u, v):     # union返回False = 已连通 = 成环
-            return [u, v]          # 这条边就是冗余边
-    return []
-</code></pre>
-            <p><strong>时间：</strong> O(n α(n))；<strong>空间：</strong> O(n)</p>
-        </details>
-
-        <details>
-            <summary>例题3：账户合并（LeetCode 721）— 多键并查集</summary>
-            <p><strong>题意：</strong> 多个账户，每个有邮箱列表，合并相同邮箱账户。</p>
-<pre><code class="language-python">from collections import defaultdict
-
-def accountsMerge(accounts):
-    email_to_id = {}        # 邮箱→代表账户ID
-    uf_parent = {}
-
-    def find(x):
-        if uf_parent.setdefault(x, x) != x:
-            uf_parent[x] = find(uf_parent[x])
-        return uf_parent[x]
-
-    def union(x, y):
-        uf_parent[find(x)] = find(y)
-
-    # 将同账户下所有邮箱union在一起
-    for account in accounts:
-        name = account[0]
-        first_email = account[1]
-        for email in account[1:]:
-            if email not in email_to_id:
-                email_to_id[email] = first_email    # 用第一个邮箱代表
-            union(email, first_email)               # 合并到第一个邮箱
-
-    # 收集每个根代表的邮箱集合
-    root_to_emails = defaultdict(list)
-    for email in email_to_id:
-        root_to_emails[find(email)].append(email)
-
-    # 组合结果（邮箱对应账户名）
-    result = []
-    email_to_name = {e: accounts[i][0] for i, acc in enumerate(accounts) for e in acc[1:]}
-    for root, emails in root_to_emails.items():
-        result.append([email_to_name[root]] + sorted(emails))
-    return result
-</code></pre>
-        </details>
-    </div>
-
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点</h3>
-        <p><strong>① find未路径压缩导致树退化</strong></p>
+        <h3>🔴 易错点分析</h3>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 错误（无压缩）</p>
-<pre><code class="language-python">def find(x):
-    while parent[x] != x:
-        x = parent[x]    # 每次都遍历整条链，O(n)
-    return x
+                <p>❌ 在 Union 时直接连接原本的元素</p>
+<pre><code class="language-python">def union(x, y):
+    # 低智：老王直接认小明做小弟。但他明明是有大帮派后台的人！
+    # 这会生生扯断连带关系导致网络被撕裂成两半。
+    self.parent[x] = y
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 正确（路径压缩）</p>
-<pre><code class="language-python">def find(x):
-    if parent[x] != x:
-        parent[x] = find(parent[x])  # 递归压缩
-    return parent[x]
+                <p>✅ 必须拉出双方最老底细再握手</p>
+<pre><code class="language-python">def union(x, y):
+    root_x = self.find(x)
+    root_y = self.find(y)
+    # 双方帮派长把酒言欢
+    self.parent[root_x] = root_y
 </code></pre>
             </div>
         </div>
-        <p><strong>② union方向混乱（不按秩）</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 错误（总是ry→rx，不管高度）</p>
-<pre><code class="language-python">def union(x, y):
-    rx, ry = find(x), find(y)
-    parent[ry] = rx    # 可能把高树接到矮树下
-    # 导致树退化，压缩效果差
-</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 正确（矮挂高）</p>
-<pre><code class="language-python">def union(x, y):
-    rx, ry = find(x), find(y)
-    if rank[rx] < rank[ry]: rx, ry = ry, rx
-    parent[ry] = rx    # 秩小的挂到秩大的下面
-    if rank[rx] == rank[ry]: rank[rx] += 1
-</code></pre>
-            </div>
-        </div>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：恐怖的路径压缩执行时刻</h3>
+        <div class="demo-container" id="ufDemo"></div>
     </div>
 
     <div class="knowledge-card kc-cyan">
         <h3>🔷 竞赛拓展</h3>
-        <p><strong>带权并查集：</strong> 在 parent 数组基础上维护 weight 数组，记录节点到根的权值关系。用于区间相等/比例关系维护。</p>
-<pre><code class="language-python">class WeightedUF:
-    def __init__(self, n):
-        self.parent = list(range(n))
-        self.weight = [1.0] * n    # weight[i] = i到parent[i]的比值
-
-    def find(self, x):
-        if self.parent[x] != x:
-            root = self.find(self.parent[x])
-            self.weight[x] *= self.weight[self.parent[x]]  # 更新权值
-            self.parent[x] = root
-        return self.parent[x]
-
-    def union(self, x, y, val):    # val = x/y
-        rx, ry = self.find(x), self.find(y)
-        if rx == ry: return
-        self.parent[rx] = ry
-        self.weight[rx] = val * self.weight[y] / self.weight[x]
-</code></pre>
-        <p><strong>离线查询（Kruskal重构树）：</strong> 处理"最小瓶颈路径"问题，将边按权值排序后建树，点对的LCA即为最小瓶颈。</p>
-        <p><strong>并查集 + 时间回退（可撤销并查集）：</strong> 按秩合并（不路径压缩），用栈记录每次操作前的状态，支持O(log n)回滚。</p>
+        <p><strong>带权并查集：</strong> 如果小明对大明欠款 100 块，大明对王阿姨欠款 50 块。由于我们找老大时会把小明和王阿姨放在同层拉近。但是小明相对王阿姨差多少这个记录该怎么存放？答案是维护一个附带距离权重的 <code>weight</code> 数组。在执行路径压缩时，我们只要让自身挂上爹的权重再加上爹指向老大的权重即可利用向量加法在扁平化时更新值。常用来解决极其复杂的同余、方程式未知数联动问题。</p>
     </div>
 </section>
 
@@ -352,5 +267,62 @@ def accountsMerge(accounts):
 </main>
 <script src="../assets/js/app.js"></script>
 <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("ufDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="flex:1; background:#1e293b; border-radius:4px; max-width:500px; padding:1.5rem; display:flex; justify-content:center; align-items:center; position:relative" id="ufBox">
+                <div style="display:flex; flex-direction:column; gap:30px; align-items:flex-end">
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <div style="color:#cbd5e1; font-size:12px">Root (终极大爹)</div>
+                        <div class="nd" id="ufNd4" style="width:30px; height:30px; border-radius:50%; background:#ef4444; border:2px solid #b91c1c; text-align:center; line-height:30px; color:#fff">4</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:25px">
+                        <div class="nd" id="ufNd3" style="width:30px; height:30px; border-radius:50%; background:#475569; border:2px solid #334155; text-align:center; line-height:30px; color:#fff; position:relative">3
+                            <svg style="position:absolute; top:-35px; left:10px; width:20px; height:40px; overflow:visible"><line x1="10" y1="40" x2="10" y2="0" stroke="#f59e0b" stroke-width="2" marker-end="url(#arw)" id="e34"/></svg>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:40px">
+                        <div class="nd" id="ufNd2" style="width:30px; height:30px; border-radius:50%; background:#475569; border:2px solid #334155; text-align:center; line-height:30px; color:#fff; position:relative">2
+                            <svg style="position:absolute; top:-35px; left:10px; width:20px; height:40px; overflow:visible"><line x1="10" y1="40" x2="10" y2="0" stroke="#f59e0b" stroke-width="2" marker-end="url(#arw)" id="e23"/></svg>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:55px">
+                        <div class="nd" id="ufNd1" style="width:30px; height:30px; border-radius:50%; background:#475569; border:2px solid #334155; text-align:center; line-height:30px; color:#fff; position:relative">1
+                            <svg style="position:absolute; top:-35px; left:10px; width:20px; height:40px; overflow:visible"><line x1="10" y1="40" x2="10" y2="0" stroke="#f59e0b" stroke-width="2" marker-end="url(#arw)" id="e12"/></svg>
+                        </div>
+                    </div>
+                </div>
+                <svg width="0" height="0"><defs><marker id="arw" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#f59e0b" /></marker><marker id="arwB" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#3b82f6" /></marker></defs></svg>
+            </div>
+            
+            <div style="display:flex; gap:0.5rem">
+                <button id="ufBtnDo" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">执行 Find(1)</button>
+            </div>
+            <div id="ufDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:4em;">在极度劣化的长面条关系链中：<br>1是2的小弟，2是3的，3是4的（4是最终大爹）。执行一次 Find(1) 让暴风雨洗礼他们。</div>
+        </div>
+    `;
+
+    document.getElementById("ufBtnDo").onclick = () => {
+        let dc = document.getElementById("ufDescr");
+        dc.innerHTML = "开始了！Find(1) 沿着黄线一直往上找老爹...直到碰到了戴红帽子的 4。";
+        setTimeout(()=> {
+            dc.innerHTML += "<br>在撤退的归程途中，恐怖的事情发生了！递归函数把所有人的箭头的终点：<b>统统改造成指向了终极目标 4 ！！！！</b>";
+            // Do magic
+            document.getElementById("e12").outerHTML = '<path d="M10,40 Q50,-15 150,-100" fill="transparent" stroke="#3b82f6" stroke-width="2" marker-end="url(#arwB)"/>';
+            document.getElementById("e23").outerHTML = '<path d="M10,40 Q50,-15 100,-70" fill="transparent" stroke="#3b82f6" stroke-width="2" marker-end="url(#arwB)"/>';
+            setTimeout(()=> {
+                dc.innerHTML = "下一次谁要是再进行 `find(1)` 或者 `find(2)` 等操作。<br>从这个长龙底下抽签，直接沿着蓝线 O(1) 指向老大！长面条永远被拉爆成了星形图表。";
+                document.getElementById("ufBtnDo").disabled = true;
+                document.getElementById("ufBtnDo").innerText = "已被优化极致";
+                document.getElementById("ufBtnDo").style.background = "#475569";
+            }, 3000);
+        }, 1500)
+    };
+});
+</script>
 </body>
 </html>

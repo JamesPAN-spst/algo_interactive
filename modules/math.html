@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -36,220 +51,133 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <div class="knowledge-card kc-blue">
-        <h3>🔵 核心定义</h3>
-        <p><strong>常用数学公式与算法：</strong></p>
-<pre><code class="language-python">import math
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">初等数论</span>
+        <span class="prereq-tag">位运算基础</span>
+        <p>算法中的数学模块不同于高数，它侧重离散数学和数论。核心要求是：在保证不溢出的前提下，将复杂的数学定义转化为计算机可高效执行的（位运算、模运算）程序逻辑。</p>
+    </div>
 
-# ===== GCD / LCM =====
-def gcd(a, b):
-    return a if b == 0 else gcd(b, a % b)   # 欧几里得递推
-    # Python: math.gcd(a, b)
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：核心数学定理与公式</h3>
 
-def lcm(a, b):
-    return a * b // gcd(a, b)               # lcm = a*b / gcd(a,b)
+        <h4>1. 欧几里得算法 (Euclidean Algorithm - 求最大公约数 GCD)</h4>
+        <div class="intuition-box">
+            <strong>核心思想：</strong> `gcd(a, b) = gcd(b, a % b)`。大数除以小数的余数，一定会继承它们共有的因子。一旦较小数缩小到 0，剩下的那个大数就是最大公因数。
+        </div>
+        <div class="think-block">
+            <div class="q">Q: 为什么 gcd(a,b) = gcd(b, a%b)？</div>
+            <details>
+                <summary>查看答疑</summary>
+                假设我们要求 <code>gcd(A, B)</code>且 A > B。A 可以写成 <code>A = k*B + R</code>，其中 R 就是 <code>A % B</code>。如果有一个数能同时整除 A 和 B，那么它必然也能整除 <code>R = A - k*B</code>。因此，A 和 B 的公约数集合，完全等价于 B 和 R 的公约数集合。不断替换成更小的数字组合，直到 0 出现。
+            </details>
+        </div>
 
-# ===== 快速幂（二分幂）=====
-def power(base, exp, mod):
-    result = 1
-    base %= mod
-    while exp > 0:
-        if exp & 1:                          # 指数为奇数
-            result = result * base % mod
-        base = base * base % mod            # base平方
-        exp >>= 1                           # 指数右移（÷2）
-    return result
-    # Python内置: pow(base, exp, mod)  # 同样O(log exp)，更快
+        <h4>2. 快速幂 (Fast Exponentiation)</h4>
+        <div class="naive-vs-smart">
+            <div class="naive"><h4 class="label">线性连乘 (Naive)</h4><p>计算 `x^n`，从 1 循环乘到 n，时间复杂度 O(N)。如果 N=$10^9$ 会超时。</p></div>
+            <div class="smart"><h4 class="label">二进制拆分 (Smart)</h4><p>因为 $13 = 1101_2$，所以 $x^{13} = x^8 * x^4 * x^1$。我们只需要不断把自身的底数平方，并在看到幂次的二进制位是 1 时乘入答案。O(log N)。</p></div>
+        </div>
 
-# ===== 线性素数筛（欧拉筛）=====
-def sieve(n):
-    is_prime = [True] * (n + 1)
-    primes = []
-    is_prime[0] = is_prime[1] = False
-    for i in range(2, n + 1):
-        if is_prime[i]:
-            primes.append(i)
-        for p in primes:
-            if i * p > n: break
-            is_prime[i * p] = False         # 用i的最小质因子筛掉
-            if i % p == 0: break            # 关键：保证每个合数只被筛一次
-    return primes
+        <h4>3. 埃拉托斯特尼筛法 (Sieve of Eratosthenes - 找素数)</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>策略：</strong> 从 2 开始，如果它是素数，就把它的所有倍数（4,6,8..）涂黑标记为合数。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>重要优化：</strong> 如果当前素数是 `p`，没必要从 `p*2` 开始涂黑，<strong>直接从 `p*p` 开始涂黑即可</strong>！因为比它小的倍数 (如 `p*2`, `p*3`...) 肯定早在处理 2 和 3 时就被涂黑过了。
+            </div>
+        </div>
 
-# ===== 质因数分解（试除法）=====
-def factorize(n):
-    factors = []
-    d = 2
-    while d * d <= n:
-        while n % d == 0:
-            factors.append(d)
-            n //= d
-        d += 1
-    if n > 1:
-        factors.append(n)                   # 剩余的n是质数
-    return factors
-</code></pre>
+        <h4>4. 模运算与费马小定理 -> 乘法逆元</h4>
+        <div class="intuition-box">
+            加减乘可以直接对中间结果取模：<code>(a * b) % p == ((a % p) * (b % p)) % p</code>。<br>
+            <strong>但是除法不行！</strong> <code>(a / b) % p != (a % p) / (b % p)</code>。必须求 b 在模 p 下的逆元 <code>b^-1</code>。<br>
+            费马小定理指出，如果 p 是质数，那么 $b^{p-1} \equiv 1 \pmod p$。两边同除以 b 得 $b^{p-2} \equiv b^{-1} \pmod p$。因此，除以 b，就等于乘以 $b^{p-2}$ 并取模！
+        </div>
     </div>
 
     <div class="knowledge-card kc-blue">
-        <h3>📊 复杂度速查</h3>
+        <h3>💻 模板代码：GCD、快速幂与素数筛</h3>
+<pre><code class="language-python"># 1. 欧几里得求 GCD 与 LCM
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+def lcm(a, b):
+    # 先除后乘防止溢出 (Python其实无所谓，C++很重要)
+    return a // gcd(a, b) * b
+
+# 2. 快速幂 (带取模)
+def fastPow(x, n, mod):
+    res = 1
+    x = x % mod
+    while n > 0:
+        if n & 1:           # 如果当前最低位为 1
+            res = (res * x) % mod
+        x = (x * x) % mod   # 底数不断翻脸平方
+        n >>= 1             # 右移一位
+    return res
+
+# 3. 乘法逆元 (如果 mod 是质数)
+def modInverse(b, mod):
+    return fastPow(b, mod - 2, mod)
+
+# 4. 埃氏筛找 n 以内的素数
+def sieve(n):
+    is_prime = [True] * (n + 1)
+    is_prime[0] = is_prime[1] = False
+    for i in range(2, int(n**0.5) + 1):
+        if is_prime[i]:
+            # 从 i^2 开始涂黑
+            for j in range(i * i, n + 1, i):
+                is_prime[j] = False
+    return [i for i, p in enumerate(is_prime) if p]
+</code></pre>
         <table>
-            <tr><th>算法</th><th>时间复杂度</th><th>空间复杂度</th><th>备注</th></tr>
-            <tr><td>欧几里得GCD</td><td>O(log min(a,b))</td><td>O(log n) 递归栈</td><td>迭代版O(1)空间</td></tr>
-            <tr><td>快速幂</td><td>O(log exp)</td><td>O(1)</td><td>Python用pow()更快</td></tr>
-            <tr><td>埃拉托色尼筛</td><td>O(n log log n)</td><td>O(n)</td><td>简单但有重复筛</td></tr>
-            <tr><td>欧拉线性筛</td><td>O(n)</td><td>O(n)</td><td>每个合数只筛一次</td></tr>
-            <tr><td>质因数分解</td><td>O(√n)</td><td>O(log n)</td><td>因子数量</td></tr>
-            <tr><td>组合数C(n,k)</td><td>O(k)</td><td>O(1)</td><td>递推或杨辉三角</td></tr>
+            <tr><th>算法</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>GCD</td><td>O(log(min(a,b)))</td><td>O(1)</td><td>模运算让数字指数级减小（类似斐波那契数列逆推）。</td></tr>
+            <tr><td>快速幂</td><td>O(log N)</td><td>O(1)</td><td>指数 $N$ 每次右移折半。</td></tr>
+            <tr><td>埃氏筛法</td><td>O(N log log N)</td><td>O(N)</td><td>调和级数求和 $\sum (N/p) pprox \log \log N$。几乎等同于线性。</td></tr>
         </table>
     </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🖼 结构图示：快速幂计算过程</h3>
-<pre class="ascii-art">
-计算 3^11 mod 1000
-
-11 = 1011₂ (二进制)
-
-步骤:          exp   base        result
-初始:          11    3           1
-exp&1=1,result×base: 10    9       3
-exp&1=0:       5     81          3
-exp&1=1,result×base: 4    6561    3×81=243
-exp&1=0:       2     6561²%1000  243
-exp&1=0:       1     ...         243
-exp&1=1:       0     ...         243 × ...
-
-最终 3^11 = 177147，177147 % 1000 = 147
-
-欧拉线性筛核心思想 (n=10):
-2: prime, 筛掉 4(2×2), 6(2×3), 10(2×5)
-3: prime, 筛掉 9(3×3)
-4: 已筛
-5: prime, 筛掉 5×2=10(已筛)... 遇到5%2≠0继续
-每个合数只被"最小质因子"筛一次 → O(n)
-</pre>
-    </div>
-
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题详解</h3>
-        <details>
-            <summary>例题1：计数质数（LeetCode 204）— 埃拉托色尼筛</summary>
-<pre><code class="language-python">def countPrimes(n):
-    if n < 2: return 0
-    is_prime = [True] * n
-    is_prime[0] = is_prime[1] = False
-    # 只需筛到√n（大于√n的合数必有 ≤√n 的质因子）
-    for i in range(2, int(n**0.5) + 1):
-        if is_prime[i]:
-            # 从 i² 开始筛（i×2,...,i×(i-1)已被更小的质数筛过）
-            for j in range(i*i, n, i):
-                is_prime[j] = False
-    return sum(is_prime)
-</code></pre>
-            <p><strong>时间：</strong> O(n log log n)；<strong>空间：</strong> O(n)</p>
-        </details>
-
-        <details>
-            <summary>例题2：数字 1 的个数（LeetCode 233）— 数位DP</summary>
-            <p><strong>题意：</strong> 给整数n，计算[1,n]所有数字中1出现的总次数。</p>
-<pre><code class="language-python">def countDigitOne(n):
-    count = 0
-    factor = 1                   # 当前考虑的位（个位、十位、百位...）
-    while factor <= n:
-        # 将n分成三部分：高位 higher、当前位 current、低位 lower
-        higher  = n // (factor * 10)
-        current = (n // factor) % 10
-        lower   = n % factor
-
-        if current == 0:
-            count += higher * factor            # 当前位为0：1出现次数=高位×factor
-        elif current == 1:
-            count += higher * factor + lower + 1  # 当前位为1：高位×factor+低位+1
-        else:
-            count += (higher + 1) * factor    # 当前位>1：(高位+1)×factor
-        factor *= 10
-    return count
-</code></pre>
-            <p><strong>时间：</strong> O(log n)；<strong>空间：</strong> O(1)</p>
-        </details>
-
-        <details>
-            <summary>例题3：丑数 II（LeetCode 264）— 三指针</summary>
-            <p><strong>题意：</strong> 只含2、3、5质因子的数称为丑数，找第n个丑数。</p>
-<pre><code class="language-python">def nthUglyNumber(n):
-    dp = [1] * n                 # dp[i] = 第i+1个丑数
-    p2 = p3 = p5 = 0            # 分别指向下一个乘以2/3/5的候选
-
-    for i in range(1, n):
-        next2 = dp[p2] * 2
-        next3 = dp[p3] * 3
-        next5 = dp[p5] * 5
-        dp[i] = min(next2, next3, next5)   # 取最小的下一个丑数
-        # 指针前进（可能有多个同时前进，避免重复）
-        if dp[i] == next2: p2 += 1
-        if dp[i] == next3: p3 += 1
-        if dp[i] == next5: p5 += 1
-    return dp[n-1]
-</code></pre>
-            <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(n)</p>
-        </details>
-    </div>
-
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点</h3>
-        <p><strong>① 快速幂取模时乘法溢出（Python不会溢出，但其他语言需注意）</strong></p>
+        <h3>🔴 易错点分析</h3>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 错误（先乘后取模，中间可能溢出）</p>
-<pre><code class="language-python"># C++/Java中：
-result = result * base % mod  # base*result可能溢出64位
+                <p>❌ 错误的逆元使用前提</p>
+<pre><code class="language-python"># 需要计算 (a / b) % m
+ans = (a % m) / (b % m)
+# 或者随便用费马小定理，哪怕 m 不是质数：
+ans = a * fastPow(b, m-2, m) % m
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 正确（Python自动大整数，但竞赛注意）</p>
-<pre><code class="language-python"># Python pow(base, exp, mod) 内部处理好了
-result = pow(base, exp, mod)
-# 或：Python整数无溢出，直接 (a * b) % mod 安全
+                <p>✅ 费马小必须保证 m 是质数</p>
+<pre><code class="language-python"># 如果 m 是质数 (如 10^9+7)：
+ans = (a * modInverse(b, m)) % m
+
+# 如果不是质数，必须使用 扩展欧几里得(exgcd) 求解
 </code></pre>
             </div>
         </div>
-        <p><strong>② 筛法下标范围错误</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 错误（从i×2开始筛）</p>
-<pre><code class="language-python">for i in range(2, n):
-    if is_prime[i]:
-        for j in range(2*i, n, i):  # 从2i开始，效率低
-            is_prime[j] = False     # 2i,...,i²-i都被更小的筛过了
-</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 正确（从i²开始筛）</p>
-<pre><code class="language-python">for i in range(2, int(n**0.5)+1):
-    if is_prime[i]:
-        for j in range(i*i, n, i):  # 从i²开始，小的已被筛
-            is_prime[j] = False
-</code></pre>
-            </div>
-        </div>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：快速幂位运算模拟 (求 $3^{11}$)</h3>
+        <div class="demo-container" id="mathDemo"></div>
     </div>
 
     <div class="knowledge-card kc-cyan">
         <h3>🔷 竞赛拓展</h3>
-        <p><strong>扩展欧几里得（exgcd）：</strong> 求 ax + by = gcd(a,b) 的整数解。用于求模逆元（当gcd=1时）。</p>
-<pre><code class="language-python">def exgcd(a, b):
-    if b == 0:
-        return a, 1, 0                      # gcd, x, y
-    g, x, y = exgcd(b, a % b)
-    return g, y, x - (a // b) * y          # 辗转递推
-
-def mod_inverse(a, mod):
-    g, x, _ = exgcd(a, mod)
-    if g != 1: return None                  # 无模逆元
-    return x % mod                          # 确保正整数
-</code></pre>
-        <p><strong>中国剩余定理（CRT）：</strong> 求满足多个同余方程组的最小正整数解，要求模数两两互质。可合并多个分组的约束。</p>
-        <p><strong>Lucas定理：</strong> 大模数下组合数取模 C(n,k) % p（p为质数）：分解n,k为p进制，逐位计算小组合数之积，O(p + log_p(n))。</p>
+        <p><strong>欧拉筛法 (线性筛)：</strong> 埃氏筛法由于 12 会被 2 和 3 重复涂黑，仍有一些浪费。线性筛法保证每个合数只被其“最小素因子”筛掉一次，绝对的 O(N) 性能，常用于带有很多求积性函数的情境。</p>
+        <p><strong>组合数学 (杨辉三角与预处理乘阶)：</strong> 在计算 $C(n,k) \pmod p$ 时，一般预处理所有数字的阶乘 `fact[i]` 和阶乘逆元 `inv[i]`，然后直接查表 O(1) 返回 `fact[n]*inv[k]*inv[n-k] % p`。</p>
     </div>
 </section>
 
@@ -356,5 +284,74 @@ def mod_inverse(a, mod):
 </main>
 <script src="../assets/js/app.js"></script>
 <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("mathDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; gap: 0.5rem; justify-content:center; align-items:center; background:#1e293b; padding:1.5rem; border-radius:4px" id="mdContainer">
+                <div style="text-align:center; padding-right:10px; border-right:1px solid #334155">
+                    <p style="margin:0 0 5px; color:#cbd5e1">当前答案 Res</p>
+                    <b id="mdRes" style="font-size:1.6rem; color:#10b981">1</b>
+                </div>
+                <div style="text-align:center; padding:0 10px; border-right:1px solid #334155">
+                    <p style="margin:0 0 5px; color:#cbd5e1">底数 X</p>
+                    <b id="mdX" style="font-size:1.6rem; color:#f59e0b">3</b>
+                </div>
+                <div style="text-align:center; padding-left:10px;">
+                    <p style="margin:0 0 5px; color:#cbd5e1">指数 N (2进制位)</p>
+                    <b id="mdN" style="font-size:1.6rem; color:#3b82f6">1011 (11)</b>
+                </div>
+            </div>
+            <div style="display:flex; gap:0.5rem">
+                <button id="mdBtnStep" style="background:#3b82f6; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">向下演进</button>
+                <button id="mdBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置</button>
+            </div>
+            <div id="mdDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:4em;">初始状态：要求 3^11。11 二进制是 1011。<br>注意最右边一位（1即为奇数）。</div>
+        </div>
+    `;
+
+    let res = 1, x = 3, n = 11;
+    const descr = document.getElementById("mdDescr");
+
+    function render() {
+        document.getElementById("mdRes").innerText = res;
+        document.getElementById("mdX").innerText = x;
+        document.getElementById("mdN").innerText = n.toString(2) + " (" + n + ")";
+    }
+
+    document.getElementById("mdBtnStep").onclick = () => {
+        if(n === 0) {
+            descr.innerHTML = "指数变为 0！最终答案已在 Res。<br>用 O(log N) 的时间走完了传统的 N 步连乘。";
+            return;
+        }
+        
+        let txt = "";
+        if (n % 2 !== 0) { // lowest bit is 1
+            res = res * x;
+            txt += `因为 N 的最低位是 <b>1</b>，触发乘入：<br><b>Res</b> = Res * 当前 X = ${res}。<br>`;
+        } else {
+            txt += `因为 N 的最低位是 <b>0</b>，跳过多余的乘入。<br>`;
+        }
+        
+        x = x * x;
+        n = Math.floor(n / 2);
+        
+        txt += `随后底数自我平方：<b>X</b> 升级为 ${x}。<br>`;
+        txt += `指数 <b>N</b> 右移(整除2)，丢弃最低位，变成 ${n} (${n.toString(2)})。`;
+        
+        descr.innerHTML = txt;
+        render();
+    };
+
+    document.getElementById("mdBtnReset").onclick = () => {
+        res = 1; x = 3; n = 11;
+        descr.innerHTML = "初始状态：要求 3^11。11 二进制是 1011。<br>注意最右边一位。点击演进。";
+        render();
+    };
+});
+</script>
 </body>
 </html>

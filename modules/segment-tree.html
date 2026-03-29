@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -36,236 +51,138 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <div class="knowledge-card kc-blue">
-        <h3>🔵 核心定义</h3>
-        <p><strong>线段树（区间和）完整实现：</strong></p>
-<pre><code class="language-python">class SegmentTree:
-    def __init__(self, nums):
-        n = len(nums)
-        self.n = n
-        self.tree = [0] * (4 * n)     # 4n保证空间够用
-        self.lazy = [0] * (4 * n)     # 懒标记（延迟批量更新）
-        self._build(nums, 1, 0, n-1)  # 从节点1开始（1-indexed更方便）
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">树的递归与分治</span>
+        <span class="prereq-tag">二叉树数组表示表示法</span>
+        <p>线段树（Segment Tree）用来解决数组的<strong>动态区间连环拷问</strong>：我不停地修改数组某个下属、甚至某一段区间的全部数值，并且我不停地问你某个子区间的总和/最大值。你必须同时做到 O(log N) 修改 和 O(log N) 查询！</p>
+    </div>
 
-    def _build(self, nums, node, start, end):
-        if start == end:
-            self.tree[node] = nums[start]
-            return
-        mid = (start + end) // 2
-        self._build(nums, 2*node,   start,   mid)
-        self._build(nums, 2*node+1, mid+1,   end)
-        self.tree[node] = self.tree[2*node] + self.tree[2*node+1]
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：线段树的由来与 Lazy Tag 的精髓</h3>
 
-    def _pushdown(self, node, start, end):
-        """将懒标记下传给子节点"""
-        if self.lazy[node]:
-            mid = (start + end) // 2
-            lc, rc = 2*node, 2*node+1
-            self.tree[lc] += self.lazy[node] * (mid - start + 1)
-            self.tree[rc] += self.lazy[node] * (end - mid)
-            self.lazy[lc] += self.lazy[node]
-            self.lazy[rc] += self.lazy[node]
-            self.lazy[node] = 0         # 清除当前懒标记
+        <h4>1. 为什么我们需要线段树？</h4>
+        <div class="naive-vs-smart">
+            <div class="naive"><h4 class="label">前缀和数组 (Naive)</h4><p>提前把前缀累加，查询区间求和 <code>[L,R] = sum[R] - sum[L-1]</code> 是 O(1)！但是如果偷偷修改了一个开头的数字，后面全部倒霉，修改是 O(N)，动态查询会超时。</p></div>
+            <div class="smart"><h4 class="label">线段树分治 (Smart)</h4><p>把数组像大饼一样不断对半切，每块大饼刻着它包含的碎片的汇总统和。修改一个碎片，只会往上报告一侧，影响 $\log N$ 次；查询也最多是由每层的边角料拼接而成，也是 $\log N$。两端平衡！</p></div>
+        </div>
 
-    def update_range(self, node, start, end, l, r, val):
-        """区间[l,r]每个元素加val"""
-        if r < start or end < l: return     # 无交集
-        if l <= start and end <= r:          # 被完全覆盖
-            self.tree[node] += val * (end - start + 1)
-            self.lazy[node] += val
-            return
-        self._pushdown(node, start, end)    # 先下传
-        mid = (start + end) // 2
-        self.update_range(2*node,   start,   mid, l, r, val)
-        self.update_range(2*node+1, mid+1,   end, l, r, val)
-        self.tree[node] = self.tree[2*node] + self.tree[2*node+1]
+        <h4>2. Lazy Tag 懒惰标记推演</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>难题出现：</strong>如果我要把 <code>[0, 1000]</code> 的数字全加上 1 （区间修改）。难道我要递归到最底层 1000 个叶子节点一个个加吗？这又变回 O(N) 了。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>挂机策略 (Lazy)：</strong>不！当我发现我的查询/修改区间<strong>完美覆盖</strong>了当前节点代表的 <code>[0, 1000]</code> 大区间时，我直接修改这个大区间的汇总值（比如 sum += 1000 * 1），然后在它身上贴个红字警告：“注意，我欠你们俩儿子每人 +1”。然后就可以直接 <code>return</code> 下班了！下层的修改完全被“懒惰地”搁置了。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>清算机制 (Push-Down)：</strong>未来的某一天，如果有另一个人来想要详细查询 <code>[0, 500]</code> 的信息，我必须得往深了搜索。这时候我头顶上贴着红字警告的欠款就瞒不住了！在进入儿子节点之前，我必须先<code>Push-Down</code>，把欠款下传给两个儿子，再消除自己的警告红字。
+            </div>
+        </div>
 
-    def query(self, node, start, end, l, r):
-        """查询[l,r]区间和"""
-        if r < start or end < l: return 0
-        if l <= start and end <= r: return self.tree[node]
-        self._pushdown(node, start, end)
-        mid = (start + end) // 2
-        return (self.query(2*node,   start, mid, l, r) +
-                self.query(2*node+1, mid+1, end, l, r))
-</code></pre>
+        <div class="think-block">
+            <div class="q">Q: 树状数组 (Fenwick Tree) 与线段树的区别是什么？</div>
+            <details>
+                <summary>查看答疑</summary>
+                树状数组代码极短，常数小，位运算如 `i & -i` 神乎其技。但它能做的东西局限：比如求和求前缀异或可以（因为可以利用减法相消去）。但是它<strong>无法处理求区间最大值 Max</strong> 的动态修改问题（Max 没有减法逆运算，你不能用 Max(大) 撤销一个元素）。线段树万物皆可维护，甚至能维护区间的一段复杂的哈希信息合并！能用树状数组的大部分都能被线段树降维打击取代。
+            </details>
+        </div>
     </div>
 
     <div class="knowledge-card kc-blue">
-        <h3>📊 复杂度速查</h3>
+        <h3>💻 模板代码：带 Lazy Tag 的线段树 (区间加法、区间求和)</h3>
+<pre><code class="language-python">class SegmentTree:
+    def __init__(self, data):
+        self.n = len(data)
+        # 4N 空间是非常稳的经验值，证明与二进制树高满打满算有关
+        self.tree = [0] * (4 * self.n)
+        self.lazy = [0] * (4 * self.n)
+        self.build(data, 0, 0, self.n - 1)
+
+    def build(self, data, node, start, end):
+        if start == end: # 叶子节点
+            self.tree[node] = data[start]
+            return
+        mid = (start + end) // 2
+        # 左儿子编号 2*i+1, 右儿子 2*i+2 (如果是从1下标开始就是 2*i 和 2*i+1)
+        self.build(data, 2 * node + 1, start, mid)
+        self.build(data, 2 * node + 2, mid + 1, end)
+        self.tree[node] = self.tree[2 * node + 1] + self.tree[2 * node + 2]
+
+    def push_down(self, node, start, end):
+        if self.lazy[node] != 0:
+            mid = (start + end) // 2
+            left = 2 * node + 1
+            right = 2 * node + 2
+            # 欠款下发
+            self.lazy[left] += self.lazy[node]
+            self.lazy[right] += self.lazy[node]
+            # 根据区间长度更新两边儿子的汇总值
+            self.tree[left] += self.lazy[node] * (mid - start + 1)
+            self.tree[right] += self.lazy[node] * (end - mid)
+            # 钱款两清
+            self.lazy[node] = 0
+
+    def update(self, node, start, end, l, r, val):
+        if r < start or end < l: return
+        
+        # 完美覆盖：打标记走人
+        if l <= start and end <= r:
+            self.tree[node] += (end - start + 1) * val
+            self.lazy[node] += val
+            return
+            
+        self.push_down(node, start, end)
+        mid = (start + end) // 2
+        self.update(2 * node + 1, start, mid, l, r, val)
+        self.update(2 * node + 2, mid + 1, end, l, r, val)
+        self.tree[node] = self.tree[2 * node + 1] + self.tree[2 * node + 2]
+</code></pre>
         <table>
-            <tr><th>操作</th><th>时间复杂度</th><th>空间复杂度</th><th>备注</th></tr>
-            <tr><td>建树 build</td><td>O(n)</td><td>O(n)</td><td>节点数≈4n</td></tr>
-            <tr><td>单点更新</td><td>O(log n)</td><td>O(1)</td><td>沿根到叶一条路</td></tr>
-            <tr><td>区间更新（懒标记）</td><td>O(log n)</td><td>O(1)</td><td>需实现pushdown</td></tr>
-            <tr><td>区间查询</td><td>O(log n)</td><td>O(1)</td><td>至多4个节点</td></tr>
-            <tr><td>树状数组（BIT）对比</td><td>O(log n)</td><td>O(n)</td><td>代码更简单，但功能受限</td></tr>
+            <tr><th>操作</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>建树 Build</td><td>O(N)</td><td>O(4N)</td><td>因为它本质是对整个所有叶子节点进行了一次后序遍历，合并代价为O(1*N)。</td></tr>
+            <tr><td>单点/区间修改</td><td>O(log N)</td><td>-</td><td>因为完美覆盖时就直接终止，无论多大的区间修改，切割成的小段也超不过 $O(log N)$ 段！</td></tr>
+            <tr><td>区间查询查询</td><td>O(log N)</td><td>-</td><td>同理，被分割成的拼凑碎快也只有 $log N$ 快。</td></tr>
         </table>
     </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🖼 结构图示：线段树节点与数组</h3>
-<pre class="ascii-art">
-数组: [1, 3, 2, 7, 9, 11]  (下标0-5)
-
-线段树（节点存区间和）:
-            [0,5]=33
-          /          \
-      [0,2]=6         [3,5]=27
-       /    \          /     \
-   [0,1]=4  [2,2]=2 [3,4]=16 [5,5]=11
-   /    \            /    \
-[0,0]=1 [1,1]=3  [3,3]=7 [4,4]=9
-
-树状数组（BIT）对比——仅支持前缀和：
-BIT[i] = 原数组中 [i-lowbit(i)+1, i] 的和
-lowbit(i) = i & (-i)
-update: 从i向上跳 i += lowbit(i)
-query:  从i向下跳 i -= lowbit(i)
-</pre>
-    </div>
-
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题详解</h3>
-        <details>
-            <summary>例题1：区间求和（LeetCode 307）— 树状数组BIT</summary>
-            <p><strong>题意：</strong> 实现数组的单点更新和区间求和，操作次数多。</p>
-<pre><code class="language-python">class BIT:                              # Binary Indexed Tree (树状数组)
-    def __init__(self, nums):
-        n = len(nums)
-        self.n = n
-        self.bit = [0] * (n + 1)       # 1-indexed
-        for i, v in enumerate(nums):
-            self._update(i + 1, v)
-
-    def _update(self, i, delta):
-        while i <= self.n:
-            self.bit[i] += delta
-            i += i & (-i)              # 加上lowbit，向上跳
-
-    def _prefix(self, i):              # 前缀和 [1..i]
-        s = 0
-        while i > 0:
-            s += self.bit[i]
-            i -= i & (-i)              # 减去lowbit，向下跳
-        return s
-
-    def update(self, i, val):
-        old = self.nums[i]
-        self.nums[i] = val
-        self._update(i + 1, val - old)
-
-    def sumRange(self, left, right):
-        return self._prefix(right+1) - self._prefix(left)
-</code></pre>
-            <p><strong>时间：</strong> O(log n) 每次操作；<strong>空间：</strong> O(n)</p>
-        </details>
-
-        <details>
-            <summary>例题2：航班预订统计（LeetCode 1109）— 差分数组</summary>
-            <p><strong>题意：</strong> n个航班，多次订座操作[first,last,seats]，求每个航班实际预订量。</p>
-<pre><code class="language-python">def corpFlightBookings(bookings, n):
-    diff = [0] * (n + 2)               # 差分数组（多一位防越界）
-    for first, last, seats in bookings:
-        diff[first] += seats           # 起点加
-        diff[last+1] -= seats          # 终点后一位减
-    # 还原：前缀和即为实际值
-    result = []
-    cur = 0
-    for i in range(1, n+1):
-        cur += diff[i]
-        result.append(cur)
-    return result
-</code></pre>
-            <p><strong>时间：</strong> O(n + m)；<strong>空间：</strong> O(n)</p>
-        </details>
-
-        <details>
-            <summary>例题3：区间最值查询（RMQ）— 稀疏表 Sparse Table</summary>
-            <p><strong>题意：</strong> 静态数组，多次查询区间最小值（无修改操作）。</p>
-<pre><code class="language-python">import math
-
-class SparseTable:
-    def __init__(self, nums):
-        n = len(nums)
-        k = int(math.log2(n)) + 1
-        # st[i][j] = nums[i..i+2^j-1] 的最小值
-        self.st = [[float('inf')]*k for _ in range(n)]
-        for i in range(n):
-            self.st[i][0] = nums[i]
-        j = 1
-        while (1 << j) <= n:
-            for i in range(n - (1<<j) + 1):
-                self.st[i][j] = min(self.st[i][j-1],
-                                    self.st[i+(1<<(j-1))][j-1])
-            j += 1
-
-    def query(self, l, r):             # 查询[l,r]最小值，O(1)
-        k = int(math.log2(r - l + 1))
-        return min(self.st[l][k], self.st[r-(1<<k)+1][k])  # 两个重叠区间的min
-</code></pre>
-            <p><strong>建表：</strong> O(n log n)；<strong>查询：</strong> O(1)！适合无修改的密集查询</p>
-        </details>
-    </div>
-
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点</h3>
-        <p><strong>① pushdown时机错误（区间更新前未下传）</strong></p>
+        <h3>🔴 易错点分析</h3>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 错误（更新前没pushdown）</p>
-<pre><code class="language-python">def update(self, node, start, end, l, r, val):
-    if r < start or end < l: return
-    if l <= start <= end <= r:
-        self.tree[node] += val*(end-start+1)
-        self.lazy[node] += val
-        return
-    # 忘记pushdown！子节点的lazy没有下传
-    mid = (start+end)//2
-    self.update(2*node, start, mid, l, r, val)
-    self.update(2*node+1, mid+1, end, l, r, val)
+                <p>❌ 忘记根据区间长度乘上 Lazy 值</p>
+<pre><code class="language-python"># 打标记时
+self.tree[node] += val  
+# 大错特错：如果你底下的区间有 10 个人，你告诉上面这帮人总和变了多少？
+# 变了 10*val！而不是变了 val！求偏导的线性关系必须保持。
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 正确（先pushdown再递归）</p>
-<pre><code class="language-python">def update(self, node, start, end, l, r, val):
-    if r < start or end < l: return
-    if l <= start <= end <= r:
-        self.tree[node] += val*(end-start+1)
-        self.lazy[node] += val
-        return
-    self._pushdown(node, start, end)  # 先下传！
-    mid = (start+end)//2
-    self.update(...)
-    self.tree[node] = self.tree[2*node] + self.tree[2*node+1]
+                <p>✅ 附带权重：时刻认清 node 的身份</p>
+<pre><code class="language-python"># 节点涵盖多宽，数值就翻多少倍
+self.tree[node] += (end - start + 1) * val
+self.lazy[node] += val 
 </code></pre>
             </div>
         </div>
-        <p><strong>② 树状数组update时delta计算错误</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 错误（直接用新值）</p>
-<pre><code class="language-python">def update(self, i, val):
-    self._update(i+1, val)     # 错！应传差值delta
-    # BIT存的是增量，直接传val会累加而非替换
-</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 正确（传差值）</p>
-<pre><code class="language-python">def update(self, i, val):
-    delta = val - self.nums[i]     # 新值 - 旧值
-    self.nums[i] = val             # 更新原始数组
-    self._update(i+1, delta)       # BIT加上差值
-</code></pre>
-            </div>
-        </div>
+    </div>
+
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：线段树区间覆盖截断机制 (Lazy)</h3>
+        <div class="demo-container" id="segDemo"></div>
     </div>
 
     <div class="knowledge-card kc-cyan">
         <h3>🔷 竞赛拓展</h3>
-        <p><strong>可持久化线段树（主席树）：</strong> 每次操作创建新版本，共享未修改节点，O(log n)空间/时间，支持区间第K小查询（历史版本）。</p>
-        <p><strong>线段树合并：</strong> 将两棵动态开点线段树在O(M log N)时间合并，用于树上DP降维（如统计子树内排名等）。</p>
-        <p><strong>Li Chao线段树：</strong> 维护线集合，O(log V)查询某x处最小/大y值（插入直线，查询静态位置的极值）。用于斜率优化DP的维护。</p>
+        <p><strong>动态开点线段树：</strong> 如果你要维护的区间是 $1$ 到 $10^9$ 怎么办？开 $4 	imes 10^9$ 的数组内存瞬间爆炸！因为并不是所有节点你都要用到，我们可以“按需分配内存”。使用指针 <code>node.left</code> 和 <code>node.right</code>，只有当访问到时我们才实例化该节点。</p>
+        <p><strong>主席树 (可持久化线段树)：</strong> 在每次 Update 修改节点时，不去修改原节点，而是“复制”一条新的从根到叶子的 $\log N$ 条链并保留旧链。这让你保存了历史所有的版本记录！可以支持查询“第 $t$ 次修改时，区间的情况是什么？”，极其强大。</p>
     </div>
 </section>
 
@@ -372,5 +289,89 @@ class SparseTable:
 </main>
 <script src="../assets/js/app.js"></script>
 <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("segDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; flex-direction:column; gap:8px; background:#1e293b; padding:1.5rem; border-radius:4px" id="stContainer">
+                <div style="text-align:center; font-size:12px; color:#cbd5e1; margin-bottom:10px;">目标：修改区间 [0, 3] 数值全 +10</div>
+                <!-- 树 -->
+                <div style="display:flex; justify-content:center"><div class="st-node" id="st03" style="width:100px; text-align:center; padding:5px; background:#475569; color:#fff; border-radius:4px; border:2px solid #334155; position:relative">[0...3]<br>Sum:<span id="s_03">0</span><div id="bz_03" style="position:absolute; top:-10px; right:-10px; font-size:10px; background:#ef4444; padding:2px; border-radius:50%; display:none"></div></div></div>
+                <div style="display:flex; justify-content:space-around; align-items:flex-start; margin-top:10px">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+                        <div class="st-node" id="st01" style="width:70px; text-align:center; padding:5px; background:#475569; color:#fff; border-radius:4px; border:2px solid #334155; position:relative">[0,1]<br>Sum:<span id="s_01">0</span><div id="bz_01" style="position:absolute; top:-8px; right:-8px; font-size:10px; background:#ef4444; padding:2px; border-radius:50%; display:none"></div></div>
+                        <div style="display:flex; gap:10px">
+                            <div class="st-node" id="st0" style="width:40px; text-align:center; padding:5px; background:#64748b; color:#fff; border-radius:4px">[0]<br>0</div>
+                            <div class="st-node" id="st1" style="width:40px; text-align:center; padding:5px; background:#64748b; color:#fff; border-radius:4px">[1]<br>0</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+                        <div class="st-node" id="st23" style="width:70px; text-align:center; padding:5px; background:#475569; color:#fff; border-radius:4px; border:2px solid #334155; position:relative">[2,3]<br>Sum:<span id="s_23">0</span><div id="bz_23" style="position:absolute; top:-8px; right:-8px; font-size:10px; background:#ef4444; padding:2px; border-radius:50%; display:none"></div></div>
+                        <div style="display:flex; gap:10px">
+                            <div class="st-node" id="st2" style="width:40px; text-align:center; padding:5px; background:#64748b; color:#fff; border-radius:4px">[2]<br>0</div>
+                            <div class="st-node" id="st3" style="width:40px; text-align:center; padding:5px; background:#64748b; color:#fff; border-radius:4px">[3]<br>0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display:flex; gap:0.5rem">
+                <button id="stBtnStep" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">1. Update修改 [0,3]</button>
+                <button id="stBtnQ" style="background:#a855f7; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;" disabled>2. Query查询 [2]</button>
+            </div>
+            <div id="stDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:4em;">点击发起针对 [0, 3] 全员数值 +10 的批量操作。</div>
+        </div>
+    `;
+
+    const descr = document.getElementById("stDescr");
+    let phase = 0;
+
+    document.getElementById("stBtnStep").onclick = function() {
+        if(phase===0) {
+            descr.innerHTML = "进入根节点 [0,3]。<br>判断发现：我的当前管辖区 [0,3] 被修改需求 [0,3] <b>完美覆盖</b>！<br>不再向下递归修改 4 个叶子了！直接修改自己的并挂上 Lazy 标志打卡下班。";
+            document.getElementById("st03").style.borderColor = "#10b981";
+            document.getElementById("s_03").innerText = "40"; // 4*10
+            document.getElementById("s_03").style.color = "#10b981";
+            const bz = document.getElementById("bz_03");
+            bz.style.display = "block"; bz.innerText = "Lazy:10";
+            this.disabled = true;
+            document.getElementById("stBtnQ").disabled = false;
+            phase = 1;
+        }
+    };
+    
+    document.getElementById("stBtnQ").onclick = function() {
+        if(phase===1) {
+            descr.innerHTML = "来了个捣乱的查询任务，点名只要问 [2]。开始从 [0,3] 开始向下搜寻。<br>糟糕！往下走之前，[0,3] 发现自己头上有红色的 Lazy欠条，必须先把欠单给手底下的团队推延 (Push-Down) 清除，才能进去办事！";
+            document.getElementById("st03").style.borderColor = "#f59e0b";
+            setTimeout(()=>{
+                document.getElementById("bz_03").style.display = "none";
+                const bz01 = document.getElementById("bz_01"), bz23 = document.getElementById("bz_23");
+                bz01.style.display = "block"; bz01.innerText = "Lazy:10";
+                bz23.style.display = "block"; bz23.innerText = "Lazy:10";
+                document.getElementById("s_01").innerText = "20"; document.getElementById("s_01").style.color="#10b981";
+                document.getElementById("s_23").innerText = "20"; document.getElementById("s_23").style.color="#10b981";
+                descr.innerHTML += "<br>债转给了两个儿子！自己一身轻走下面去。";
+                
+                setTimeout(()=>{
+                    descr.innerHTML = "向左[0,1]没用，向右来到 [2,3]。问你要单点[2]？[2,3]也没法直接回答。身上有挂逼，也要接着 Push-Down！";
+                    document.getElementById("st23").style.borderColor = "#f59e0b";
+                    setTimeout(()=>{
+                        document.getElementById("bz_23").style.display = "none";
+                        document.getElementById("st2").innerHTML = "[2]<br><span style='color:#10b981'>10</span>";
+                        document.getElementById("st3").innerHTML = "[3]<br><span style='color:#10b981'>10</span>";
+                        descr.innerHTML = "下传成功！此时走到底层，节点[2]被正确拉起。返回答案 [2]=10。<br><b>结论：没有查询逼你拆家的话，你那些无聊的大段更新永远以高效率蛰伏在树的顶端！时间复杂度就是极限拉扯的艺术。</b>";
+                        document.getElementById("stBtnQ").disabled = true;
+                    }, 1500)
+                }, 1500)
+            }, 1000);
+            phase = 2;
+        }
+    }
+});
+</script>
 </body>
 </html>

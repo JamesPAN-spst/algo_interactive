@@ -28,6 +28,21 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
+    
+        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
+        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
+        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
+        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
+        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+        .derive-body { flex:1; }
+        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
+        .intuition-box strong { color:#10b981; }
+        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
+        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
+        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
+        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
+        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
     </style>
 </head>
 <body data-theme="day">
@@ -44,295 +59,130 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <div class="knowledge-card kc-blue">
-                <h3>🔵 核心定义</h3>
-                <p><strong>链表节点定义：</strong></p>
-<pre><code class="language-python">class ListNode:
-    def __init__(self, val=0, next=None):
-        self.val = val
-        self.next = next
-</code></pre>
-                <p><strong>哨兵节点（Dummy Node）技巧：</strong> 在链表头部加一个虚拟节点，统一处理头节点的特殊情况。</p>
-<pre><code class="language-python">dummy = ListNode(0)   # 哨兵节点
-dummy.next = head
-cur = dummy
-# 操作完成后返回 dummy.next（新的头节点）
-return dummy.next
-</code></pre>
-                <p><strong>链表反转（三指针迭代）：</strong></p>
-<pre><code class="language-python">def reverseList(head):
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">指针与引用</span>
+        <span class="prereq-tag">内存不连续性</span>
+        <p>链表由于不是连续存储的，因此我们<strong>丧失了 O(1) 的随机访问能力</strong>，取而代之的是极致的插入/删除灵活性。解链表题的核心心法永远是：管理好你手中的那几根指针，不要让它们弄丢了节点。</p>
+    </div>
+
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：双指针的艺术</h3>
+
+        <h4>1. 快慢指针找中点</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>相对速度：</strong> 快指针 <code>fast</code> 每次走 2 步，慢指针 <code>slow</code> 每次走 1 步。快指针速度是慢指针的 2 倍。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>行程等式：</strong> 当 <code>fast</code> 走到链表末尾（路程 $L$）时，由于速度是 2 倍，<code>slow</code> 一定刚好走到 $L/2$ 处，即中点。
+            </div>
+        </div>
+
+        <div class="think-block">
+            <div class="q">Q: 为什么 fast 的起点有时是 head，有时是 head.next？</div>
+            <details>
+                <summary>查看答疑</summary>
+                如果节点总数是偶数，有两个中点（如 1->2->3->4 的 2 和 3）。如果 <code>fast = head, slow = head</code>，结束时 slow 指向 3（右中点）。如果 <code>fast = head.next, slow = head</code>，相当于 fast 偷跑了一步，它会更早触底，此时 slow 会指向 2（左中点）。左中点在链表前半段断开时非常关键。
+            </details>
+        </div>
+
+        <h4>2. 为什么快慢指针判断环一定能相遇？而且一定是在一圈内？</h4>
+        <div class="naive-vs-smart">
+            <div class="naive"><h4 class="label">直觉质疑 (Naive)</h4><p>快指针走那么快，会不会直接就越过慢指针而永远错过相遇，无穷无尽地兜圈子下去？</p></div>
+            <div class="smart"><h4 class="label">数学证明 (Smart)</h4><p>设此时 fast 在 slow 的后方，距离为 d（以顺时针计）。由于每经过一回合，fast 走 2，slow 走 1，它们之间的距离 $d$ 就必定缩短 1 步。距离是离散的整数，每次 -1，最终必然减为 0，也就是精确相遇，绝不存在“跳过”！整个追及过程必定发生在慢指针进入环内走完一圈之前。</p></div>
+        </div>
+    </div>
+
+    <div class="knowledge-card kc-blue">
+        <h3>💻 模板代码：反转链表与环检测</h3>
+<pre><code class="language-python"># 1. 迭代反转链表：经典三指针交响乐
+def reverseList(head):
     prev = None
-    cur = head
-    while cur:
-        nxt = cur.next       # 先保存下一个节点
-        cur.next = prev      # 反转当前节点的指针
-        prev = cur           # prev前移
-        cur = nxt            # cur前移
-    return prev              # prev就是新的头节点
-</code></pre>
-            </div>
+    curr = head
+    while curr:
+        nxt = curr.next    # 【存】先用 nxt 把下一个节点拉住，防止链子断裂掉入深渊
+        curr.next = prev   # 【反】把当前节点的箭头反转指向前驱
+        prev = curr        # 【推】prev 向前推一格，变成刚刚处理好的 curr
+        curr = nxt         # 【推】curr 也安全地向前推一格，变成刚才拉住的 nxt
+    return prev            # 最终 curr 掉出悬崖(None)，prev 站在原本的尾端(新的头)
 
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查</h3>
-                <table>
-                    <tr><th>操作</th><th>单链表</th><th>双链表</th><th>备注</th></tr>
-                    <tr><td>头部插入/删除</td><td>O(1)</td><td>O(1)</td><td>有dummy更方便</td></tr>
-                    <tr><td>尾部插入（有tail指针）</td><td>O(1)</td><td>O(1)</td><td>无tail则O(n)</td></tr>
-                    <tr><td>中间插入/删除（已有前驱）</td><td>O(1)</td><td>O(1)</td><td>需要前驱节点</td></tr>
-                    <tr><td>查找第k个节点</td><td>O(n)</td><td>O(n)</td><td>顺序遍历</td></tr>
-                    <tr><td>反转整个链表</td><td>O(n)</td><td>O(n)</td><td>三指针/递归</td></tr>
-                    <tr><td>检测环</td><td>O(n)</td><td>O(n)</td><td>快慢指针Floyd</td></tr>
-                    <tr><td>找链表中点</td><td>O(n)</td><td>O(n)</td><td>快慢指针</td></tr>
-                </table>
-            </div>
-
-            <div class="knowledge-card kc-purple">
-                <h3>🖼 结构图示：链表操作可视化</h3>
-<pre class="ascii-art">
-【链表反转过程】
-初始: dummy→1→2→3→4→None
-      prev=None  cur=1
-
-step1: nxt=2, 1→None, prev=1, cur=2
-       None←1  2→3→4
-
-step2: nxt=3, 2→1, prev=2, cur=3
-       None←1←2  3→4
-
-step3: nxt=4, 3→2, prev=3, cur=4
-step4: nxt=None, 4→3, prev=4, cur=None
-       None←1←2←3←4   返回prev=4 ✓
-
-【快慢指针找中点】
-1→2→3→4→5
-s  f         step1: slow=2, fast=3
-   s     f   step2: slow=3, fast=5
-             fast到末，slow在中间=3 ✓
-
-【Floyd环检测】
-若有环，fast终将追上slow
-相遇点到环起点的距离 = 头节点到环起点的距离
-→ 双指针分别从头和相遇点出发，再次相遇即环起点
-</pre>
-            </div>
-
-            <div class="knowledge-card kc-green">
-                <h3>🟢 典型例题详解</h3>
-                <details>
-                    <summary>例题1：链表中环的入口（LeetCode 142）— Floyd算法</summary>
-                    <p><strong>题意：</strong> 找到链表环的入口节点，若无环返回None。</p>
-<pre><code class="language-python">def detectCycle(head):
-    slow = fast = head
-    # 第一阶段：找相遇点
+# 2. 环检测并找到入环节点 (Floyd 判圈法)
+def detectCycle(head):
+    slow, fast = head, head
+    # Phase 1: 判定是否有环
     while fast and fast.next:
         slow = slow.next
         fast = fast.next.next
-        if slow == fast:                 # 相遇
-            break
-    else:
-        return None                      # 无环
-
-    # 第二阶段：找环入口
-    # 数学证明：头到入口的距离 = 相遇点到入口的距离
-    fast = head
-    while fast != slow:
-        fast = fast.next
-        slow = slow.next
-    return slow                          # 环入口节点
+        if slow == fast:
+            # Phase 2: 找入口
+            # 为什么重新放一个指针在 head 同步走就能相遇在入口？
+            # 设 head 到入口长 a，入环到相遇点 b，环剩余 c。
+            # fast = 2*slow => a + n(b+c) + b = 2(a+b) => a = (n-1)(b+c) + c
+            # 说明 a 的长度恰好等于【绕 n-1 圈后再走 c 步的长度】！
+            ptr = head
+            while ptr != slow:
+                ptr = ptr.next
+                slow = slow.next
+            return ptr
+    return None
 </code></pre>
-                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
-                </details>
+        <table>
+            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>反转链表</td><td>O(N)</td><td>O(1)</td><td>只花了几个指针的额外空间，沿途修改所有的箭头。</td></tr>
+            <tr><td>找中点/找倒数第K个</td><td>O(N)</td><td>O(1)</td><td>只遍历一趟即可到达指定相对位置，极大地避免了二次扫描。</td></tr>
+        </table>
+    </div>
 
-                <details>
-                    <summary>例题2：K个一组翻转链表（LeetCode 25）</summary>
-                    <p><strong>题意：</strong> 每K个节点一组进行翻转，不足K的保持原样。</p>
-<pre><code class="language-python">def reverseKGroup(head, k):
-    dummy = ListNode(0)
-    dummy.next = head
-    pre = dummy
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题变种比对</h3>
+        <details>
+            <summary>变种：K 个一组翻转链表</summary>
+            <p><strong>题解：</strong> 这要求我们不仅仅是全局 Reverse，而是要局部的。我们用一个 <code>cur</code> 不断往后探 $K$ 步，如果探不到 $K$ 个说明结束了，不翻转；如果探到了，记录下这个局部头以及这一段结束的 <code>nxt</code> 节点，切断后对这一小段执行标准的三指针 Reverse，翻转完后再把它和之前/之后的子链缝合起来。这极大地考验了 <strong>虚拟头节点 (Dummy Node)</strong> 的使用。没有 Dummy Node 处理这种可能改变原始头节点的问题极其痛苦！</p>
+        </details>
+    </div>
 
-    def reverse(start, end):         # 翻转 start 到 end 之间的节点
-        prev, cur = None, start
-        while cur != end:
-            nxt = cur.next
-            cur.next = prev
-            prev, cur = cur, nxt
-        return prev                  # 返回翻转后的头（原来的end前一节点）
-
-    while True:
-        # 检查是否有k个节点
-        tail = pre
-        for _ in range(k):
-            tail = tail.next
-            if not tail: return dummy.next  # 不足k个，结束
-        nxt = tail.next              # 保存下一组的头
-        # 翻转 [pre.next, tail]
-        head = reverse(pre.next, tail.next)
-        pre.next.next = nxt          # 原头现在是尾，连接下一组
-        pre.next = head              # pre连接新的头
-        pre = pre.next.next if pre.next else pre  # pre移到翻转段末
-        # 简化：
-        pre = pre.next               # 错了要纠正
-</code></pre>
-<pre><code class="language-python"># 更清晰的实现
-def reverseKGroup(head, k):
-    dummy = ListNode(0, head)
-    group_prev = dummy
-
-    while True:
-        kth = getKth(group_prev, k)
-        if not kth: break
-        group_next = kth.next
-
-        # 翻转本组
-        prev, curr = kth.next, group_prev.next
-        while curr != group_next:
-            nxt = curr.next
-            curr.next = prev
-            prev = curr
-            curr = nxt
-
-        tmp = group_prev.next          # 原头（翻转后变尾）
-        group_prev.next = kth          # 接新头
-        tmp.next = group_next          # 原头接下一组
-        group_prev = tmp               # group_prev移到翻转段末尾
-    return dummy.next
-
-def getKth(curr, k):
-    while curr and k > 0:
-        curr = curr.next; k -= 1
-    return curr
-</code></pre>
-                    <p><strong>时间：</strong> O(n)；<strong>空间：</strong> O(1)</p>
-                </details>
-
-                <details>
-                    <summary>例题3：LRU缓存（LeetCode 146）— 哈希表+双链表</summary>
-                    <p><strong>题意：</strong> 实现LRU缓存，get和put操作均为O(1)。</p>
-<pre><code class="language-python">class LRUCache:
-    def __init__(self, capacity):
-        self.cap = capacity
-        self.cache = {}              # key → node
-        self.head = ListNode(0)      # 哨兵（最近使用）
-        self.tail = ListNode(0)      # 哨兵（最久未使用）
-        self.head.next = self.tail
-        self.tail.prev = self.head
-
-    def _remove(self, node):         # 从双链表删除节点
-        node.prev.next = node.next
-        node.next.prev = node.prev
-
-    def _insert(self, node):         # 插入到head之后（最近使用位置）
-        node.next = self.head.next
-        node.prev = self.head
-        self.head.next.prev = node
-        self.head.next = node
-
-    def get(self, key):
-        if key in self.cache:
-            self._remove(self.cache[key])
-            self._insert(self.cache[key])    # 移到最近使用位置
-            return self.cache[key].val
-        return -1
-
-    def put(self, key, value):
-        if key in self.cache:
-            self._remove(self.cache[key])
-        node = ListNode(value)
-        node.key = key
-        self.cache[key] = node
-        self._insert(node)
-        if len(self.cache) > self.cap:       # 超容量，删最久未使用
-            lru = self.tail.prev
-            self._remove(lru)
-            del self.cache[lru.key]
-</code></pre>
-                    <p><strong>时间：</strong> O(1) get/put；<strong>空间：</strong> O(capacity)</p>
-                </details>
-            </div>
-
-            <div class="knowledge-card kc-red">
-                <h3>🔴 易错点</h3>
-                <p><strong>① 修改指针顺序错误导致链表断裂</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（先移cur导致丢失nxt）</p>
-<pre><code class="language-python">cur.next = prev    # 先断开
-prev = cur
-cur = cur.next     # cur.next已改变，丢失原next！
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（先保存nxt）</p>
-<pre><code class="language-python">nxt = cur.next     # 第一步：保存下一节点
-cur.next = prev    # 第二步：反转指针
-prev = cur         # 第三步：前移prev
-cur = nxt          # 第四步：前移cur
-</code></pre>
-                    </div>
-                </div>
-                <p><strong>② 环链表快慢指针漏判空</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（无空指针保护）</p>
-<pre><code class="language-python">while slow != fast:
-    slow = slow.next
-    fast = fast.next.next  # 若fast为None则报错！
-</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（先判空）</p>
-<pre><code class="language-python">while fast and fast.next:
-    slow = slow.next
-    fast = fast.next.next
-    if slow == fast: break
-</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <div class="knowledge-card kc-cyan">
-                <h3>🔷 竞赛拓展</h3>
-                <p><strong>跳表（Skip List）：</strong> 多层索引链表，支持O(log n)查找/插入/删除，Redis中SortedSet的底层实现。</p>
-                <p><strong>XOR链表：</strong> 每个节点存 prev XOR next，节省一半指针空间，实现双链表。但Python不支持裸指针操作。</p>
-                <p><strong>链表排序（O(n log n) + O(1)空间）：</strong> 自底向上归并排序链表，避免递归栈空间。</p>
-<pre><code class="language-python">def sortList(head):
-    # 自底向上归并，避免递归O(n)空间
-    if not head or not head.next: return head
-    length = 0
-    node = head
-    while node: length += 1; node = node.next
-
-    dummy = ListNode(0, head)
-    sub_len = 1
-    while sub_len < length:
-        prev, cur = dummy, dummy.next
-        while cur:
-            # 取第一段 sub_len 个
-            head1 = cur
-            for _ in range(sub_len - 1):
-                if cur.next: cur = cur.next
-                else: break
-            head2 = cur.next; cur.next = None
-            cur = head2
-            # 取第二段 sub_len 个
-            for _ in range(sub_len - 1):
-                if cur and cur.next: cur = cur.next
-                else: break
-            nxt = cur.next if cur else None
-            if cur: cur.next = None
-            cur = nxt
-            # 合并两段
-            merged = merge2(head1, head2)
-            prev.next = merged
-            while prev.next: prev = prev.next
-        sub_len <<= 1   # 每次翻倍
-    return dummy.next
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点分析</h3>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 丢失被覆盖的 Next</p>
+<pre><code class="language-python">while curr:
+    # 灾难：一上来就把 next 覆盖了
+    curr.next = prev 
+    prev = curr
+    # 原本的 curr.next 彻底找不到了！
+    curr = curr.next 
 </code></pre>
             </div>
-        </section>
+            <div class="right">
+                <p>✅ 正确的保存与反转</p>
+<pre><code class="language-python">while curr:
+    nxt = curr.next # 备份
+    curr.next = prev
+    prev = curr
+    curr = nxt      # 恢复
+</code></pre>
+            </div>
+        </div>
+    </div>
 
-        <section class="card" data-quiz data-module="linked-list">
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示：单链表逐节点反转</h3>
+        <div class="demo-container" id="llDemo"></div>
+    </div>
+
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 竞赛拓展</h3>
+        <p><strong>跳表 (Skip List)：</strong> 链表虽然插入 O(1) 但查找 O(N)。如果有序的话如何 O(log N) 查找？可以仿造二分法建“快速通道”，给部分节点增加更高的“层数”（随机化分布），使得最顶层指针一口气能跳过一半的元素。这是 Redis ZSet 的核心底层数据结构。</p>
+    </div>
+</section>
+
+<section class="card" data-quiz data-module="linked-list">
 <h2>练习题（Practice）</h2>
 <div class="quiz-controls"><label>跳转题号：<input data-jump-input type="text" placeholder="例如 LL3"></label><button data-jump-btn class="secondary">跳转</button><button data-reset-all class="secondary">一键重置</button></div>
 <p data-accuracy>已答 0/15，正确 0，正确率 0%</p>
@@ -435,5 +285,117 @@ cur = nxt          # 第四步：前移cur
     </main>
     <script src="../assets/js/app.js"></script>
     <script>hljs.highlightAll();</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("llDemo");
+    if(!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="flex:1; background:#1e293b; padding:1.5rem 1rem; border-radius:4px; max-width:600px; display:flex; justify-content:flex-start; position:relative; overflow-x:auto" id="llCanvasBox">
+                <canvas id="llCanvas" width="550" height="150" style="width:100%; display:block;"></canvas>
+            </div>
+            <div style="display:flex; gap:0.5rem">
+                <button id="llBtnStep" style="background:#3b82f6; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">执行下一步反转</button>
+                <button id="llBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置链表</button>
+            </div>
+            <div id="llDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:3em;">准备反转链表。<br>prev = None, curr = Head (1)</div>
+        </div>
+    `;
+
+    const cvs = document.getElementById("llCanvas"), ctx = cvs.getContext("2d"), descr = document.getElementById("llDescr");
+    let nodes = [];
+    let state = 0; // index of curr node being processed
+    let completedEdges = []; // indices of nodes whose arrows are flipped
+    let prev = null, curr = 0;
+    
+    function reset() {
+        nodes = [{val:1, x:80},{val:2, x:180},{val:3, x:280},{val:4, x:380},{val:5, x:480}];
+        curr = 0; prev = null; completedEdges = [];
+        descr.innerHTML = `准备反转链表。初始化 prev = None, curr = 节点(${nodes[0].val})。`;
+        draw();
+    }
+    
+    function draw() {
+        ctx.clearRect(0,0,cvs.width,cvs.height);
+        ctx.font = "bold 14px monospace";
+        
+        const r = 20, y = 80;
+        
+        // pointers
+        ctx.fillStyle = "#a855f7"; // purple prev
+        if(prev !== null) ctx.fillText("prev", nodes[prev].x, y + 45);
+        else ctx.fillText("prev: None", 10, y + 45);
+        
+        ctx.fillStyle = "#38bdf8"; // blue curr
+        if(curr < nodes.length) ctx.fillText("curr", nodes[curr].x, y + 45);
+        
+        ctx.fillStyle = "#facc15"; // yellow nxt
+        if(curr < nodes.length - 1) ctx.fillText("nxt", nodes[curr+1].x, y - 45);
+        else if (curr === nodes.length - 1) ctx.fillText("nxt: None", 480, y - 45);
+        
+        // Edges
+        ctx.lineWidth = 3;
+        for(let i=0; i<nodes.length-1; i++) {
+            let u = nodes[i], v=nodes[i+1];
+            if (completedEdges.includes(i)) {
+                // Reversed edge (right to left)
+                ctx.strokeStyle = "#10b981"; // green
+                drawArrow(ctx, v.x - r, y + 15, u.x + r, y + 15);
+            } else {
+                // Normal edge (left to right)
+                ctx.strokeStyle = "#475569"; // slate
+                drawArrow(ctx, u.x + r, y, v.x - r, y);
+            }
+        }
+        
+        if (completedEdges.length > 0 && curr >= nodes.length) {
+            ctx.fillStyle="#10b981"; ctx.fillText("反转彻底完成！", cvs.width/2 - 50, 30);
+        }
+
+        // Nodes
+        nodes.forEach((n, i) => {
+            ctx.beginPath(); ctx.arc(n.x, y, r, 0, Math.PI*2);
+            ctx.fillStyle = completedEdges.includes(i) || (i===nodes.length-1 && curr>=nodes.length) ? "#10b981" : "#1e293b"; 
+            if(i === curr) ctx.fillStyle = "#0284c7";
+            ctx.fill(); ctx.strokeStyle="#475569"; ctx.stroke();
+            
+            ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle"; 
+            ctx.fillText(n.val, n.x, y);
+        });
+    }
+    
+    function drawArrow(ctx, fromx, fromy, tox, toy) {
+        let headlen = 10, angle = Math.atan2(toy-fromy, tox-fromx);
+        ctx.beginPath(); ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
+        ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/6), toy-headlen*Math.sin(angle-Math.PI/6));
+        ctx.moveTo(tox, toy);
+        ctx.lineTo(tox-headlen*Math.cos(angle+Math.PI/6), toy-headlen*Math.sin(angle+Math.PI/6));
+        ctx.stroke();
+    }
+
+    document.getElementById("llBtnStep").onclick = () => {
+        if(curr >= nodes.length) {
+            descr.innerHTML = "全部反转完毕！原链表头尾互换。";
+            return;
+        }
+        let txt = `第 ${curr+1} 步操作（处理节点 ${nodes[curr].val}）：<br>`;
+        txt += `1. nxt 备份了后面的节点 (${curr<nodes.length-1?nodes[curr+1].val:'None'})。<br>`;
+        txt += `2. 切断现有的向前指针，将其 <b><code>curr.next = prev</code></b>。<br>`;
+        txt += `3. prev 前进到当前节点 (${nodes[curr].val})。<br>`;
+        txt += `4. curr 跳跃到刚才备份的 nxt 位置。`;
+        
+        descr.innerHTML = txt;
+        completedEdges.push(curr);
+        prev = curr;
+        curr = curr + 1;
+        
+        draw();
+    };
+
+    document.getElementById("llBtnReset").onclick = reset;
+    reset();
+});
+</script>
 </body>
 </html>
