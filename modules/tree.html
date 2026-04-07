@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>二叉树与遍历模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,21 +33,28 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
-    
-        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
-        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
-        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
-        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
-        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
-        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
-        .derive-body { flex:1; }
-        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
-        .intuition-box strong { color:#10b981; }
-        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
-        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
-        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
-        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
-        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+        .naive-vs-smart { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.8rem 0; }
+        .naive-vs-smart .naive { border-left: 3px solid #f43f5e; padding-left: 0.8rem; }
+        .naive-vs-smart .smart { border-left: 3px solid #10b981; padding-left: 0.8rem; }
+        .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
+        @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
+
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
     </style>
 </head>
 <body data-theme="day">
@@ -56,130 +68,622 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+
+    <!-- ═══ 层 0: 引子问题 ═══ -->
+    <div class="knowledge-card kc-gray">
+        <h3>🎯 引子问题</h3>
+        <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+            "一个家族族谱里，怎么快速找到两个人的最近共同祖先？"
+        </p>
+        <p>更进一步：能不能在一棵有序的数据树里 O(log n) 完成查找、插入、删除？带着这些问题，我们来看二叉树与遍历的世界。</p>
+    </div>
+
+    <!-- ═══ 层 1: 前置知识 ═══ -->
     <div class="knowledge-card kc-gray">
         <h3>⚙️ 前置知识</h3>
         <span class="prereq-tag">递归思维</span>
-        <span class="prereq-tag">指针/引用结构</span>
-        <p>树可以说是算法面试中最最核心的考点，因为所有复杂的动态规划状态转移、图论搜索本质上的隐式运行轨迹都是一棵“调用树”。弄懂树的遍历，你就弄懂了最庞大的递归宇宙的心智模型。</p>
+        <span class="prereq-tag">指针 / 引用</span>
+        <span class="prereq-tag">栈（迭代遍历）</span>
+        <span class="prereq-tag">队列（层序遍历）</span>
+        <p><strong>递归 (Recursion)</strong>：函数调用自身。树的定义本身就是递归的——一棵树 = 根节点 + 左子树 + 右子树。</p>
+        <p><strong>指针 / 引用</strong>：每个树节点通过指针连接子节点。Python 中用对象引用，C++ 用指针，Rust 用 <code>Rc&lt;RefCell&lt;T&gt;&gt;</code>。</p>
+        <p>栈和队列的基础知识可参考 <a href="stack-queue.html">栈与队列模块</a>。</p>
     </div>
 
+    <!-- ═══ 层 2: 研究动机与问题建模 ═══ -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：遍历顺序与二叉搜索树的神奇性质</h3>
+        <h3>🔬 研究动机——为什么需要树形结构？</h3>
+        <div class="naive-vs-smart">
+            <div class="naive">
+                <h4 class="label">线性结构的困境</h4>
+                <p>有序数组：二分查找 O(log n)，但插入/删除需 O(n) 移动元素。<br>
+                链表：插入 O(1)，但查找只能 O(n) 逐个扫描。<br>
+                <strong>能不能同时做到 O(log n) 查找和 O(log n) 插入？</strong></p>
+            </div>
+            <div class="smart">
+                <h4 class="label">BST 的完美回答</h4>
+                <p>二叉搜索树（BST）：左 &lt; 根 &lt; 右。查找时每次排除一半子树，O(log n)。插入只需沿路径走到叶子位置，O(log n)。<br>
+                <strong>本质：树 = 动态维护的有序结构。</strong></p>
+            </div>
+        </div>
+        <p>除了搜索之外，还有大量问题需要"系统性地访问树中每一个节点"——这就是 DFS（前/中/后序）和 BFS（层序）遍历的研究动机。</p>
+        <p><strong>形式化定义：</strong>给定 $n$ 个节点的二叉树，设计 $O(n)$ 的遍历方案访问每个节点恰好一次，并利用遍历结构解决搜索、验证、路径统计等问题。</p>
+    </div>
 
-        <h4>1. 深度优先遍历 (DFS) 的三种形态</h4>
+    <!-- ═══ 层 3: 推导卡片 ═══ -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：遍历、BST 与 LCA</h3>
+
+        <h4>1. 深度优先遍历的三种形态</h4>
         <div class="intuition-box">
-            把一个极其宏大的树压缩到极简模型：只有 <code>(根, 左子, 右子)</code> 三个节点。<br>
-            <strong>前序 (Pre-order)：</strong> 根 -> 左 -> 右。最符合人类阅读习惯：先宣告我是谁，再介绍我的左右手。<br>
-            <strong>中序 (In-order)：</strong> 左 -> 根 -> 右。在二叉搜索树 (BST) 下，它产生完美的升序序列。<br>
-            <strong>后序 (Post-order)：</strong> 左 -> 右 -> 根。用来处理“向上汇报”。只有等我的左右儿子把底下的情况调查清楚交给我，我才能得出我自己的状态！
+            <strong>核心洞察：</strong>将整棵树压缩为三节点模型 <code>(根, 左子, 右子)</code>，三种遍历的区别仅在于"根"在什么时候被访问：
+            <br>• 前序 (Pre-order)：<strong>根</strong> → 左 → 右 —— "先宣告自己，再探索子树"
+            <br>• 中序 (In-order)：左 → <strong>根</strong> → 右 —— "从小到大依次访问"（BST 下产生升序）
+            <br>• 后序 (Post-order)：左 → 右 → <strong>根</strong> —— "先汇聚子树信息，再处理自己"
         </div>
 
+<pre class="ascii-art">
+示例树:          [1]
+                ╱   ╲
+             [2]     [3]
+            ╱   ╲
+          [4]   [5]
+
+  前序: 1 → 2 → 4 → 5 → 3     (根先行)
+  中序: 4 → 2 → 5 → 1 → 3     (左→根→右)
+  后序: 4 → 5 → 2 → 3 → 1     (子先于父)
+  BFS:  1 → 2 → 3 → 4 → 5     (逐层扫描)
+</pre>
+
         <div class="think-block">
-            <div class="q">Q: 为什么对二叉搜索树 (BST) 进行中序遍历，结果必为从小到大排序？</div>
+            <div class="q">Q: 为什么 BST 的中序遍历必然产生升序序列？</div>
             <details>
                 <summary>查看答疑</summary>
-                这是 BST 的定义决定的。BST 规定：任何一个节点，其左子树的所有元素均严格小于它，右子树则大于它。而中序遍历恰好是：`去遍历比我小的所有元素` -> `访问我自己` -> `去遍历比我大的所有元素`。由于每个层次都递归执行这个“先小后中再大”的逻辑，全局展开后毫无悬念是严格单调递增的 O(N) 排序！
+                BST 定义：左子树所有值 &lt; 根 &lt; 右子树所有值。中序遍历恰好是"先访问所有比我小的（左子树）→ 访问我 → 再访问所有比我大的（右子树）"。每层递归都遵循这个逻辑，展开后自然是严格升序。
             </details>
         </div>
 
-        <h4>2. 最近公共祖先 (LCA) 推导</h4>
+        <div class="think-block">
+            <div class="q">Q: 为什么后序遍历适合"从子节点汇聚信息"的问题？</div>
+            <details>
+                <summary>查看答疑</summary>
+                后序遍历中，处理当前节点时左右子树已经全部处理完毕并返回了结果。当前节点可以直接使用子树的计算结果——完美适合求树高度、子树大小、树形 DP 等"先调查下属再总结"的场景。
+            </details>
+        </div>
+
+        <h4>2. BST 验证——全局边界推导</h4>
         <div class="derive-step">
             <div class="derive-num">1</div>
-            <div class="derive-body">
-                <strong>从叶底问话（后序）：</strong>找 p 和 q 的最近祖先，我们必须让人跑到树底去问：“你下面有 p 或者 q 吗？” 只有后序遍历满足这种先下后上的汇报。
-            </div>
+            <div class="derive-body"><strong>常见错误：</strong>只比较节点与直接子节点的大小关系。例如根=10, 右子=15, 右孙=2。局部看 2&lt;15 合法，但 2&lt;10 违反了全局 BST 规则！</div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
-            <div class="derive-body">
-                <strong>三种可能：</strong>如果我发现我的左边回传了情报，右边也回传了情报。那说明 p 躲在我左边，q 躲在我右边（或反之）。作为它们中间的关卡，我必然就是它俩的 <strong>最近公共祖先 (LCA)</strong>！如果只有左边传来情报，那说明它俩都在左边缩着，此时 LCA 要么是其中的一个自身，要么肯定在更深处的左侧，我把自己收到的情报告诉上面就好。
-            </div>
+            <div class="derive-body"><strong>正确思路：</strong>每个节点从祖先继承一个合法区间 <code>(lower, upper)</code>。往左走时 upper 收紧为当前值，往右走时 lower 收紧为当前值。</div>
         </div>
+
+<pre class="ascii-art">
+BST 验证 —— 全局边界传递:
+
+              [10]  区间: (-∞, +∞)
+             ╱    ╲
+        [5]          [15]
+    (-∞, 10)       (10, +∞)
+       ╱  ╲          ╱    ╲
+    [3]    [7]     [12]    [20]
+ (-∞,5)  (5,10)  (10,15) (15,+∞)
+</pre>
+
+        <h4>3. 最近公共祖先 (LCA) 推导</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><strong>后序遍历策略：</strong>要找 p 和 q 的 LCA，必须让信息从叶子向上汇聚。后序天然满足——先问左右子树"你们有没有找到 p 或 q？"</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>分叉判定：</strong>如果左子树报告找到了一个，右子树也报告找到了一个 → 当前节点就是 LCA。如果只有一边有报告 → LCA 在那一边更深处（或就是那个报告节点本身）。</div>
+        </div>
+
+        <div class="intuition-box">
+            <strong>LCA 一句话：</strong>后序 DFS 中，两边都有情报 → 我是答案；只有一边有 → 把情报向上传递。
+        </div>
+
+        <h4>4. 树形 DP——后序汇聚范式</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">许多树上问题都可以用"后序 DFS + 全局变量"解决：在返回值中传递子树统计量，在每个节点用子树结果更新全局答案。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>经典例子——树的直径：</strong>每个节点的"经由我的最长路径" = 左子树深度 + 右子树深度。遍历中持续更新全局 max 即可。</div>
+        </div>
+
+<pre class="ascii-art">
+树形 DP —— 直径计算过程:
+
+          [1]  ← left_d=2, right_d=1 → 经过我: 2+1=3 ✓ 
+         ╱   ╲
+       [2]   [3]  depth=1
+      ╱   ╲
+    [4]   [5]     depth=1 (叶子)
+
+  每个节点返回: max(left_d, right_d) + 1
+  全局维护: ans = max(ans, left_d + right_d)
+  最终直径 = 3 (路径 4→2→1→3 或 5→2→1→3)
+</pre>
     </div>
 
+    <!-- ═══ 层 4: 模板代码 ═══ -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：后序遍历找 LCA 与层序遍历</h3>
-<pre><code class="language-python"># 1. 寻找二叉树的最近公共祖先 (LCA)
-def lowestCommonAncestor(root, p, q):
-    # Base Case: 越界或者是直接碰到了 p 还是 q
-    if not root or root == p or root == q:
-        return root
-        
-    # 去下面打听情报 (后序遍历)
-    left_report = lowestCommonAncestor(root.left, p, q)
-    right_report = lowestCommonAncestor(root.right, p, q)
-    
-    # 汇总情况：如果两边都有人，我就是总汇点！
-    if left_report and right_report:
-        return root
-        
-    # 如果只有一边有人，说明他俩抱团在那边，直接把那边的情报向上递交
-    return left_report if left_report else right_report
-
-# 2. 广度优先 (层序) 遍历 (BFS)
+        <h3>💻 模板代码</h3>
+        <h4>Python</h4>
+<pre><code class="language-python">from __future__ import annotations
 from collections import deque
-def levelOrder(root):
-    if not root: return []
-    res = []
+
+class TreeNode:
+    def __init__(self, val: int = 0,
+                 left: TreeNode | None = None,
+                 right: TreeNode | None = None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+# ─── 1. 三种 DFS 遍历（递归） ───
+def preorder(root: TreeNode | None) -> list[int]:
+    if not root:
+        return []
+    return [root.val] + preorder(root.left) + preorder(root.right)
+
+def inorder(root: TreeNode | None) -> list[int]:
+    if not root:
+        return []
+    return inorder(root.left) + [root.val] + inorder(root.right)  # [why] BST 下产生升序
+
+def postorder(root: TreeNode | None) -> list[int]:
+    if not root:
+        return []
+    return postorder(root.left) + postorder(root.right) + [root.val]
+
+# ─── 2. 层序遍历（BFS） ───
+def level_order(root: TreeNode | None) -> list[list[int]]:
+    if not root:
+        return []
+    result: list[list[int]] = []
     queue = deque([root])
-    
     while queue:
-        level_size = len(queue)
-        current_level = []
-        # 一次性把这一层的老人全部出列，同时把它们的孩子(下一层新兵)塞进队尾
+        level_size = len(queue)  # [why] 锁定当前层节点数，防止混入下层
+        level: list[int] = []
         for _ in range(level_size):
             node = queue.popleft()
-            current_level.append(node.val)
-            if node.left: queue.append(node.left)
+            level.append(node.val)
+            if node.left:  queue.append(node.left)
             if node.right: queue.append(node.right)
-        res.append(current_level)
-    return res
+        result.append(level)
+    return result
+
+# ─── 3. BST 验证（全局边界） ───
+def is_valid_bst(node: TreeNode | None,
+                 lower: float = float('-inf'),
+                 upper: float = float('inf')) -> bool:
+    if not node:
+        return True
+    if node.val <= lower or node.val >= upper:  # [why] 边界由祖先传递
+        return False
+    return (is_valid_bst(node.left,  lower, node.val) and  # [why] 左走 upper 收紧
+            is_valid_bst(node.right, node.val, upper))     # [why] 右走 lower 收紧
+
+# ─── 4. LCA（后序 DFS） ───
+def lowest_common_ancestor(root: TreeNode | None,
+                           p: TreeNode, q: TreeNode) -> TreeNode | None:
+    if not root or root == p or root == q:
+        return root  # [why] 碰到目标或到底则返回
+    left  = lowest_common_ancestor(root.left,  p, q)
+    right = lowest_common_ancestor(root.right, p, q)
+    if left and right:
+        return root   # [why] 分叉点：两边各找到一个
+    return left if left else right  # [why] 只有一边有，继续上传
+
+# ─── 5. 树直径（后序 + 全局 max） ───
+def diameter_of_binary_tree(root: TreeNode | None) -> int:
+    ans = 0
+    def depth(node: TreeNode | None) -> int:
+        nonlocal ans
+        if not node:
+            return 0
+        left_d  = depth(node.left)
+        right_d = depth(node.right)
+        ans = max(ans, left_d + right_d)       # [why] 经过当前节点的最长路径
+        return max(left_d, right_d) + 1        # [why] 向上汇报子树最大深度
+    depth(root)
+    return ans
 </code></pre>
+
+        <details>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;algorithm&gt;
+#include &lt;climits&gt;
+#include &lt;functional&gt;
+#include &lt;queue&gt;
+#include &lt;vector&gt;
+
+struct TreeNode {
+    int val;
+    TreeNode *left, *right;
+    TreeNode(int v) : val(v), left(nullptr), right(nullptr) {}
+};
+
+// BST 验证 —— 使用 long 防止 INT_MIN/MAX 边界踩坑
+bool isValidBST(TreeNode* n, long lo = LONG_MIN, long hi = LONG_MAX) {
+    if (!n) return true;
+    if (n-&gt;val &lt;= lo || n-&gt;val &gt;= hi) return false;
+    return isValidBST(n-&gt;left, lo, n-&gt;val)
+        &amp;&amp; isValidBST(n-&gt;right, n-&gt;val, hi);
+}
+
+// LCA
+TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+    if (!root || root == p || root == q) return root;
+    auto* L = lowestCommonAncestor(root-&gt;left,  p, q);
+    auto* R = lowestCommonAncestor(root-&gt;right, p, q);
+    if (L &amp;&amp; R) return root;
+    return L ? L : R;
+}
+
+// 直径
+int diameterOfBinaryTree(TreeNode* root) {
+    int ans = 0;
+    std::function&lt;int(TreeNode*)&gt; depth = [&amp;](TreeNode* n) -&gt; int {
+        if (!n) return 0;
+        int l = depth(n-&gt;left), r = depth(n-&gt;right);
+        ans = std::max(ans, l + r);
+        return std::max(l, r) + 1;
+    };
+    depth(root);
+    return ans;
+}
+
+// 层序遍历
+std::vector&lt;std::vector&lt;int&gt;&gt; levelOrder(TreeNode* root) {
+    std::vector&lt;std::vector&lt;int&gt;&gt; res;
+    if (!root) return res;
+    std::queue&lt;TreeNode*&gt; q;
+    q.push(root);
+    while (!q.empty()) {
+        int sz = q.size();
+        std::vector&lt;int&gt; level;
+        while (sz--) {
+            auto* nd = q.front(); q.pop();
+            level.push_back(nd-&gt;val);
+            if (nd-&gt;left)  q.push(nd-&gt;left);
+            if (nd-&gt;right) q.push(nd-&gt;right);
+        }
+        res.push_back(std::move(level));
+    }
+    return res;
+}
+</code></pre>
+        </details>
+
+        <details>
+            <summary>Rust 版本</summary>
+<pre><code class="language-rust">use std::cell::RefCell;
+use std::collections::VecDeque;
+use std::rc::Rc;
+
+type Link = Option&lt;Rc&lt;RefCell&lt;TreeNode&gt;&gt;&gt;;
+
+pub struct TreeNode {
+    pub val: i32,
+    pub left: Link,
+    pub right: Link,
+}
+
+impl TreeNode {
+    pub fn new(val: i32) -&gt; Self {
+        TreeNode { val, left: None, right: None }
+    }
+}
+
+// BST 验证
+pub fn is_valid_bst(root: &amp;Link) -&gt; bool {
+    fn go(node: &amp;Link, lo: i64, hi: i64) -&gt; bool {
+        match node {
+            None =&gt; true,
+            Some(rc) =&gt; {
+                let n = rc.borrow();
+                let v = n.val as i64; // [why] 防止 i32 边界溢出
+                v &gt; lo &amp;&amp; v &lt; hi
+                    &amp;&amp; go(&amp;n.left, lo, v)
+                    &amp;&amp; go(&amp;n.right, v, hi)
+            }
+        }
+    }
+    go(root, i64::MIN, i64::MAX)
+}
+
+// 直径
+pub fn diameter(root: &amp;Link) -&gt; i32 {
+    fn dfs(node: &amp;Link, ans: &amp;mut i32) -&gt; i32 {
+        match node {
+            None =&gt; 0,
+            Some(rc) =&gt; {
+                let n = rc.borrow();
+                let l = dfs(&amp;n.left, ans);
+                let r = dfs(&amp;n.right, ans);
+                *ans = (*ans).max(l + r); // [why] 经过此节点的路径
+                l.max(r) + 1
+            }
+        }
+    }
+    let mut ans = 0;
+    dfs(root, &amp;mut ans);
+    ans
+}
+
+// 层序遍历
+pub fn level_order(root: &amp;Link) -&gt; Vec&lt;Vec&lt;i32&gt;&gt; {
+    let mut res = vec![];
+    let Some(rc) = root else { return res; };
+    let mut q = VecDeque::new();
+    q.push_back(Rc::clone(rc));
+    while !q.is_empty() {
+        let sz = q.len();
+        let mut level = Vec::with_capacity(sz);
+        for _ in 0..sz {
+            let node = q.pop_front().unwrap();
+            let n = node.borrow();
+            level.push(n.val);
+            if let Some(ref l) = n.left  { q.push_back(Rc::clone(l)); }
+            if let Some(ref r) = n.right { q.push_back(Rc::clone(r)); }
+        }
+        res.push(level);
+    }
+    res
+}
+</code></pre>
+        </details>
+    </div>
+
+    <!-- ═══ 层 5: 复杂度分析 ═══ -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度分析</h3>
         <table>
-            <tr><th>访问法</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>递归 DFS</td><td>O(N)</td><td>O(H) 树高</td><td>每个节点严格被触碰常数次。递归栈深度等于树的高度。</td></tr>
-            <tr><td>队列 BFS</td><td>O(N)</td><td>O(W) 树宽</td><td>一层一层扫，最宽的那一层节点数决定了队列极值（完全二叉树最后一层 N/2）。</td></tr>
+            <tr><th>操作</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>DFS 遍历 (前/中/后)</td><td>O(n)</td><td>O(n)</td><td>O(h)</td><td>每个节点恰好访问一次；递归栈深度 = 树高 h</td></tr>
+            <tr><td>BFS 层序</td><td>O(n)</td><td>O(n)</td><td>O(w)</td><td>队列最大宽度 w（完全二叉树最后一层 ≈ n/2）</td></tr>
+            <tr><td>BST 查找</td><td>O(log n)</td><td>O(n)</td><td>O(h)</td><td>平衡时每次排除一半子树；退化为链时逐个检查</td></tr>
+            <tr><td>BST 插入/删除</td><td>O(log n)</td><td>O(n)</td><td>O(h)</td><td>沿搜索路径走到目标位置，最坏链状退化</td></tr>
+            <tr><td>LCA (后序 DFS)</td><td>O(n)</td><td>O(n)</td><td>O(h)</td><td>每节点最多访问一次</td></tr>
+            <tr><td>树直径</td><td>O(n)</td><td>O(n)</td><td>O(h)</td><td>一次后序 DFS 遍历所有节点</td></tr>
         </table>
     </div>
 
+    <!-- ═══ 层 6: 核心性质与定理 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📐 核心性质与定理</h3>
+
+        <p><strong>1. BST 中序排序性</strong><br>
+        形式化：BST 的中序遍历结果为严格升序序列。<br>
+        <em>直觉：</em>中序 = "先访问所有更小的 → 我 → 所有更大的"，递归展开即升序。</p>
+
+        <p><strong>2. 完全二叉树数组表示</strong><br>
+        下标 $i$ 的左子 = $2i+1$, 右子 = $2i+2$, 父 = $\lfloor(i-1)/2\rfloor$。<br>
+        <em>直觉：</em>完全二叉树每层紧密排列，恰好用数组下标编号层序关系——这是堆的存储基础。</p>
+
+        <p><strong>3. 满二叉树节点数</strong><br>
+        高度 $h$ 的满二叉树有 $2^{h+1}-1$ 个节点。<br>
+        <em>证明：</em>每层 $2^k$ 个节点，等比数列求和 $\sum_{k=0}^{h} 2^k = 2^{h+1}-1$。</p>
+
+        <p><strong>4. 平衡 BST 高度保证</strong><br>
+        AVL 树保证 $h = O(\log n)$，所有操作最坏 $O(\log n)$。<br>
+        <em>代价：</em>插入后最多 1-2 次旋转恢复平衡（LL/RR 单旋，LR/RL 双旋）。红黑树旋转次数类似但着色规则更灵活。</p>
+
+        <p><strong>5. 任意二叉树节点与边的关系</strong><br>
+        $n$ 个节点的二叉树恰好有 $n-1$ 条边（每个非根节点恰好有一个父指针）。</p>
+    </div>
+
+    <!-- ═══ 层 7: 典型例题 ═══ -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题</h3>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.3);">基础</span> 验证二叉搜索树 (LC 98)</summary>
+            <p><strong>题意：</strong>给定二叉树，判断是否为合法 BST。</p>
+            <p><strong>思路：</strong>递归传递全局区间 (lower, upper)，每个节点检查是否在区间内。左走 upper 收紧为 node.val，右走 lower 收紧。</p>
+<pre><code class="language-python">def isValidBST(root: TreeNode | None,
+               lo: float = float('-inf'),
+               hi: float = float('inf')) -> bool:
+    if not root: return True
+    if root.val <= lo or root.val >= hi: return False
+    return isValidBST(root.left, lo, root.val) and \
+           isValidBST(root.right, root.val, hi)
+</code></pre>
+            <p><strong>变种：</strong>若 BST 允许重复值 (左 ≤ 根 ≤ 右)，需将 <code>&lt;=</code>/<code>&gt;=</code> 改为 <code>&lt;</code>/<code>&gt;</code>。</p>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15);color:#fbbf24;border-color:rgba(251,191,36,.3);">中级</span> 二叉树的最近公共祖先 (LC 236)</summary>
+            <p><strong>题意：</strong>给定二叉树和两个节点 p, q，找 LCA。</p>
+            <p><strong>思路：</strong>后序 DFS，递归返回"在子树中是否找到了 p 或 q"。两边都有→当前即 LCA；只有一边→继续上传。</p>
+<pre><code class="language-python">def lowestCommonAncestor(root, p, q):
+    if not root or root == p or root == q:
+        return root
+    L = lowestCommonAncestor(root.left, p, q)
+    R = lowestCommonAncestor(root.right, p, q)
+    if L and R: return root
+    return L or R
+</code></pre>
+            <p><strong>变种对比：</strong>若是 BST，可利用值大小判断。当 p, q 分居根两侧时根就是 LCA；都在左/右侧则递归对应子树。时间从 O(n) 降为 O(h)。</p>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15);color:#f87171;border-color:rgba(248,113,113,.3);">高级</span> 二叉树中的最大路径和 (LC 124)</summary>
+            <p><strong>题意：</strong>找二叉树中和最大的路径（路径可不经过根）。</p>
+            <p><strong>思路：</strong>后序 DFS + 全局 max。每节点算"经过我的最大路径" = node.val + max(0, 左贡献) + max(0, 右贡献)。向上只返回单侧最优。</p>
+<pre><code class="language-python">def maxPathSum(root: TreeNode) -> int:
+    ans = float('-inf')
+    def dfs(node):
+        nonlocal ans
+        if not node: return 0
+        left  = max(0, dfs(node.left))   # [why] 负贡献不如不取
+        right = max(0, dfs(node.right))
+        ans = max(ans, node.val + left + right)  # [why] 完整路径
+        return node.val + max(left, right)       # [why] 向上只选一侧
+    dfs(root)
+    return ans
+</code></pre>
+            <p><strong>变种：</strong>树的直径是同类问题的"边数版"——把 val 换成 1（每条边贡献 1）。</p>
+        </details>
+    </div>
+
+    <!-- ═══ 层 8: 变种 / 技术对比表 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📋 遍历方式对比</h3>
+        <table>
+            <tr><th>遍历</th><th>顺序</th><th>适用场景</th><th>数据结构</th><th>空间</th></tr>
+            <tr><td>前序 DFS</td><td>根→左→右</td><td>复制树、序列化、路径记录</td><td>递归栈 / 显式栈</td><td>O(h)</td></tr>
+            <tr><td>中序 DFS</td><td>左→根→右</td><td>BST 排序、第 k 小</td><td>递归栈 / 显式栈</td><td>O(h)</td></tr>
+            <tr><td>后序 DFS</td><td>左→右→根</td><td>删除、汇聚统计、LCA</td><td>递归栈 / 显式栈</td><td>O(h)</td></tr>
+            <tr><td>层序 BFS</td><td>逐层从左到右</td><td>最短深度、层级分组</td><td>队列</td><td>O(w)</td></tr>
+        </table>
+
+        <h4 style="margin-top:1rem;">平衡树家族对比</h4>
+        <table>
+            <tr><th>树类型</th><th>查/插/删</th><th>平衡条件</th><th>典型应用</th></tr>
+            <tr><td>普通 BST</td><td>O(h)，最坏 O(n)</td><td>无保证</td><td>教学、简易场景</td></tr>
+            <tr><td>AVL 树</td><td>O(log n)</td><td>左右高度差 ≤ 1</td><td>查找密集型场景</td></tr>
+            <tr><td>红黑树</td><td>O(log n)</td><td>无连续红 + 黑高相等</td><td>STL map, Java TreeMap</td></tr>
+            <tr><td>B+ 树</td><td>O(log<sub>B</sub> n)</td><td>节点填充 ≥ 50%</td><td>数据库索引、文件系统</td></tr>
+        </table>
+    </div>
+
+    <!-- ═══ 层 9: 易错点 ═══ -->
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
+        <h3>⚠️ 易错点与陷阱</h3>
+
+        <h4>1. BST 验证只比较直接子节点 → WA</h4>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 错误理解 BST 二叉搜索树局部性</p>
-<pre><code class="language-python"># 检查是否为合法的 BST
-def isValidBST(node):
+                <p>❌ 只检查直接子节点（漏网之鱼）</p>
+<pre><code class="language-python">def isValidBST(node):
     if not node: return True
-    # 大错特错：只比较直接手下！
-    if node.left and node.left.val >= node.val: return False
-    if node.right and node.right.val <= node.val: return False
+    # 只看左右儿子，不看更深的后代！
+    if node.left and node.left.val >= node.val:
+        return False
+    if node.right and node.right.val <= node.val:
+        return False
     return isValidBST(node.left) and isValidBST(node.right)
-# 如果根是10，右儿子15，右孙子是2。
-# 2被上面的逻辑判定为<15合法，但它明明应该被拦截：它<10！
+# 根=10, 右子=15, 右孙=2 → 2<15 通过, 但 2<10 违规!
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 必须用全局长河边界约束</p>
-<pre><code class="language-python">def isValidBST(node, lower=float('-inf'), upper=float('inf')):
+                <p>✅ 传递全局边界</p>
+<pre><code class="language-python">def isValidBST(node, lo=float('-inf'), hi=float('inf')):
     if not node: return True
-    # 任何节点都背负着从祖先传下来的边界铁律
-    if node.val <= lower or node.val >= upper: return False
-    return (isValidBST(node.left, lower, node.val) and 
-            isValidBST(node.right, node.val, upper))
+    if node.val <= lo or node.val >= hi:
+        return False  # 祖先传下来的铁律
+    return (isValidBST(node.left, lo, node.val) and
+            isValidBST(node.right, node.val, hi))
 </code></pre>
             </div>
         </div>
+
+        <h4>2. 递归遗漏 None base case → RE (AttributeError)</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 直接访问 .left.val</p>
+<pre><code class="language-python"># 如果 node.left 为 None → 崩溃
+if node.left.val > node.val:
+    ...
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 先检查 None</p>
+<pre><code class="language-python">if not node:
+    return  # base case 优先
+# 此后 node 一定非 None
+</code></pre>
+            </div>
+        </div>
+
+        <h4>3. Python 递归深度限制</h4>
+        <p>Python 默认递归深度 1000。退化链 (n &gt; 1000) 会 <code>RecursionError</code>。解决：<code>sys.setrecursionlimit(N)</code> 或改用迭代栈。C++ 无此硬限制但栈空间有限（约 1-8 MB）。Rust 默认栈 8 MB，可用 <code>stacker</code> crate 扩展。</p>
     </div>
 
+    <!-- ═══ 层 10: 互动演示 ═══ -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：树的中序与后序递归步进轨迹</h3>
+        <h3>🎮 互动演示：三种遍历步进可视化</h3>
+        <p>选择一种遍历方式，逐步观察节点被访问的顺序。<span style="color:#10b981">■</span> 已访问 <span style="color:#f59e0b">■</span> 当前节点。</p>
         <div class="demo-container" id="treeDemo"></div>
     </div>
 
+    <!-- ═══ 层 11: 竞赛拓展 ═══ -->
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>Morris 遍历：</strong> 传统的 DFS 递归或栈迭代必须要用到 $O(N)$ 的额外空间。Morris 遍历利用了叶子节点空闲的 <code>right</code> 指针，将其变成返回父亲的线索。彻底将树遍历的空间复杂度降维到 $O(1)$！</p>
+        <h3>🏆 竞赛拓展</h3>
+        <p><em>以下内容超出常规面试范围，适合竞赛选手或进阶学习。</em></p>
+
+        <details>
+            <summary>Morris 遍历 —— O(1) 空间中序遍历</summary>
+            <p>利用叶节点空闲的 right 指针临时指向中序后继，省去递归栈。遍历完成后恢复原始结构。空间 O(1)，时间仍 O(n)。</p>
+<pre><code class="language-python">def morris_inorder(root: TreeNode | None) -> list[int]:
+    result, curr = [], root
+    while curr:
+        if not curr.left:
+            result.append(curr.val)
+            curr = curr.right          # [why] 无左子，直接后继
+        else:
+            pred = curr.left
+            while pred.right and pred.right != curr:
+                pred = pred.right      # [why] 找左子树最右节点
+            if not pred.right:
+                pred.right = curr      # [why] 建线索
+                curr = curr.left
+            else:
+                pred.right = None      # [why] 恢复原结构
+                result.append(curr.val)
+                curr = curr.right
+    return result
+</code></pre>
+        </details>
+
+        <details>
+            <summary>Euler Tour + Sparse Table 求 LCA —— O(n log n) 预处理, O(1) 查询</summary>
+            <p>将 DFS 的进出记录转化为长 2n-1 的一维数组，LCA 问题转化为 RMQ（区间最小深度查询）。用 Sparse Table 预处理后支持 O(1) 在线查询，是最优的在线 LCA 方案。</p>
+        </details>
+
+        <details>
+            <summary>树链剖分 (Heavy-Light Decomposition)</summary>
+            <p>将树分解为若干"重链"，使得任意路径最多穿过 $O(\log n)$ 条链。配合线段树可在 $O(\log^2 n)$ 内完成路径查询/修改。适用于竞赛中复杂的树上路径操作题。</p>
+        </details>
     </div>
+
+    <!-- ═══ 层 12: 工业实战 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业实战</h3>
+
+        <h4>B-Tree / B+Tree —— 数据库索引的基石</h4>
+        <p>关系数据库（MySQL InnoDB, PostgreSQL）几乎全部使用 B+Tree 索引。原因：磁盘 I/O 以页（4KB）为单位读取，B+Tree 每个节点存上百个键值，树高仅 3-4 层即可索引数十亿条记录，每次查询只需 3-4 次磁盘读取。</p>
+<pre class="ascii-art">
+B+Tree 索引 (阶数 3 简化):
+
+         ┌────────────┐
+         │   [30, 60]  │          ← 根节点（常驻内存）
+         └──┬────┬────┬┘
+            │    │    │
+    ┌───────┘    │    └───────┐
+    ▼            ▼            ▼
+┌───────┐  ┌─────────┐  ┌─────────┐   ← 叶节点（磁盘页）
+│10, 20 │→ │30, 40, 50│→ │60, 70, 80│   ← 叶子形成有序链表
+└───────┘  └─────────┘  └─────────┘       支持高效范围查询
+</pre>
+
+        <h4>编译器 AST（抽象语法树）</h4>
+        <p>编译器（GCC, Clang, rustc）将源代码解析为 AST，后续的类型检查、优化、代码生成都基于 AST 的遍历。例如 <code>a + b * c</code> 被解析为以 <code>+</code> 为根、<code>a</code> 为左子、<code>*(b,c)</code> 为右子的树。Babel 和 ESLint 也通过 AST 遍历实现 JavaScript 的转译和代码检查。</p>
+
+        <h4>DOM 树与浏览器渲染</h4>
+        <p>浏览器将 HTML 解析为 DOM 树，CSS 合并后生成渲染树，通过 Layout（回流）和 Paint（重绘）完成页面显示。React 的 Virtual DOM diff 算法本质是两棵树的对比遍历（O(n) 启发式算法，而非 O(n³) 的通用树编辑距离）。</p>
+    </div>
+
+
 </section>
 
 <section class="card" data-quiz data-module="tree">

@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>Trie 字典树模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,21 +33,28 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
-    
-        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
-        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
-        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
-        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
-        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
-        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
-        .derive-body { flex:1; }
-        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
-        .intuition-box strong { color:#10b981; }
-        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
-        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
-        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
-        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
-        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+        .naive-vs-smart { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.8rem 0; }
+        .naive-vs-smart .naive { border-left: 3px solid #f43f5e; padding-left: 0.8rem; }
+        .naive-vs-smart .smart { border-left: 3px solid #10b981; padding-left: 0.8rem; }
+        .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
+        @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
+
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
     </style>
 </head>
 <body data-theme="day">
@@ -51,97 +63,484 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+
+    <!-- ═══ 层 0: 引子问题 ═══ -->
+    <div class="knowledge-card kc-gray">
+        <h3>🎯 引子问题</h3>
+        <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+            "手机输入法打 'hel'，怎么瞬间弹出 'hello', 'help', 'helmet'？"
+        </p>
+        <p>Hash 表可以告诉你某个完整单词是否存在，但怎么高效找出所有以某个前缀开头的单词？这就是字典树（Trie）要解决的核心难题。</p>
+    </div>
+
+    <!-- ═══ 层 1: 前置知识 ═══ -->
     <div class="knowledge-card kc-gray">
         <h3>⚙️ 前置知识</h3>
-        <span class="prereq-tag">树的节点指针网络</span>
+        <span class="prereq-tag">树的节点指针</span>
         <span class="prereq-tag">散列表 (HashMap)</span>
-        <p>字典树（Trie，或者是前缀树）是专门为海量“字符串池”设计的高级武器。它的诞生就是为了回答一个 HashMap 解决不了的问题：“在这个庞大的系统字典里，有哪些词是以 `auto` 作为<strong>前缀起点</strong>的？”使用 HashMap 只能查精确匹配，而 Trie 将世界拆解为单字母的森林。</p>
+        <span class="prereq-tag">字符串基础</span>
+        <p><strong>树结构</strong>：Trie 是多叉树——每个节点可以有多个子节点（最多 |Σ| 个，Σ 为字母表）。</p>
+        <p><strong>HashMap</strong>：提供 O(1) 的精确查找，但无法高效回答"以某前缀开头的所有键"——理解这一局限是学习 Trie 的起点。</p>
     </div>
 
+    <!-- ═══ 层 2: 研究动机与问题建模 ═══ -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：Trie 与 HashMap 的优劣角逐</h3>
-
+        <h3>🔬 研究动机——HashMap 为什么搞不定前缀查询？</h3>
         <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">HashMap (精确搜索 O(1))</h4><p>如果要查是否存在 `apple`，Hash(apple) 是 O(L) 长度，查表 O(1)。然而，如果我要找拥有 `app` 前缀的所有单词？抱歉，哈希表只能 O(N) 全库遍历！</p></div>
-            <div class="smart"><h4 class="label">Trie 树 (前缀之王)</h4><p>将字母打散，`apple` 就是 `a->p->p->l->e` 的树状单行道。要查以 `app` 开头的词？你只需顺着走三步，下面的整棵挂下来的庞大子树，全部都是以它为前缀的符合词汇！</p></div>
+            <div class="naive">
+                <h4 class="label">HashMap（精确搜索之王）</h4>
+                <p>查 "apple" 是否在字典中？Hash("apple") → O(L)。✅<br>
+                查以 "app" 为前缀的所有 100 个单词？只能 O(N) 遍历全部 10 万条记录逐个比较前缀。❌<br>
+                <strong>问题：哈希函数把不同前缀的单词打散到不同桶里，完全丢失了前缀的结构信息。</strong></p>
+            </div>
+            <div class="smart">
+                <h4 class="label">Trie（前缀之王）</h4>
+                <p>"apple" 在 Trie 中是路径 <code>根→a→p→p→l→e</code>。<br>
+                查以 "app" 开头的词？沿路径走三步到达 'p' 节点，其下整棵子树都是 "app" 前缀的词汇！<br>
+                <strong>前缀搜索 = 沿路径走到对应节点 + DFS 收集子树。</strong></p>
+            </div>
         </div>
 
-        <h4>Trie 的极致内存复用</h4>
-        <div class="intuition-box">
-            如果有十万个单词：<code>abandon</code>, <code>absolute</code>, <code>abstract</code>...。<br>
-            在 HashMap 中，每个单词的 `ab` 都是被独立申请内存存下来的字符串。十万个单词就有十万次大量的无用重复。<br>
-            在 Trie 里，所有这些单词统统合并在一起走相同的 <code>根 -> a -> b</code> 前两次过道。这在拥有大量重叠前缀的场景极大地节省了内存！这被称为<strong>共享前缀空间。</strong>
+        <p><strong>形式化定义：</strong>给定 $n$ 个总长为 $S$ 的字符串，设计数据结构支持：① <code>insert(word)</code> $O(L)$，② <code>search(word)</code> $O(L)$，③ <code>startsWith(prefix)</code> $O(L)$，其中 $L$ 为查询串长度，<strong>与字典大小 $n$ 无关</strong>。</p>
+    </div>
+
+    <!-- ═══ 层 3: 推导卡片 ═══ -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：Trie 的设计与压缩</h3>
+
+        <h4>1. 基本 Trie 结构</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><strong>核心想法：</strong>把每个字符串拆为逐字符的路径。共享相同前缀的字符串共用同一段路径，分歧点才分叉。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>节点结构：</strong>每个节点存储 <code>children</code>（字符→子节点的映射）和 <code>is_end</code>（标记是否为完整单词的终止）。</div>
         </div>
 
-        <h4>关于终点结束符的作用</h4>
+<pre class="ascii-art">
+插入 "cat", "car", "card", "dog" 后的 Trie:
+
+         (root)
+        ╱      ╲
+      [c]       [d]
+       │         │
+      [a]       [o]
+      ╱ ╲        │
+    [t●] [r●]   [g●]
+          │
+         [d●]
+
+  ● = is_end = True（完整单词终止符）
+</pre>
+
         <div class="think-block">
-            <div class="q">Q: 树里有 apple 和 app，如果不加区分标记，怎么辨别 app 是真实存入的词，还是仅仅是为了去 apple 的中转站？</div>
+            <div class="q">Q: 树里有 "app" 和 "apple"，如果不加 is_end 标记，怎么区分 "app" 是真实单词还是仅仅是 "apple" 的中转站？</div>
             <details>
                 <summary>查看答疑</summary>
-                这就是 <code>isEnd</code> (是否结尾) 这个布尔量存在的终极意义！当我们在节点 <code>p</code> 身上将 <code>isEnd = true</code>，它就声明了这不仅是过道，此时此刻截断它，这条从根到我的轨迹本身，也是一个合法的、曾经被明确插入进来的单词。
+                这就是 <code>is_end</code> 存在的终极意义！在 'p' 节点（第二个 'p'）上设 <code>is_end = True</code>，宣告"从根到我的路径 app 本身是一个合法单词"——即使 'p' 之后还有子节点 l → e 通向 "apple"。
             </details>
         </div>
+
+        <h4>2. Trie 的前缀共享与内存复用</h4>
+        <div class="intuition-box">
+            <strong>核心洞察：</strong>如果字典中有 10 万个词都以 "ab" 开头（abandon, absolute, abstract...），HashMap 里每个词都独立存储 'a','b' 两个字符。Trie 里它们共享同一条 <code>根→a→b</code> 通道——<strong>前缀越共享，Trie 越省空间。</strong>
+        </div>
+
+        <h4>3. 压缩 Trie (Radix Tree / Patricia Tree)</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><strong>普通 Trie 的浪费：</strong>如果单词 "internationalization" 只有它自己用这段路径，就需要 20 个单字符节点串联，浪费空间。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>压缩思路：</strong>将只有单个子节点的连续链合并为一个节点，存储"子串"而非"单字符"。节点数从 O(S) 降为 O(n)（n = 单词数量）。</div>
+        </div>
+
+<pre class="ascii-art">
+普通 Trie:               压缩 Trie (Radix Tree):
+
+    (root)                   (root)
+     │                      ╱      ╲
+    [r]                  ["rom"]  ["rub"]
+     │                    ╱  ╲       ╱ ╲
+    [o]              ["an●"]["e●"]["ber●"]["y●"]
+     │               │
+    [m]           ["ce●"]
+    ╱ ╲
+  [a]  [e●]      左：存 roman, romance, rome
+   │              右：存 rubber, ruby
+  [n]
+   ╱ ╲
+ [●]  [c]
+       │
+      [e●]
+</pre>
     </div>
 
+    <!-- ═══ 层 4: 模板代码 ═══ -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：最原汁原味的字典树实现</h3>
+        <h3>💻 模板代码</h3>
+        <h4>Python</h4>
 <pre><code class="language-python">class TrieNode:
-    def __init__(self):
-        # 使用哈希表储存子节点，比起一个巨大的 [None]*26 数组，能支持更多字符且节省空白空间
-        self.children = {}
-        # 是否是一个完整单词的结尾
-        self.is_end = False
+    def __init__(self) -> None:
+        self.children: dict[str, 'TrieNode'] = {}  # [why] HashMap 比 [None]*26 更灵活，支持任意字符
+        self.is_end: bool = False                   # [why] 标记完整单词终止
 
 class Trie:
-    def __init__(self):
+    def __init__(self) -> None:
         self.root = TrieNode()
 
-    # 1. 插入 O(L) L为词长
-    def insert(self, word):
+    # ─── 插入 O(L) ───
+    def insert(self, word: str) -> None:
         node = self.root
-        for char in word:
-            # 如果没有这条路，给它铺一条下去
-            if char not in node.children:
-                node.children[char] = TrieNode()
-            node = node.children[char]
-        # 单词全部遍历完，在这个终点节点盖个公章，确认词汇
-        node.is_end = True
+        for ch in word:
+            if ch not in node.children:
+                node.children[ch] = TrieNode()  # [why] 没路则铺路
+            node = node.children[ch]
+        node.is_end = True  # [why] 盖公章：此路径对应的前缀是合法单词
 
-    # 2. 查找是否存在该完整单词 O(L)
-    def search(self, word):
-        node = self.root
-        for char in word:
-            if char not in node.children:
-                return False
-            node = node.children[char]
-        return node.is_end  # 找到了路径不代表有词，必须看公章！
+    # ─── 精确查找 O(L) ───
+    def search(self, word: str) -> bool:
+        node = self._walk(word)
+        return node is not None and node.is_end  # [why] 走到了 ≠ 是单词
 
-    # 3. 查找是否存在以 prefix 结尾的前缀！
-    def startsWith(self, prefix):
+    # ─── 前缀判定 O(L) ───
+    def starts_with(self, prefix: str) -> bool:
+        return self._walk(prefix) is not None  # [why] 能走完就说明前缀存在
+
+    def _walk(self, s: str) -> 'TrieNode | None':
+        """沿字符路径走到目标节点，走不通返回 None。"""
         node = self.root
-        for char in prefix:
-            if char not in node.children:
-                return False
-            node = node.children[char]
-        # 只要能顺着路走下来不死路，就意味着必然有以此为前缀的叶蔓！
-        return True 
+        for ch in s:
+            if ch not in node.children:
+                return None
+            node = node.children[ch]
+        return node
+
+    # ─── 收集所有以 prefix 开头的单词 ───
+    def autocomplete(self, prefix: str) -> list[str]:
+        node = self._walk(prefix)
+        if not node:
+            return []
+        results: list[str] = []
+        def dfs(n: TrieNode, path: str) -> None:
+            if n.is_end:
+                results.append(path)
+            for ch, child in sorted(n.children.items()):
+                dfs(child, path + ch)
+        dfs(node, prefix)
+        return results
 </code></pre>
-        <table>
-            <tr><th>操作</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>插入/查询操作</td><td>O(L)</td><td>O(L)每次插入</td><td>完全忽略词典大小 $N$，永远只和这个词自身的长度 $L$ 有关！</td></tr>
-            <tr><td>极端恶劣输入</td><td>-</td><td>O(N $	imes$ L)</td><td>如果完全没有任意两个词共用任何前缀，全部退化成平摊。</td></tr>
-        </table>
+
+        <details>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;string&gt;
+#include &lt;unordered_map&gt;
+#include &lt;vector&gt;
+
+struct TrieNode {
+    std::unordered_map&lt;char, TrieNode*&gt; children;
+    bool is_end = false;
+    ~TrieNode() {
+        for (auto&amp; [c, p] : children) delete p; // [why] 避免内存泄漏
+    }
+};
+
+class Trie {
+    TrieNode root;
+public:
+    void insert(const std::string&amp; word) {
+        auto* node = &amp;root;
+        for (char ch : word) {
+            if (!node-&gt;children.count(ch))
+                node-&gt;children[ch] = new TrieNode();
+            node = node-&gt;children[ch];
+        }
+        node-&gt;is_end = true;
+    }
+
+    bool search(const std::string&amp; word) const {
+        auto* node = walk(word);
+        return node &amp;&amp; node-&gt;is_end;
+    }
+
+    bool startsWith(const std::string&amp; prefix) const {
+        return walk(prefix) != nullptr;
+    }
+
+private:
+    const TrieNode* walk(const std::string&amp; s) const {
+        const auto* node = &amp;root;
+        for (char ch : s) {
+            auto it = node-&gt;children.find(ch);
+            if (it == node-&gt;children.end()) return nullptr;
+            node = it-&gt;second;
+        }
+        return node;
+    }
+};
+</code></pre>
+        </details>
+
+        <details>
+            <summary>Rust 版本</summary>
+<pre><code class="language-rust">use std::collections::HashMap;
+
+#[derive(Default)]
+struct TrieNode {
+    children: HashMap&lt;char, TrieNode&gt;, // [why] HashMap 灵活支持 Unicode
+    is_end: bool,
+}
+
+#[derive(Default)]
+pub struct Trie {
+    root: TrieNode,
+}
+
+impl Trie {
+    pub fn new() -&gt; Self { Self::default() }
+
+    pub fn insert(&amp;mut self, word: &amp;str) {
+        let mut node = &amp;mut self.root;
+        for ch in word.chars() {
+            node = node.children.entry(ch).or_default(); // [why] 没路则默认插入空节点
+        }
+        node.is_end = true;
+    }
+
+    pub fn search(&amp;self, word: &amp;str) -&gt; bool {
+        self.walk(word).map_or(false, |n| n.is_end)
+    }
+
+    pub fn starts_with(&amp;self, prefix: &amp;str) -&gt; bool {
+        self.walk(prefix).is_some()
+    }
+
+    fn walk(&amp;self, s: &amp;str) -&gt; Option&lt;&amp;TrieNode&gt; {
+        let mut node = &amp;self.root;
+        for ch in s.chars() {
+            node = node.children.get(&amp;ch)?; // [why] ? 自动返回 None
+        }
+        Some(node)
+    }
+}
+</code></pre>
+        </details>
     </div>
 
+    <!-- ═══ 层 5: 复杂度分析 ═══ -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度分析</h3>
+        <table>
+            <tr><th>操作</th><th>时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>insert(word)</td><td>O(L)</td><td>最坏 O(L) 新节点</td><td>逐字符走/建路径，与字典大小 n 无关</td></tr>
+            <tr><td>search(word)</td><td>O(L)</td><td>O(1)</td><td>沿路径走 L 步即可判定</td></tr>
+            <tr><td>startsWith(prefix)</td><td>O(L)</td><td>O(1)</td><td>同上，不需检查 is_end</td></tr>
+            <tr><td>autocomplete(prefix)</td><td>O(L + K)</td><td>O(K)</td><td>L 步定位前缀节点 + DFS 收集 K 个结果</td></tr>
+            <tr><td>构建整棵 Trie</td><td>O(S)</td><td>O(S · |Σ|)</td><td>S = 所有字符串总长；每节点最多 |Σ| 个指针</td></tr>
+        </table>
+        <p><strong>最坏空间注意：</strong>若所有单词完全无共同前缀（如 "a", "b", "c"...），退化为每个字符一个节点，空间 O(S)。但实际自然语言中前缀共享率高，Trie 通常比存储所有完整字符串更省空间。</p>
+    </div>
+
+    <!-- ═══ 层 6: 核心性质与定理 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📐 核心性质与定理</h3>
+
+        <p><strong>1. 前缀共享性</strong><br>
+        Trie 中任意两个公共前缀只存储一次。<br>
+        <em>直觉：</em>所有以 "pre" 开头的单词共用 根→p→r→e 这三个节点。</p>
+
+        <p><strong>2. 查询独立于字典规模</strong><br>
+        Trie 的 search/startsWith 时间为 $O(L)$，仅取决于查询串长度 $L$，与字典大小 $n$ 无关。<br>
+        <em>对比：</em>哈希表虽然也是 $O(L)$ 查找（计算哈希值），但无法做前缀查询。</p>
+
+        <p><strong>3. 字典序输出</strong><br>
+        对 Trie 进行 DFS（按字符排序遍历子节点），可以按字典序输出所有单词。<br>
+        <em>应用：</em>搜索引擎的自动补全候选按字典序排列。</p>
+
+        <p><strong>4. 压缩 Trie 节点数</strong><br>
+        Radix Tree（压缩 Trie）的内部节点数不超过 $n$（单词数），而非 $S$（总字符数）。<br>
+        <em>来源：</em>每个内部节点至少有 2 个子节点（否则会被合并）。</p>
+    </div>
+
+    <!-- ═══ 层 7: 典型例题 ═══ -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题</h3>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.3);">基础</span> 实现 Trie (LC 208)</summary>
+            <p><strong>题意：</strong>实现 insert, search, startsWith。</p>
+            <p><strong>思路：</strong>直接套上面的模板。关键是 search 必须检查 is_end，startsWith 不需要。</p>
+            <p><strong>变种：</strong>如果需要统计前缀出现次数，在每个节点加 <code>prefix_count</code> 计数器，insert 时沿途 +1。</p>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15);color:#fbbf24;border-color:rgba(251,191,36,.3);">中级</span> 单词搜索 II (LC 212)</summary>
+            <p><strong>题意：</strong>在 m×n 字母网格中找出词典里所有单词（可相邻拼接）。</p>
+            <p><strong>思路：</strong>将词典建成 Trie，然后对网格每个格子出发 DFS。DFS 过程中，如果当前路径不是任何词的前缀（Trie 走不通），立即剪枝。比用 HashSet 的优势巨大——HashSet 必须等完整路径形成才能判断，Trie 可以逐字符提前终止。</p>
+<pre><code class="language-python">def findWords(board: list[list[str]], words: list[str]) -> list[str]:
+    trie = Trie()
+    for w in words:
+        trie.insert(w)
+    res, m, n = set(), len(board), len(board[0])
+
+    def dfs(i: int, j: int, node: TrieNode, path: str):
+        if node.is_end:
+            res.add(path)
+            node.is_end = False  # [why] 去重：找到后标记防止重复添加
+        if i < 0 or i >= m or j < 0 or j >= n:
+            return
+        ch = board[i][j]
+        if ch not in node.children:
+            return  # [why] Trie 剪枝：此方向无任何词的前缀
+        board[i][j] = '#'  # [why] 标记已访问
+        for di, dj in [(0,1),(0,-1),(1,0),(-1,0)]:
+            dfs(i+di, j+dj, node.children[ch], path+ch)
+        board[i][j] = ch   # [why] 回溯恢复
+
+    for i in range(m):
+        for j in range(n):
+            dfs(i, j, trie.root, "")
+    return list(res)
+</code></pre>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15);color:#f87171;border-color:rgba(248,113,113,.3);">高级</span> 数组中两个数的最大异或值 (LC 421)</summary>
+            <p><strong>题意：</strong>给定整数数组，找出两个数使异或值最大。</p>
+            <p><strong>思路：</strong>01-Trie：将每个数的 32 位二进制表示插入 Trie。查询时，从最高位起贪心地走与当前位相反的方向（1 选 0，0 选 1），尽可能让高位异或为 1。</p>
+            <p><strong>时间：</strong>O(32n) = O(n)，比暴力 O(n²) 快得多。</p>
+        </details>
+    </div>
+
+    <!-- ═══ 层 8: 变种 / 技术对比表 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📋 Trie vs 替代方案对比</h3>
+        <table>
+            <tr><th>数据结构</th><th>精确查找</th><th>前缀查询</th><th>空间</th><th>优势</th><th>劣势</th></tr>
+            <tr><td>HashMap</td><td>O(L)</td><td>O(n·L) 全遍历</td><td>O(S)</td><td>实现简单、精确查找极快</td><td>完全不支持前缀操作</td></tr>
+            <tr><td>排序数组 + 二分</td><td>O(L·log n)</td><td>O(L·log n + K)</td><td>O(S)</td><td>空间紧凑</td><td>动态插入 O(n)</td></tr>
+            <tr><td>Trie</td><td>O(L)</td><td>O(L + K)</td><td>O(S·|Σ|)</td><td>前缀查询最优</td><td>空间占用可能大</td></tr>
+            <tr><td>Radix Tree</td><td>O(L)</td><td>O(L + K)</td><td>O(n)</td><td>压缩后节点数仅 O(n)</td><td>实现复杂</td></tr>
+        </table>
+        <p><em>S = 总字符数，L = 查询串长，K = 匹配结果数，|Σ| = 字母表大小</em></p>
+    </div>
+
+    <!-- ═══ 层 9: 易错点 ═══ -->
+    <div class="knowledge-card kc-red">
+        <h3>⚠️ 易错点与陷阱</h3>
+
+        <h4>1. search 不检查 is_end → WA</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 走完路径就返回 True</p>
+<pre><code class="language-python">def search(self, word):
+    node = self.root
+    for ch in word:
+        if ch not in node.children:
+            return False
+        node = node.children[ch]
+    return True  # 错！"app" 只是 "apple" 的中转
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 必须检查 is_end</p>
+<pre><code class="language-python">def search(self, word):
+    node = self._walk(word)
+    return node is not None and node.is_end
+</code></pre>
+            </div>
+        </div>
+
+        <h4>2. 删除时直接删节点破坏共享前缀</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 暴力删除路径上所有节点</p>
+<pre><code class="language-python"># 删除 "app" 时把 a→p→p 全删了
+# 但 "apple" 还需要 a→p→p→l→e！
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 先清 is_end，再从叶向上逐层删无用节点</p>
+<pre><code class="language-python"># 1. 将 "app" 终点的 is_end 置 False
+# 2. 从末尾向上回溯，仅删除无子节点且 is_end=False 的节点
+# 3. 遇到有其他子节点或 is_end=True 的节点时停止
+</code></pre>
+            </div>
+        </div>
+
+        <h4>3. 固定数组 vs HashMap 子节点</h4>
+        <p>使用 <code>[None]*26</code> 数组时，字符映射为 <code>ord(ch)-ord('a')</code>，效率高但仅支持小写字母。若需要支持 Unicode（如中文），必须用 HashMap。C++ 中注意 <code>unordered_map</code> 的常数较大，竞赛中有时用数组更快。</p>
+    </div>
+
+    <!-- ═══ 层 10: 互动演示 ═══ -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：在 Trie 中复用前缀通道</h3>
+        <h3>🎮 互动演示：逐字符插入 Trie 并高亮路径</h3>
+        <p>输入单词并插入，观察 Trie 的分支结构如何生长。<span style="color:#ef4444">■</span> 单词终止节点 <span style="color:#475569">■</span> 中间节点。试试先插入 "cat" 再插入 "car"，观察前缀共享。</p>
         <div class="demo-container" id="triDemo"></div>
     </div>
 
+    <!-- ═══ 层 11: 竞赛拓展 ═══ -->
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>0/1 字典树 (求最大异或值)：</strong> 不仅能存字母字典，将所有数字转化为 二进制 的 0 和 1（长 32），存入一棵只有左右儿子的满口 Trie。你想求某个数 A 和谁能产生最大的异或结果？沿着 A 二进制位的<strong>相反的反方向位</strong>（1找0，0找1）极其贪心地深入树冠，就能 $O(32)$ 秒杀最长距离异或题！极其神似哈夫曼的倒影。</p>
+        <h3>🏆 竞赛拓展</h3>
+        <p><em>以下内容超出常规面试范围，适合竞赛选手或进阶学习。</em></p>
+
+        <details>
+            <summary>01-Trie —— 求最大异或值</summary>
+            <p>将所有整数的 32 位二进制表示插入只有 0/1 两个子节点的 Trie。查询时从最高位到最低位贪心走相反方向，O(32) 即可找到与目标异或最大的数。</p>
+<pre><code class="language-python">class BinaryTrie:
+    def __init__(self) -> None:
+        self.root: list = [None, None]  # [left=0 child, right=1 child]
+
+    def insert(self, num: int) -> None:
+        node = self.root
+        for i in range(31, -1, -1):  # [why] 从最高位到最低位
+            bit = (num >> i) & 1
+            if node[bit] is None:
+                node[bit] = [None, None]
+            node = node[bit]
+
+    def max_xor(self, num: int) -> int:
+        node, xor_val = self.root, 0
+        for i in range(31, -1, -1):
+            bit = (num >> i) & 1
+            want = 1 - bit  # [why] 贪心：走相反方向让异或位为 1
+            if node[want] is not None:
+                xor_val |= (1 << i)
+                node = node[want]
+            else:
+                node = node[bit]
+        return xor_val
+</code></pre>
+        </details>
+
+        <details>
+            <summary>AC 自动机 (Aho-Corasick) —— 多模式匹配</summary>
+            <p>将多个模式串建成 Trie，然后用 BFS 建立<strong>失败指针</strong>（failure link）——指向当前节点对应字符串的最长真后缀中存在于 Trie 的节点。匹配时若当前字符走不通，跳转到失败指针继续匹配，时间 $O(|text| + |Σ| \cdot \sum|pattern|)$。这是 Trie + KMP 思想的融合。</p>
+        </details>
+
+        <details>
+            <summary>后缀自动机 (Suffix Automaton, SAM)</summary>
+            <p>接受一个字符串所有后缀的最小 DFA。节点数 ≤ 2n-1，转移数 ≤ 3n-4。O(n) 构建，可解决大量子串统计问题（本质不同子串数、最长公共子串等）。严格证明涉及等价类理论，此处仅提及。</p>
+        </details>
     </div>
+
+    <!-- ═══ 层 12: 工业实战 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业实战</h3>
+
+        <h4>IP 路由表的最长前缀匹配 (Longest Prefix Match)</h4>
+        <p>网络路由器需要根据目标 IP 地址在路由表中找到最长匹配的前缀来决定转发端口。IP 地址视为比特串，路由表存储在 Trie（或其变体 Patricia Tree）中。查询时沿比特路径走到尽可能深的匹配节点，O(32) 即完成。Linux 内核的 FIB (Forwarding Information Base) 使用 LC-Trie（Level-Compressed Trie）实现。</p>
+
+        <h4>IDE 自动补全引擎</h4>
+        <p>VS Code、IntelliJ 等 IDE 的代码补全功能底层使用 Trie 或倒排索引。当用户输入 <code>str.</code> 时，引擎在 Trie 中定位 "str." 前缀节点，DFS 收集子树中按使用频率/相关度排序的候选项，实时返回给 UI。TypeScript Language Server (tsserver) 就使用了前缀树加速补全。</p>
+
+        <h4>搜索引擎 Suggest / Autocomplete</h4>
+        <p>Google 搜索框的自动补全：将数十亿历史查询存入 Trie，每个节点附带频率计数。用户每输入一个字符，系统在 Trie 中定位对应前缀节点，返回频率最高的 Top-K 候选。实际系统会对 Trie 做分区+缓存优化（如 Google 的 Completion Trie），使得延迟低于 100ms。</p>
+    </div>
+
+
 </section>
 
 <section class="card" data-quiz data-module="trie">

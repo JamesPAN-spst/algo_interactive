@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>链表基础模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,21 +33,39 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
-    
-        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
-        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
-        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
-        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
-        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
-        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
-        .derive-body { flex:1; }
-        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
-        .intuition-box strong { color:#10b981; }
-        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
-        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
-        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
-        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
-        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+        .highlight-inline { background: rgba(99,102,241,.15); color: #a5b4fc; padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+        .naive-vs-smart { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.8rem 0; }
+        .naive-vs-smart .naive { border-left: 3px solid #f43f5e; padding-left: 0.8rem; }
+        .naive-vs-smart .smart { border-left: 3px solid #10b981; padding-left: 0.8rem; }
+        .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
+        @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
+
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-array { display: flex; gap: 4px; flex-wrap: wrap; margin: 0.8rem 0; }
+        .demo-cell { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-family: monospace; font-size: 1.1rem; font-weight: 700; transition: all .2s; border: 2px solid #334155; background: #1e293b; color: #94a3b8; position: relative; }
+        .demo-cell.in-window { background: rgba(99,102,241,.2); border-color: #6366f1; color: #c7d2fe; }
+        .demo-cell.left-ptr { border-color: #f59e0b; background: rgba(245,158,11,.2); color: #fcd34d; }
+        .demo-cell.right-ptr { border-color: #10b981; background: rgba(16,185,129,.2); color: #6ee7b7; }
+        .demo-cell.both-ptr { border-color: #8b5cf6; background: rgba(139,92,246,.2); color: #c4b5fd; }
+        .demo-ptr-label { font-size: 0.65rem; position: absolute; bottom: -18px; font-weight: 800; white-space: nowrap; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-info { margin: 1rem 0 0; font-size: 0.85rem; color: #94a3b8; font-family: monospace; line-height: 1.6; }
+        .demo-info .highlight { color: #a5b4fc; font-weight: 700; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
+        .demo-log .log-new { color: #6ee7b7; }
     </style>
 </head>
 <body data-theme="day">
@@ -59,128 +82,520 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <div class="knowledge-card kc-gray">
-        <h3>⚙️ 前置知识</h3>
-        <span class="prereq-tag">指针与引用</span>
-        <span class="prereq-tag">内存不连续性</span>
-        <p>链表由于不是连续存储的，因此我们<strong>丧失了 O(1) 的随机访问能力</strong>，取而代之的是极致的插入/删除灵活性。解链表题的核心心法永远是：管理好你手中的那几根指针，不要让它们弄丢了节点。</p>
-    </div>
-
-    <div class="knowledge-card kc-amber">
-        <h3>💡 推导：双指针的艺术</h3>
-
-        <h4>1. 快慢指针找中点</h4>
-        <div class="derive-step">
-            <div class="derive-num">1</div>
-            <div class="derive-body">
-                <strong>相对速度：</strong> 快指针 <code>fast</code> 每次走 2 步，慢指针 <code>slow</code> 每次走 1 步。快指针速度是慢指针的 2 倍。
+            <!-- ═══ 层 0：引子问题 ═══ -->
+            <div class="knowledge-card kc-gray">
+                <h3>🎯 引子问题</h3>
+                <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+                    "你只能看到面前一个人的后脑勺，怎么知道队伍有多长？"
+                </p>
+                <p>带着这个问题，我们来探索链表的核心操作：<strong>快慢指针 · 链表反转 · 合并链表 · Floyd 判环</strong>。</p>
             </div>
-        </div>
-        <div class="derive-step">
-            <div class="derive-num">2</div>
-            <div class="derive-body">
-                <strong>行程等式：</strong> 当 <code>fast</code> 走到链表末尾（路程 $L$）时，由于速度是 2 倍，<code>slow</code> 一定刚好走到 $L/2$ 处，即中点。
+
+            <!-- ═══ 层 1：前置知识 ═══ -->
+            <div class="knowledge-card kc-gray">
+                <h3>📋 前置知识</h3>
+                <p>开始前你应该熟悉：</p>
+                <span class="prereq-tag">指针与引用</span> Python 中变量名就是引用；C++ 中要区分指针 <code>*</code> 和引用 <code>&amp;</code>。<br>
+                <span class="prereq-tag">内存不连续性</span> 数组元素连续存储，O(1) 随机访问（<a href="arrays.html">见数组模块</a>）。链表节点散布在内存各处，只能沿 next 指针顺序遍历。<br>
+                <span class="prereq-tag">递归基础</span> 链表天然是递归结构：一个节点 + 一个子链表。
+                <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">
+                    <strong>核心心法：</strong>链表题的精髓在于<strong>管理好你手中的几根指针</strong>，不要让它们弄丢节点。
+                </p>
             </div>
-        </div>
 
-        <div class="think-block">
-            <div class="q">Q: 为什么 fast 的起点有时是 head，有时是 head.next？</div>
-            <details>
-                <summary>查看答疑</summary>
-                如果节点总数是偶数，有两个中点（如 1->2->3->4 的 2 和 3）。如果 <code>fast = head, slow = head</code>，结束时 slow 指向 3（右中点）。如果 <code>fast = head.next, slow = head</code>，相当于 fast 偷跑了一步，它会更早触底，此时 slow 会指向 2（左中点）。左中点在链表前半段断开时非常关键。
-            </details>
-        </div>
+            <!-- ═══ 层 2：研究动机 ═══ -->
+            <div class="knowledge-card kc-amber">
+                <h3>💡 研究动机与问题建模</h3>
+                <p><strong>核心困境：</strong>链表丧失了 O(1) 随机访问能力，但获得了 O(1) 任意位置插入/删除——只要你手上有那个节点的指针。</p>
 
-        <h4>2. 为什么快慢指针判断环一定能相遇？而且一定是在一圈内？</h4>
-        <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">直觉质疑 (Naive)</h4><p>快指针走那么快，会不会直接就越过慢指针而永远错过相遇，无穷无尽地兜圈子下去？</p></div>
-            <div class="smart"><h4 class="label">数学证明 (Smart)</h4><p>设此时 fast 在 slow 的后方，距离为 d（以顺时针计）。由于每经过一回合，fast 走 2，slow 走 1，它们之间的距离 $d$ 就必定缩短 1 步。距离是离散的整数，每次 -1，最终必然减为 0，也就是精确相遇，绝不存在“跳过”！整个追及过程必定发生在慢指针进入环内走完一圈之前。</p></div>
-        </div>
-    </div>
+                <div class="naive-vs-smart">
+                    <div class="naive">
+                        <p class="label" style="color:#f87171">数组的痛点</p>
+                        <ul style="margin:0.3rem 0; font-size:0.9rem">
+                            <li>中间插入/删除 → O(n) 移动</li>
+                            <li>扩容 → 整体拷贝 O(n)</li>
+                            <li>频繁增删场景性能差</li>
+                        </ul>
+                    </div>
+                    <div class="smart">
+                        <p class="label" style="color:#4ade80">链表的优势</p>
+                        <ul style="margin:0.3rem 0; font-size:0.9rem">
+                            <li>已知位置时插入/删除 O(1)</li>
+                            <li>无需连续内存，无需扩容</li>
+                            <li>天然支持动态大小</li>
+                        </ul>
+                    </div>
+                </div>
 
-    <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：反转链表与环检测</h3>
-<pre><code class="language-python"># 1. 迭代反转链表：经典三指针交响乐
-def reverseList(head):
-    prev = None
+                <p><strong>代价：</strong>寻址 O(n)、缓存不友好（cache miss 多）、每个节点额外存储指针（空间开销）。</p>
+<pre class="ascii-art">
+  数组 vs 链表的内存布局
+
+  数组：[10][20][30][40][50]   ← 连续内存，缓存友好
+        0x00 0x04 0x08 0x0C 0x10
+
+  链表：[10|●]─→[20|●]─→[30|●]─→[40|●]─→[50|∅]
+        0x3A     0x12     0x7F     0x05     0x52
+        ↑ 散布在内存各处，缓存不友好
+</pre>
+            </div>
+
+            <!-- ═══ 层 3：推导卡片 ═══ -->
+            <div class="knowledge-card kc-amber">
+                <h3>💡 推导：链表的核心技巧</h3>
+
+                <h4>一、快慢指针 — 相对速度的魔法</h4>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body"><strong>找中点：</strong>fast 每次走 2 步，slow 每次走 1 步。当 fast 到末尾（走了 L 步），slow 刚好在 L/2 处。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body"><strong>找倒数第 K 个：</strong>fast 先走 K 步，然后 fast/slow 同速前进。fast 到末尾时 slow 在倒数第 K。</div>
+                </div>
+                <div class="think-block">
+                    <div class="q">🤔 偶数节点时 slow 指向左中点还是右中点？</div>
+                    <details>
+                        <summary>展开答案</summary>
+                        <p><code>fast=head, slow=head</code> → slow 停在右中点（如 1→2→3→4 的节点 3）。<br><code>fast=head.next, slow=head</code> → fast 偷跑一步 → slow 停在左中点（节点 2）。归并排序、链表回文等需要"前半段最后一个节点"时选左中点。</p>
+                    </details>
+                </div>
+
+                <h4>二、链表反转 — 三指针交响乐</h4>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body"><strong>存</strong>：<code>nxt = curr.next</code>——先备份后继，防止链断了找不到。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body"><strong>反</strong>：<code>curr.next = prev</code>——反转当前箭头。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">3</div>
+                    <div class="derive-body"><strong>推</strong>：<code>prev = curr; curr = nxt</code>——两个指针各前进一步。</div>
+                </div>
+<pre class="ascii-art">
+  链表反转过程 (1 → 2 → 3 → 4)
+
+  初始:  prev    curr
+          │       │
+          ▼       ▼
+        NULL    [1] → [2] → [3] → [4] → NULL
+
+  Step 1: nxt=curr.next; curr.next=prev; prev=curr; curr=nxt
+                prev   curr
+                 │      │
+                 ▼      ▼
+  NULL ← [1]   [2] → [3] → [4] → NULL
+
+  Step 2:
+                       prev   curr
+                        │      │
+                        ▼      ▼
+  NULL ← [1] ← [2]   [3] → [4] → NULL
+
+  最终:
+  NULL ← [1] ← [2] ← [3] ← [4]  prev=4(新头), curr=NULL
+</pre>
+                <div class="intuition-box">
+                    <strong>核心洞察：</strong>反转链表只改变箭头方向，不移动节点。四步操作（存-反-推-推）的顺序不能颠倒——先存后继是因为反转后无法再找到原来的 next。
+                </div>
+
+                <h4>三、Floyd 判环 — 龟兔赛跑的数学证明</h4>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body"><strong>Phase 1（有环必相遇）：</strong>fast 走 2 步，slow 走 1 步。进入环后两者距离每回合缩短 1。距离为整数，必然减到 0 → 必定相遇。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body"><strong>Phase 2（找环入口）：</strong>设 head→入口长 a，入口→相遇点长 b，环长 C=b+c。相遇时 fast=2×slow → a+b+kC = 2(a+b) → a = kC-b = (k-1)C+c。所以从 head 和相遇点同时走 a 步会在入口相遇。</div>
+                </div>
+<pre class="ascii-art">
+  Floyd 判环示意图
+
+         a          b
+  head ────→ entry ────→ meet
+               ↑              │
+               │    环长 C    │ c
+               └──────────────┘
+
+  a = (k-1)C + c  →  从 head 走 a 步 = 从 meet 走 c+(k-1)圈
+  两者都到达 entry！
+</pre>
+                <div class="think-block">
+                    <div class="q">🤔 为什么 fast 不会跳过 slow 而永远错过？</div>
+                    <details>
+                        <summary>展开答案</summary>
+                        <p>每轮 fast 走 2 步、slow 走 1 步，两者距离减少恰好 1（不是 2 或其他值）。距离是离散整数，每次 -1，必定减到 0。不存在"跳过"的可能。整个追及过程在 slow 走完一圈之前完成。</p>
+                    </details>
+                </div>
+            </div>
+
+            <!-- ═══ 层 4：模板代码 ═══ -->
+            <div class="knowledge-card kc-blue">
+                <h3>💻 模板代码</h3>
+                <h4>Python</h4>
+<pre><code class="language-python">class ListNode:
+    def __init__(self, val: int = 0, next: 'ListNode | None' = None):
+        self.val = val
+        self.next = next
+
+# ─── 反转链表（迭代）───
+def reverse_list(head: ListNode | None) -&gt; ListNode | None:
+    prev: ListNode | None = None
     curr = head
     while curr:
-        nxt = curr.next    # 【存】先用 nxt 把下一个节点拉住，防止链子断裂掉入深渊
-        curr.next = prev   # 【反】把当前节点的箭头反转指向前驱
-        prev = curr        # 【推】prev 向前推一格，变成刚刚处理好的 curr
-        curr = nxt         # 【推】curr 也安全地向前推一格，变成刚才拉住的 nxt
-    return prev            # 最终 curr 掉出悬崖(None)，prev 站在原本的尾端(新的头)
+        nxt = curr.next      # [why] 先存后继，防断链
+        curr.next = prev     # [why] 反转箭头
+        prev = curr          # [why] prev 前进
+        curr = nxt           # [why] curr 前进
+    return prev              # [why] curr=None 时 prev 是新头
 
-# 2. 环检测并找到入环节点 (Floyd 判圈法)
-def detectCycle(head):
-    slow, fast = head, head
-    # Phase 1: 判定是否有环
+# ─── 环检测 + 找入口（Floyd）───
+def detect_cycle(head: ListNode | None) -&gt; ListNode | None:
+    slow = fast = head
     while fast and fast.next:
-        slow = slow.next
-        fast = fast.next.next
-        if slow == fast:
-            # Phase 2: 找入口
-            # 为什么重新放一个指针在 head 同步走就能相遇在入口？
-            # 设 head 到入口长 a，入环到相遇点 b，环剩余 c。
-            # fast = 2*slow => a + n(b+c) + b = 2(a+b) => a = (n-1)(b+c) + c
-            # 说明 a 的长度恰好等于【绕 n-1 圈后再走 c 步的长度】！
+        slow = slow.next             # [why] 慢 1 步
+        fast = fast.next.next        # [why] 快 2 步
+        if slow is fast:             # [why] Phase 1: 有环
             ptr = head
-            while ptr != slow:
+            while ptr is not slow:   # [why] Phase 2: 找入口
                 ptr = ptr.next
                 slow = slow.next
             return ptr
     return None
-</code></pre>
-        <table>
-            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>反转链表</td><td>O(N)</td><td>O(1)</td><td>只花了几个指针的额外空间，沿途修改所有的箭头。</td></tr>
-            <tr><td>找中点/找倒数第K个</td><td>O(N)</td><td>O(1)</td><td>只遍历一趟即可到达指定相对位置，极大地避免了二次扫描。</td></tr>
-        </table>
-    </div>
 
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题变种比对</h3>
-        <details>
-            <summary>变种：K 个一组翻转链表</summary>
-            <p><strong>题解：</strong> 这要求我们不仅仅是全局 Reverse，而是要局部的。我们用一个 <code>cur</code> 不断往后探 $K$ 步，如果探不到 $K$ 个说明结束了，不翻转；如果探到了，记录下这个局部头以及这一段结束的 <code>nxt</code> 节点，切断后对这一小段执行标准的三指针 Reverse，翻转完后再把它和之前/之后的子链缝合起来。这极大地考验了 <strong>虚拟头节点 (Dummy Node)</strong> 的使用。没有 Dummy Node 处理这种可能改变原始头节点的问题极其痛苦！</p>
-        </details>
-    </div>
+# ─── 合并两个有序链表 ───
+def merge_two_lists(l1: ListNode | None, l2: ListNode | None) -&gt; ListNode | None:
+    dummy = ListNode(0)              # [why] 哨兵节点避免特判头节点
+    tail = dummy
+    while l1 and l2:
+        if l1.val &lt;= l2.val:
+            tail.next = l1           # [why] 接较小节点
+            l1 = l1.next
+        else:
+            tail.next = l2
+            l2 = l2.next
+        tail = tail.next
+    tail.next = l1 or l2             # [why] 接上剩余部分
+    return dummy.next
 
-    <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 丢失被覆盖的 Next</p>
-<pre><code class="language-python">while curr:
-    # 灾难：一上来就把 next 覆盖了
-    curr.next = prev 
-    prev = curr
-    # 原本的 curr.next 彻底找不到了！
-    curr = curr.next 
-</code></pre>
+# ─── 快慢指针找中点（左中点）───
+def find_middle(head: ListNode | None) -&gt; ListNode | None:
+    slow = head
+    fast = head.next if head else None  # [why] fast 偷跑→左中点
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    return slow</code></pre>
+                <details>
+                    <summary>C++ 版本</summary>
+<pre><code class="language-cpp">struct ListNode {
+    int val;
+    ListNode* next;
+    ListNode(int v = 0, ListNode* n = nullptr) : val(v), next(n) {}
+};
+
+// ─── 反转链表 ───
+ListNode* reverseList(ListNode* head) {
+    ListNode *prev = nullptr, *curr = head;
+    while (curr) {
+        auto nxt = curr-&gt;next;   // [why] 备份
+        curr-&gt;next = prev;       // [why] 反转
+        prev = curr;
+        curr = nxt;
+    }
+    return prev;
+}
+
+// ─── Floyd 判环 ───
+ListNode* detectCycle(ListNode* head) {
+    auto slow = head, fast = head;
+    while (fast &amp;&amp; fast-&gt;next) {
+        slow = slow-&gt;next;
+        fast = fast-&gt;next-&gt;next;
+        if (slow == fast) {
+            auto ptr = head;
+            while (ptr != slow) { ptr = ptr-&gt;next; slow = slow-&gt;next; }
+            return ptr;
+        }
+    }
+    return nullptr;
+}
+
+// ─── 合并有序链表 ───
+ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+    ListNode dummy;
+    auto* tail = &amp;dummy;
+    while (l1 &amp;&amp; l2) {
+        if (l1-&gt;val &lt;= l2-&gt;val) { tail-&gt;next = l1; l1 = l1-&gt;next; }
+        else                     { tail-&gt;next = l2; l2 = l2-&gt;next; }
+        tail = tail-&gt;next;
+    }
+    tail-&gt;next = l1 ? l1 : l2;
+    return dummy.next;
+}</code></pre>
+                </details>
+                <details>
+                    <summary>Rust 版本</summary>
+<pre><code class="language-rust">// Rust 的所有权机制使链表实现更具挑战性
+// 使用 Option&lt;Box&lt;ListNode&gt;&gt; 表示可空节点
+
+#[derive(Debug)]
+struct ListNode {
+    val: i32,
+    next: Option&lt;Box&lt;ListNode&gt;&gt;,
+}
+
+/// 反转链表 — 需要 take() 转移所有权
+fn reverse_list(mut head: Option&lt;Box&lt;ListNode&gt;&gt;) -&gt; Option&lt;Box&lt;ListNode&gt;&gt; {
+    let mut prev: Option&lt;Box&lt;ListNode&gt;&gt; = None;
+    while let Some(mut node) = head {
+        head = node.next.take();   // [why] take() 取出 next 的所有权
+        node.next = prev;          // [why] 反转箭头
+        prev = Some(node);         // [why] prev 前进
+    }
+    prev
+}
+
+/// 合并两个有序链表
+fn merge_two_lists(
+    mut l1: Option&lt;Box&lt;ListNode&gt;&gt;,
+    mut l2: Option&lt;Box&lt;ListNode&gt;&gt;,
+) -&gt; Option&lt;Box&lt;ListNode&gt;&gt; {
+    let mut dummy = Box::new(ListNode { val: 0, next: None });
+    let mut tail = &amp;mut dummy;
+    while l1.is_some() &amp;&amp; l2.is_some() {
+        // [why] 比较并取出较小节点的所有权
+        if l1.as_ref().unwrap().val &lt;= l2.as_ref().unwrap().val {
+            let mut node = l1.unwrap();
+            l1 = node.next.take();
+            tail.next = Some(node);
+        } else {
+            let mut node = l2.unwrap();
+            l2 = node.next.take();
+            tail.next = Some(node);
+        }
+        tail = tail.next.as_mut().unwrap();
+    }
+    tail.next = if l1.is_some() { l1 } else { l2 };
+    dummy.next
+}
+// 注意：Rust 中 Floyd 判环需要 unsafe 或 引用计数（Rc），因为安全 Rust 不允许别名可变引用</code></pre>
+                </details>
             </div>
-            <div class="right">
-                <p>✅ 正确的保存与反转</p>
+
+            <!-- ═══ 层 5：复杂度分析表 ═══ -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度分析表</h3>
+                <table>
+                    <tr><th>技巧</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>为什么</th></tr>
+                    <tr><td>反转链表（迭代）</td><td>O(N)</td><td>O(N)</td><td>O(1)</td><td>只用 prev/curr/nxt 三个指针，沿途修改 N 个箭头</td></tr>
+                    <tr><td>反转链表（递归）</td><td>O(N)</td><td>O(N)</td><td>O(N)</td><td>递归栈深 N 层</td></tr>
+                    <tr><td>快慢指针找中点</td><td>O(N)</td><td>O(N)</td><td>O(1)</td><td>fast 走完全程，slow 走一半</td></tr>
+                    <tr><td>Floyd 判环</td><td>O(N)</td><td>O(N)</td><td>O(1)</td><td>Phase 1: slow 最多走一圈；Phase 2: 同步走 ≤ N 步</td></tr>
+                    <tr><td>合并 K 个有序链表</td><td>O(N log K)</td><td>O(N log K)</td><td>O(K)</td><td>小顶堆维护 K 个头，每次弹出最小 O(log K)</td></tr>
+                </table>
+            </div>
+
+            <!-- ═══ 层 6：核心性质 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 核心性质与定理</h3>
+                <p><strong>定理 1 — Floyd 判环正确性：</strong>若存在环（长 C），两指针速度差为 1，进入环后距离每轮减 1，最多 C 轮相遇。总复杂度 O(N)（N 含尾部 + 环）。</p>
+                <p><strong>定理 2 — 入口公式：</strong>设头→入口长 a，入口→相遇长 b，环长 C=b+c。<br>fast = 2×slow → a+b+kC = 2(a+b) → a = (k-1)C+c。<br>因此从 head 走 a 步 = 从相遇点走 c+(k-1)圈 = 到入口。</p>
+                <p><strong>性质 3 — 哨兵节点的统一性：</strong>在 dummy.next = head 的约定下，对头节点的插入/删除和对中间节点的操作代码完全一致，消除所有特判。</p>
+                <p><strong>性质 4 — 链表递归结构：</strong>链表 = 空 | 节点+链表。因此很多操作天然适合递归（反转、合并、去重），但要注意递归深度 = 链表长度，可能栈溢出。</p>
+            </div>
+
+            <!-- ═══ 层 7：典型例题 ═══ -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题</h3>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.3);">基础</span> 删除倒数第 N 个节点（LeetCode 19）</summary>
+                    <p><strong>题意：</strong>一次遍历删除倒数第 N 个节点。</p>
+                    <p><strong>思路：</strong>dummy + 快慢指针。fast 先走 N+1 步（因为要找到待删节点的前驱），然后同步走。</p>
+<pre><code class="language-python">def removeNthFromEnd(head: ListNode | None, n: int) -&gt; ListNode | None:
+    dummy = ListNode(0, head)
+    fast = slow = dummy
+    for _ in range(n + 1):           # [why] fast 先走 N+1 步
+        fast = fast.next
+    while fast:                      # [why] 同步走直到 fast 到尾
+        fast = fast.next
+        slow = slow.next
+    slow.next = slow.next.next       # [why] 跳过目标节点
+    return dummy.next</code></pre>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15); color:#fbbf24; border-color:rgba(251,191,36,.3);">中级</span> 链表排序（LeetCode 148）— 归并排序</summary>
+                    <p><strong>题意：</strong>O(N log N) 时间、O(1) 空间排序链表。</p>
+                    <p><strong>思路：</strong>自底向上归并排序——从 step=1 开始，每次合并长 step 的相邻子链，step 翻倍。</p>
+<pre><code class="language-python">def sortList(head: ListNode | None) -&gt; ListNode | None:
+    if not head or not head.next: return head
+    # [why] 计算长度
+    n, node = 0, head
+    while node: n += 1; node = node.next
+    dummy = ListNode(0, head)
+    step = 1
+    while step &lt; n:                  # [why] step 翻倍直到覆盖全链
+        tail = dummy; curr = dummy.next
+        while curr:
+            left = curr
+            right = split(left, step)     # 分离左半
+            curr = split(right, step)     # 分离右半
+            tail = merge(left, right, tail)  # 合并并接到 tail 后
+        step *= 2
+    return dummy.next</code></pre>
+                    <p><strong>变种对比：</strong>递归归并 O(log N) 栈空间；自底向上迭代 O(1) 空间。面试首选迭代版。</p>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15); color:#f87171; border-color:rgba(248,113,113,.3);">高级</span> K 个一组翻转链表（LeetCode 25）</summary>
+                    <p><strong>题意：</strong>每 K 个节点一组反转，不足 K 个不反转。</p>
+                    <p><strong>思路：</strong>dummy 哨兵 + 循环：每次向前探 K 步，够就反转该段并缝合。</p>
+<pre><code class="language-python">def reverseKGroup(head: ListNode | None, k: int) -&gt; ListNode | None:
+    dummy = ListNode(0, head)
+    prev_group = dummy
+    while True:
+        kth = prev_group
+        for _ in range(k):           # [why] 试探是否够 K 个
+            kth = kth.next
+            if not kth: return dummy.next
+        next_group = kth.next
+        # [why] 反转 prev_group.next 到 kth 这段
+        prev_node, curr = kth.next, prev_group.next
+        while curr != next_group:
+            nxt = curr.next
+            curr.next = prev_node
+            prev_node = curr
+            curr = nxt
+        tmp = prev_group.next        # [why] 反转后原头变成了尾
+        prev_group.next = kth        # [why] 缝合：前驱指向新头
+        prev_group = tmp             # [why] 原头(现尾)成为下一组的前驱</code></pre>
+                </details>
+            </div>
+
+            <!-- ═══ 层 8：技术对比表 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 技术对比表</h3>
+                <table>
+                    <tr><th>类型</th><th>结构</th><th>访问</th><th>插入/删除（已知位置）</th><th>典型用途</th></tr>
+                    <tr><td>单链表</td><td>node→next</td><td>O(N) 只能前进</td><td>O(1)</td><td>栈实现、基础题</td></tr>
+                    <tr><td>双链表</td><td>node↔next/prev</td><td>O(N) 可双向</td><td>O(1)</td><td>LRU Cache、浏览器历史</td></tr>
+                    <tr><td>循环链表</td><td>尾→头</td><td>O(N)</td><td>O(1)</td><td>约瑟夫问题、轮询调度</td></tr>
+                    <tr><td>跳表</td><td>多层索引链表</td><td>O(log N) 期望</td><td>O(log N) 期望</td><td>Redis ZSET、有序集合</td></tr>
+                </table>
+            </div>
+
+            <!-- ═══ 层 9：易错点 ═══ -->
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点与陷阱</h3>
+                <p><strong>① 反转链表时忘记先存 next → 断链</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ next 被覆盖了</p>
 <pre><code class="language-python">while curr:
-    nxt = curr.next # 备份
+    curr.next = prev     # next 丢了！
+    prev = curr
+    curr = curr.next     # 指向 prev 而非原 next</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 先存再反转</p>
+<pre><code class="language-python">while curr:
+    nxt = curr.next      # [why] 先存
     curr.next = prev
     prev = curr
-    curr = nxt      # 恢复
-</code></pre>
+    curr = nxt</code></pre>
+                    </div>
+                </div>
+                <p><strong>② fast.next.next 访问空指针</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ fast.next 可能为 None</p>
+<pre><code class="language-python">while fast:
+    fast = fast.next.next  # fast.next 为 None 时崩溃</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 同时检查 fast 和 fast.next</p>
+<pre><code class="language-python">while fast and fast.next:
+    fast = fast.next.next</code></pre>
+                    </div>
+                </div>
+                <p><strong>③ 没有使用 dummy 节点导致特判头节点</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 删除头节点需要特判</p>
+<pre><code class="language-python">if head.val == target:
+    head = head.next     # 特判！
+# 后续代码与上面不同…</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ dummy 统一处理</p>
+<pre><code class="language-python">dummy = ListNode(0, head)
+curr = dummy
+while curr.next:
+    if curr.next.val == target:
+        curr.next = curr.next.next  # [why] 统一逻辑
+    else:
+        curr = curr.next
+return dummy.next</code></pre>
+                    </div>
+                </div>
+                <p><strong>④ C++: 忘记 delete 被移除的节点 → 内存泄漏</strong></p>
+                <p style="font-size:0.9rem; color:var(--subtle-text)">Python / Rust 有 GC / 所有权管理，但 C++ 需要手动 <code>delete</code>。竞赛中常忽略，但面试中是加分点。</p>
             </div>
-        </div>
-    </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：单链表逐节点反转</h3>
-        <div class="demo-container" id="llDemo"></div>
-    </div>
+            <!-- ═══ 层 10：互动演示 ═══ -->
+            <div class="knowledge-card kc-purple">
+                <h3>🎮 互动演示：单链表逐节点反转</h3>
+                <p style="font-size:0.9rem; color:var(--subtle-text)">链表 <strong>1→2→3→4→5</strong>，点击按钮逐步观察 prev/curr/nxt 三指针和箭头反转过程。</p>
+                <div class="demo-container">
+                    <div style="background:#1e293b; padding:1.5rem 1rem; border-radius:4px; max-width:600px; position:relative; overflow-x:auto">
+                        <canvas id="llCanvas" width="550" height="150" style="width:100%; display:block;"></canvas>
+                    </div>
+                    <div class="demo-controls" style="margin-top:0.8rem">
+                        <button id="llPrev" disabled>⏮ Prev</button>
+                        <button id="llNext">⏭ Next</button>
+                        <button id="llReset">🔄 Reset</button>
+                        <span style="margin-left:auto; font-size:0.82rem; color:#64748b" id="llStepLabel">步骤 0 / 5</span>
+                    </div>
+                    <div class="demo-log" id="llLog" style="margin-top:0.6rem">点击 Next 开始反转演示…</div>
+                </div>
+            </div>
 
-    <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>跳表 (Skip List)：</strong> 链表虽然插入 O(1) 但查找 O(N)。如果有序的话如何 O(log N) 查找？可以仿造二分法建“快速通道”，给部分节点增加更高的“层数”（随机化分布），使得最顶层指针一口气能跳过一半的元素。这是 Redis ZSet 的核心底层数据结构。</p>
-    </div>
-</section>
+            <!-- ═══ 层 11：竞赛拓展 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>跳表（Skip List）：</strong>在有序链表上构建多层索引，每层"跳过"约一半节点。查找/插入/删除 O(log N) 期望，实现比平衡 BST 简单且易于并发。Redis ZSET 选择跳表而非红黑树的原因：范围查询更自然、实现更简洁、锁粒度更细。</p>
+                <p><strong>XOR 链表：</strong>每个节点只存 prev XOR next，通过已知一侧可恢复另一侧。节省一半指针空间，但只能顺序遍历，且 Python/Rust 不适用（GC/所有权）。</p>
+                <details>
+                    <summary>可撤销链表操作</summary>
+                    <p>用栈记录每步操作的逆操作，支持 undo。常见于编辑器、版本控制的基础设计。</p>
+                </details>
+            </div>
+
+            <!-- ═══ 层 12：工业实战 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🏭 工业实战</h3>
+                <p><strong>Linux 内核 list_head：</strong>Linux 使用"侵入式双向循环链表"——<code>struct list_head { struct list_head *next, *prev; }</code> 嵌入到任意结构体中。通过 <code>container_of</code> 宏从链表节点反推出宿主结构。内核进程调度、设备驱动、文件系统全部依赖此设计。</p>
+<pre class="ascii-art">
+  Linux 侵入式链表（简化示意）
+
+  struct task_struct {          struct task_struct {
+      int pid;                      int pid;
+      struct list_head tasks;       struct list_head tasks;
+      ...                           ...
+  };                            };
+       ↕ list_head.next/prev ↕
+  ┌──────────┐    ┌──────────┐    ┌──────────┐
+  │ pid=1    │←──→│ pid=42   │←──→│ pid=100  │←──→ (head)
+  │ tasks  ● │    │ tasks  ● │    │ tasks  ● │
+  └──────────┘    └──────────┘    └──────────┘
+</pre>
+                <p><strong>LRU Cache（Memcached / CPU 缓存）：</strong>哈希表 O(1) 定位 + 双向链表 O(1) 调整顺序。访问时移到链表头，淘汰时删除链表尾。LeetCode 146 是面试高频题，也是真实缓存系统的核心模块。</p>
+                <p><strong>GC 三色标记（Go runtime）：</strong>Go 的垃圾回收器使用三色标记法遍历对象图。待扫描对象存放在灰色链表中，扫描完标白或标黑。链表的 O(1) 头插/删除特性使扫描过程高效且可增量进行。</p>
+            </div>
+
+        </section>
+
 
 <section class="card" data-quiz data-module="linked-list">
 <h2>练习题（Practice）</h2>
@@ -287,114 +702,76 @@ def detectCycle(head):
     <script>hljs.highlightAll();</script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("llDemo");
-    if(!container) return;
-    
-    container.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-            <div style="flex:1; background:#1e293b; padding:1.5rem 1rem; border-radius:4px; max-width:600px; display:flex; justify-content:flex-start; position:relative; overflow-x:auto" id="llCanvasBox">
-                <canvas id="llCanvas" width="550" height="150" style="width:100%; display:block;"></canvas>
-            </div>
-            <div style="display:flex; gap:0.5rem">
-                <button id="llBtnStep" style="background:#3b82f6; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">执行下一步反转</button>
-                <button id="llBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置链表</button>
-            </div>
-            <div id="llDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:3em;">准备反转链表。<br>prev = None, curr = Head (1)</div>
-        </div>
-    `;
+    const cvs = document.getElementById("llCanvas");
+    if(!cvs) return;
+    const ctx = cvs.getContext("2d");
+    const logEl = document.getElementById("llLog");
+    const nodes = [{val:1,x:80},{val:2,x:180},{val:3,x:280},{val:4,x:380},{val:5,x:480}];
+    const totalSteps = nodes.length;
 
-    const cvs = document.getElementById("llCanvas"), ctx = cvs.getContext("2d"), descr = document.getElementById("llDescr");
-    let nodes = [];
-    let state = 0; // index of curr node being processed
-    let completedEdges = []; // indices of nodes whose arrows are flipped
-    let prev = null, curr = 0;
-    
-    function reset() {
-        nodes = [{val:1, x:80},{val:2, x:180},{val:3, x:280},{val:4, x:380},{val:5, x:480}];
-        curr = 0; prev = null; completedEdges = [];
-        descr.innerHTML = `准备反转链表。初始化 prev = None, curr = 节点(${nodes[0].val})。`;
-        draw();
+    // steps[k] = state after processing node k (0-indexed)
+    // state: { curr: index of current node being processed, completedEdges: [indices of reversed edges], prev: index }
+    const states = [];
+    states.push({curr:0, prev:null, completed:[], msg:"初始：prev=None, curr=节点(1)。"});
+    for(let k=0; k<nodes.length; k++){
+        let comp = states[k].completed.slice();
+        comp.push(k);
+        let msg = `Step ${k+1}: 处理节点(${nodes[k].val})。nxt=${k<nodes.length-1?nodes[k+1].val:'None'}; curr.next=prev; prev=${nodes[k].val}; curr=${k<nodes.length-1?nodes[k+1].val:'None'}。`;
+        if(k === nodes.length-1) msg += " ✅ 反转完成！";
+        states.push({curr:k+1, prev:k, completed:comp, msg});
     }
-    
-    function draw() {
+
+    let cur = 0;
+    function draw(){
+        const st = states[cur];
         ctx.clearRect(0,0,cvs.width,cvs.height);
         ctx.font = "bold 14px monospace";
-        
-        const r = 20, y = 80;
-        
-        // pointers
-        ctx.fillStyle = "#a855f7"; // purple prev
-        if(prev !== null) ctx.fillText("prev", nodes[prev].x, y + 45);
-        else ctx.fillText("prev: None", 10, y + 45);
-        
-        ctx.fillStyle = "#38bdf8"; // blue curr
-        if(curr < nodes.length) ctx.fillText("curr", nodes[curr].x, y + 45);
-        
-        ctx.fillStyle = "#facc15"; // yellow nxt
-        if(curr < nodes.length - 1) ctx.fillText("nxt", nodes[curr+1].x, y - 45);
-        else if (curr === nodes.length - 1) ctx.fillText("nxt: None", 480, y - 45);
-        
-        // Edges
-        ctx.lineWidth = 3;
-        for(let i=0; i<nodes.length-1; i++) {
-            let u = nodes[i], v=nodes[i+1];
-            if (completedEdges.includes(i)) {
-                // Reversed edge (right to left)
-                ctx.strokeStyle = "#10b981"; // green
-                drawArrow(ctx, v.x - r, y + 15, u.x + r, y + 15);
+        const r=20, y=80;
+        // pointer labels
+        ctx.fillStyle="#a855f7";
+        if(st.prev!==null) ctx.fillText("prev",nodes[st.prev].x-12, y+45);
+        else ctx.fillText("prev:None",10,y+45);
+        ctx.fillStyle="#38bdf8";
+        if(st.curr<nodes.length) ctx.fillText("curr",nodes[st.curr].x-12, y+45);
+        // edges
+        ctx.lineWidth=3;
+        for(let i=0;i<nodes.length-1;i++){
+            let u=nodes[i],v=nodes[i+1];
+            if(st.completed.includes(i)){
+                ctx.strokeStyle="#10b981";
+                drawArrow(ctx,v.x-r,y+12,u.x+r,y+12);
             } else {
-                // Normal edge (left to right)
-                ctx.strokeStyle = "#475569"; // slate
-                drawArrow(ctx, u.x + r, y, v.x - r, y);
+                ctx.strokeStyle="#475569";
+                drawArrow(ctx,u.x+r,y,v.x-r,y);
             }
         }
-        
-        if (completedEdges.length > 0 && curr >= nodes.length) {
-            ctx.fillStyle="#10b981"; ctx.fillText("反转彻底完成！", cvs.width/2 - 50, 30);
-        }
-
-        // Nodes
-        nodes.forEach((n, i) => {
-            ctx.beginPath(); ctx.arc(n.x, y, r, 0, Math.PI*2);
-            ctx.fillStyle = completedEdges.includes(i) || (i===nodes.length-1 && curr>=nodes.length) ? "#10b981" : "#1e293b"; 
-            if(i === curr) ctx.fillStyle = "#0284c7";
+        // nodes
+        nodes.forEach((n,i)=>{
+            ctx.beginPath(); ctx.arc(n.x,y,r,0,Math.PI*2);
+            ctx.fillStyle = st.completed.includes(i)||(i===nodes.length-1&&st.curr>=nodes.length) ? "#10b981" : "#1e293b";
+            if(i===st.curr) ctx.fillStyle="#0284c7";
             ctx.fill(); ctx.strokeStyle="#475569"; ctx.stroke();
-            
-            ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle"; 
-            ctx.fillText(n.val, n.x, y);
+            ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle";
+            ctx.fillText(n.val,n.x,y);
         });
+        if(st.curr>=nodes.length){ ctx.fillStyle="#10b981"; ctx.fillText("反转完成！",cvs.width/2-30,30); }
+        logEl.innerHTML = `<span class="log-new">${st.msg}</span>`;
+        document.getElementById("llStepLabel").textContent = `步骤 ${cur} / ${totalSteps}`;
+        document.getElementById("llPrev").disabled = cur===0;
+        document.getElementById("llNext").disabled = cur===totalSteps;
     }
-    
-    function drawArrow(ctx, fromx, fromy, tox, toy) {
-        let headlen = 10, angle = Math.atan2(toy-fromy, tox-fromx);
-        ctx.beginPath(); ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
-        ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/6), toy-headlen*Math.sin(angle-Math.PI/6));
-        ctx.moveTo(tox, toy);
-        ctx.lineTo(tox-headlen*Math.cos(angle+Math.PI/6), toy-headlen*Math.sin(angle+Math.PI/6));
+    function drawArrow(ctx,fx,fy,tx,ty){
+        let hl=10, a=Math.atan2(ty-fy,tx-fx);
+        ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(tx,ty);
+        ctx.lineTo(tx-hl*Math.cos(a-Math.PI/6),ty-hl*Math.sin(a-Math.PI/6));
+        ctx.moveTo(tx,ty);
+        ctx.lineTo(tx-hl*Math.cos(a+Math.PI/6),ty-hl*Math.sin(a+Math.PI/6));
         ctx.stroke();
     }
-
-    document.getElementById("llBtnStep").onclick = () => {
-        if(curr >= nodes.length) {
-            descr.innerHTML = "全部反转完毕！原链表头尾互换。";
-            return;
-        }
-        let txt = `第 ${curr+1} 步操作（处理节点 ${nodes[curr].val}）：<br>`;
-        txt += `1. nxt 备份了后面的节点 (${curr<nodes.length-1?nodes[curr+1].val:'None'})。<br>`;
-        txt += `2. 切断现有的向前指针，将其 <b><code>curr.next = prev</code></b>。<br>`;
-        txt += `3. prev 前进到当前节点 (${nodes[curr].val})。<br>`;
-        txt += `4. curr 跳跃到刚才备份的 nxt 位置。`;
-        
-        descr.innerHTML = txt;
-        completedEdges.push(curr);
-        prev = curr;
-        curr = curr + 1;
-        
-        draw();
-    };
-
-    document.getElementById("llBtnReset").onclick = reset;
-    reset();
+    document.getElementById("llNext").addEventListener("click",()=>{ if(cur<totalSteps){ cur++; draw(); } });
+    document.getElementById("llPrev").addEventListener("click",()=>{ if(cur>0){ cur--; draw(); } });
+    document.getElementById("llReset").addEventListener("click",()=>{ cur=0; draw(); });
+    draw();
 });
 </script>
 </body>

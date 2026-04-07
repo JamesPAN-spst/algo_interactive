@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>线段树模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
@@ -15,6 +17,8 @@
         .kc-red { border-left: 3px solid #f43f5e; }
         .kc-cyan { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-gray { border-left: 3px solid #6b7280; }
+        .kc-amber { border-left: 3px solid #f59e0b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
         .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
@@ -58,131 +62,364 @@
         <p>线段树（Segment Tree）用来解决数组的<strong>动态区间连环拷问</strong>：我不停地修改数组某个下属、甚至某一段区间的全部数值，并且我不停地问你某个子区间的总和/最大值。你必须同时做到 O(log N) 修改 和 O(log N) 查询！</p>
     </div>
 
+    <!-- 层2 动机 -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：线段树的由来与 Lazy Tag 的精髓</h3>
-
-        <h4>1. 为什么我们需要线段树？</h4>
+        <h3>💡 动机：为什么需要线段树？</h3>
         <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">前缀和数组 (Naive)</h4><p>提前把前缀累加，查询区间求和 <code>[L,R] = sum[R] - sum[L-1]</code> 是 O(1)！但是如果偷偷修改了一个开头的数字，后面全部倒霉，修改是 O(N)，动态查询会超时。</p></div>
-            <div class="smart"><h4 class="label">线段树分治 (Smart)</h4><p>把数组像大饼一样不断对半切，每块大饼刻着它包含的碎片的汇总统和。修改一个碎片，只会往上报告一侧，影响 $\log N$ 次；查询也最多是由每层的边角料拼接而成，也是 $\log N$。两端平衡！</p></div>
+            <div class="naive">
+                <div class="label">❌ 前缀和 (Naive)</div>
+                <p>预处理 $O(n)$，查询 $O(1)$，但<strong>单点修改需要 $O(n)$ 重建前缀数组</strong>。频繁修改 + 查询时总复杂度退化为 $O(nq)$。</p>
+            </div>
+            <div class="smart">
+                <div class="label">✅ 线段树 (Smart)</div>
+                <p>将数组递归二分，每个节点维护一段区间的聚合信息。<strong>单点/区间修改 $O(\log n)$，区间查询 $O(\log n)$</strong>，两端平衡！</p>
+            </div>
         </div>
+    </div>
 
-        <h4>2. Lazy Tag 懒惰标记推演</h4>
+    <!-- 层3 推导 -->
+    <div class="knowledge-card kc-amber">
+        <h3>📐 推导：核心操作详解</h3>
+
+        <h4>1. 建树 Build —— 自底向上合并</h4>
         <div class="derive-step">
             <div class="derive-num">1</div>
-            <div class="derive-body">
-                <strong>难题出现：</strong>如果我要把 <code>[0, 1000]</code> 的数字全加上 1 （区间修改）。难道我要递归到最底层 1000 个叶子节点一个个加吗？这又变回 O(N) 了。
-            </div>
+            <div class="derive-body">递归到叶子节点，将原数组值存入。</div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
-            <div class="derive-body">
-                <strong>挂机策略 (Lazy)：</strong>不！当我发现我的查询/修改区间<strong>完美覆盖</strong>了当前节点代表的 <code>[0, 1000]</code> 大区间时，我直接修改这个大区间的汇总值（比如 sum += 1000 * 1），然后在它身上贴个红字警告：“注意，我欠你们俩儿子每人 +1”。然后就可以直接 <code>return</code> 下班了！下层的修改完全被“懒惰地”搁置了。
-            </div>
+            <div class="derive-body">回溯时，父节点值 = 左子值 + 右子值（或取 max/min 等），自底向上逐层合并。</div>
         </div>
         <div class="derive-step">
             <div class="derive-num">3</div>
-            <div class="derive-body">
-                <strong>清算机制 (Push-Down)：</strong>未来的某一天，如果有另一个人来想要详细查询 <code>[0, 500]</code> 的信息，我必须得往深了搜索。这时候我头顶上贴着红字警告的欠款就瞒不住了！在进入儿子节点之前，我必须先<code>Push-Down</code>，把欠款下传给两个儿子，再消除自己的警告红字。
-            </div>
+            <div class="derive-body">整棵树只遍历一次，每个节点 $O(1)$ 合并，总 $O(n)$。</div>
         </div>
 
+        <h4>2. 线段树数组结构（8 个叶子的完整树）</h4>
+        <div class="ascii-art">                         [0,7]=36
+                   /                    \
+            [0,3]=10               [4,7]=26
+           /        \             /        \
+       [0,1]=3   [2,3]=7    [4,5]=11   [6,7]=15
+       /   \      /   \      /   \      /   \
+     [0]  [1]  [2]  [3]  [4]  [5]  [6]  [7]
+      1    2    3    4    5    6    7    8
+
+  节点编号(1-indexed): 根=1, 左子=2i, 右子=2i+1
+  数组大小: 4n 即可覆盖所有节点</div>
+
+        <h4>3. 区间查询 Query —— 区间分裂</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">从根节点出发，判断查询区间 $[l,r]$ 与当前节点区间 $[s,e]$ 的关系。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>完全包含</strong>（$l \le s$ 且 $e \le r$）：直接返回当前节点的聚合值，无需下探。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body"><strong>部分重叠</strong>：分裂为左右子区间分别递归，合并返回。每层最多访问常数个边界节点，总共 $O(\log n)$ 层。</div>
+        </div>
+
+        <h4>4. 单点修改 Update</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">从根向下递归，找到叶子节点对应位置，修改其值。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">回溯时，沿路径自底向上更新所有祖先节点的聚合值。只影响一条根到叶路径，$O(\log n)$。</div>
+        </div>
+
+        <h4>5. Lazy Propagation（懒标记）核心思想</h4>
         <div class="think-block">
-            <div class="q">Q: 树状数组 (Fenwick Tree) 与线段树的区别是什么？</div>
+            <div class="q">Q: 区间修改 [l,r] 全体 +v，如果递归到每个叶子，不就退化成 O(n) 了吗？</div>
             <details>
-                <summary>查看答疑</summary>
-                树状数组代码极短，常数小，位运算如 `i & -i` 神乎其技。但它能做的东西局限：比如求和求前缀异或可以（因为可以利用减法相消去）。但是它<strong>无法处理求区间最大值 Max</strong> 的动态修改问题（Max 没有减法逆运算，你不能用 Max(大) 撤销一个元素）。线段树万物皆可维护，甚至能维护区间的一段复杂的哈希信息合并！能用树状数组的大部分都能被线段树降维打击取代。
+                <summary>展开分析</summary>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body"><strong>问题：</strong>对 $[0,1000]$ 全部 +1，逐个叶子更新 = 遍历 1000 个节点，$O(n)$。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body"><strong>懒策略：</strong>当修改区间<strong>完全覆盖</strong>当前节点区间时，直接更新聚合值（<code>sum += len × v</code>），并在节点上贴标签 <code>lazy += v</code>，表示"子节点应 +v 但还没做"。立即返回。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">3</div>
+                    <div class="derive-body"><strong>Push-Down（下传）：</strong>后续操作需进入子节点时，先检查懒标记并下传给两个孩子（更新孩子的 sum 和 lazy），然后清除自身标记。修改被按需延迟执行。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">4</div>
+                    <div class="derive-body"><strong>复杂度保证：</strong>每次区间修改/查询仍只经过 $O(\log n)$ 个节点，push-down 只在路径上执行，不额外增加量级。</div>
+                </div>
             </details>
         </div>
     </div>
 
+    <!-- 层4 代码 -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：带 Lazy Tag 的线段树 (区间加法、区间求和)</h3>
-<pre><code class="language-python">class SegmentTree:
+        <h3>💻 模板代码</h3>
+        <h4>Python 实现（1-indexed，区间加法 + 区间求和 + 懒标记）</h4>
+<pre><code class="language-python">class SegTree:
     def __init__(self, data):
         self.n = len(data)
-        # 4N 空间是非常稳的经验值，证明与二进制树高满打满算有关
-        self.tree = [0] * (4 * self.n)
-        self.lazy = [0] * (4 * self.n)
-        self.build(data, 0, 0, self.n - 1)
+        self.tr = [0] * (4 * self.n)
+        self.lz = [0] * (4 * self.n)
+        self._build(data, 1, 0, self.n - 1)
 
-    def build(self, data, node, start, end):
-        if start == end: # 叶子节点
-            self.tree[node] = data[start]
-            return
-        mid = (start + end) // 2
-        # 左儿子编号 2*i+1, 右儿子 2*i+2 (如果是从1下标开始就是 2*i 和 2*i+1)
-        self.build(data, 2 * node + 1, start, mid)
-        self.build(data, 2 * node + 2, mid + 1, end)
-        self.tree[node] = self.tree[2 * node + 1] + self.tree[2 * node + 2]
+    def _build(self, a, p, l, r):
+        if l == r:
+            self.tr[p] = a[l]; return
+        m = (l + r) >> 1
+        self._build(a, p*2, l, m)
+        self._build(a, p*2+1, m+1, r)
+        self.tr[p] = self.tr[p*2] + self.tr[p*2+1]
 
-    def push_down(self, node, start, end):
-        if self.lazy[node] != 0:
-            mid = (start + end) // 2
-            left = 2 * node + 1
-            right = 2 * node + 2
-            # 欠款下发
-            self.lazy[left] += self.lazy[node]
-            self.lazy[right] += self.lazy[node]
-            # 根据区间长度更新两边儿子的汇总值
-            self.tree[left] += self.lazy[node] * (mid - start + 1)
-            self.tree[right] += self.lazy[node] * (end - mid)
-            # 钱款两清
-            self.lazy[node] = 0
+    def _apply(self, p, l, r, v):
+        self.tr[p] += (r - l + 1) * v
+        self.lz[p] += v
 
-    def update(self, node, start, end, l, r, val):
-        if r < start or end < l: return
-        
-        # 完美覆盖：打标记走人
-        if l <= start and end <= r:
-            self.tree[node] += (end - start + 1) * val
-            self.lazy[node] += val
-            return
-            
-        self.push_down(node, start, end)
-        mid = (start + end) // 2
-        self.update(2 * node + 1, start, mid, l, r, val)
-        self.update(2 * node + 2, mid + 1, end, l, r, val)
-        self.tree[node] = self.tree[2 * node + 1] + self.tree[2 * node + 2]
+    def _push(self, p, l, r):
+        if self.lz[p]:
+            m = (l + r) >> 1
+            self._apply(p*2, l, m, self.lz[p])
+            self._apply(p*2+1, m+1, r, self.lz[p])
+            self.lz[p] = 0
+
+    # 单点修改: update_point(pos, val, 1, 0, n-1)
+    def update_point(self, pos, val, p, l, r):
+        if l == r:
+            self.tr[p] = val; return
+        self._push(p, l, r)
+        m = (l + r) >> 1
+        if pos <= m: self.update_point(pos, val, p*2, l, m)
+        else:        self.update_point(pos, val, p*2+1, m+1, r)
+        self.tr[p] = self.tr[p*2] + self.tr[p*2+1]
+
+    # 区间查询: query(ql, qr, 1, 0, n-1)
+    def query(self, ql, qr, p, l, r):
+        if ql <= l and r <= qr: return self.tr[p]
+        self._push(p, l, r)
+        m, res = (l + r) >> 1, 0
+        if ql <= m: res += self.query(ql, qr, p*2, l, m)
+        if qr >  m: res += self.query(ql, qr, p*2+1, m+1, r)
+        return res
+
+    # 区间修改(带lazy): range_add(ql, qr, v, 1, 0, n-1)
+    def range_add(self, ql, qr, v, p, l, r):
+        if ql <= l and r <= qr:
+            self._apply(p, l, r, v); return
+        self._push(p, l, r)
+        m = (l + r) >> 1
+        if ql <= m: self.range_add(ql, qr, v, p*2, l, m)
+        if qr >  m: self.range_add(ql, qr, v, p*2+1, m+1, r)
+        self.tr[p] = self.tr[p*2] + self.tr[p*2+1]
 </code></pre>
+
+        <details>
+            <summary>C++ 实现（点击展开）</summary>
+<pre><code class="language-cpp">struct SegTree {
+    int n;
+    vector&lt;long long&gt; tr, lz;
+    SegTree(vector&lt;int&gt;&amp; a) : n(a.size()), tr(4*n), lz(4*n) {
+        build(a, 1, 0, n-1);
+    }
+    void build(vector&lt;int&gt;&amp; a, int p, int l, int r) {
+        if (l == r) { tr[p] = a[l]; return; }
+        int m = (l+r)/2;
+        build(a,p*2,l,m); build(a,p*2+1,m+1,r);
+        tr[p] = tr[p*2] + tr[p*2+1];
+    }
+    void apply(int p, int l, int r, long long v) {
+        tr[p] += (long long)(r-l+1)*v; lz[p] += v;
+    }
+    void push(int p, int l, int r) {
+        if (lz[p]) {
+            int m = (l+r)/2;
+            apply(p*2,l,m,lz[p]); apply(p*2+1,m+1,r,lz[p]);
+            lz[p] = 0;
+        }
+    }
+    void range_add(int ql, int qr, long long v, int p, int l, int r) {
+        if (ql &lt;= l &amp;&amp; r &lt;= qr) { apply(p,l,r,v); return; }
+        push(p,l,r); int m = (l+r)/2;
+        if (ql &lt;= m) range_add(ql,qr,v,p*2,l,m);
+        if (qr &gt;  m) range_add(ql,qr,v,p*2+1,m+1,r);
+        tr[p] = tr[p*2] + tr[p*2+1];
+    }
+    long long query(int ql, int qr, int p, int l, int r) {
+        if (ql &lt;= l &amp;&amp; r &lt;= qr) return tr[p];
+        push(p,l,r); int m = (l+r)/2; long long res = 0;
+        if (ql &lt;= m) res += query(ql,qr,p*2,l,m);
+        if (qr &gt;  m) res += query(ql,qr,p*2+1,m+1,r);
+        return res;
+    }
+};</code></pre>
+        </details>
+
+        <details>
+            <summary>Rust 实现（点击展开）</summary>
+<pre><code class="language-rust">struct SegTree { n: usize, tr: Vec&lt;i64&gt;, lz: Vec&lt;i64&gt; }
+
+impl SegTree {
+    fn new(a: &amp;[i64]) -&gt; Self {
+        let n = a.len();
+        let mut st = Self { n, tr: vec![0;4*n], lz: vec![0;4*n] };
+        st.build(a,1,0,n-1); st
+    }
+    fn build(&amp;mut self, a: &amp;[i64], p: usize, l: usize, r: usize) {
+        if l == r { self.tr[p] = a[l]; return; }
+        let m = (l+r)/2;
+        self.build(a,p*2,l,m); self.build(a,p*2+1,m+1,r);
+        self.tr[p] = self.tr[p*2] + self.tr[p*2+1];
+    }
+    fn apply(&amp;mut self, p: usize, l: usize, r: usize, v: i64) {
+        self.tr[p] += (r-l+1) as i64 * v; self.lz[p] += v;
+    }
+    fn push(&amp;mut self, p: usize, l: usize, r: usize) {
+        if self.lz[p] != 0 {
+            let m = (l+r)/2; let v = self.lz[p];
+            self.apply(p*2,l,m,v); self.apply(p*2+1,m+1,r,v);
+            self.lz[p] = 0;
+        }
+    }
+    fn range_add(&amp;mut self, ql: usize, qr: usize, v: i64,
+                 p: usize, l: usize, r: usize) {
+        if ql &lt;= l &amp;&amp; r &lt;= qr { self.apply(p,l,r,v); return; }
+        self.push(p,l,r); let m = (l+r)/2;
+        if ql &lt;= m { self.range_add(ql,qr,v,p*2,l,m); }
+        if qr &gt;  m { self.range_add(ql,qr,v,p*2+1,m+1,r); }
+        self.tr[p] = self.tr[p*2] + self.tr[p*2+1];
+    }
+    fn query(&amp;mut self, ql: usize, qr: usize,
+             p: usize, l: usize, r: usize) -&gt; i64 {
+        if ql &lt;= l &amp;&amp; r &lt;= qr { return self.tr[p]; }
+        self.push(p,l,r); let m = (l+r)/2; let mut res = 0i64;
+        if ql &lt;= m { res += self.query(ql,qr,p*2,l,m); }
+        if qr &gt;  m { res += self.query(ql,qr,p*2+1,m+1,r); }
+        res
+    }
+}</code></pre>
+        </details>
+    </div>
+
+    <!-- 层5 复杂度 -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度总结</h3>
         <table>
-            <tr><th>操作</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>建树 Build</td><td>O(N)</td><td>O(4N)</td><td>因为它本质是对整个所有叶子节点进行了一次后序遍历，合并代价为O(1*N)。</td></tr>
-            <tr><td>单点/区间修改</td><td>O(log N)</td><td>-</td><td>因为完美覆盖时就直接终止，无论多大的区间修改，切割成的小段也超不过 $O(log N)$ 段！</td></tr>
-            <tr><td>区间查询查询</td><td>O(log N)</td><td>-</td><td>同理，被分割成的拼凑碎快也只有 $log N$ 快。</td></tr>
+            <tr><th>操作</th><th>时间</th><th>空间</th><th>说明</th></tr>
+            <tr><td>建树 Build</td><td>$O(n)$</td><td>$O(4n)$</td><td>后序遍历所有节点，每个节点 $O(1)$ 合并</td></tr>
+            <tr><td>单点查询 / 单点修改</td><td>$O(\log n)$</td><td>—</td><td>自根到叶一条路径</td></tr>
+            <tr><td>区间查询</td><td>$O(\log n)$</td><td>—</td><td>每层最多拆成常数个边界段</td></tr>
+            <tr><td>区间修改（Lazy）</td><td>$O(\log n)$</td><td>—</td><td>完全覆盖直接打标记返回</td></tr>
         </table>
     </div>
 
+    <!-- 层6 性质 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📌 关键性质</h3>
+        <ul>
+            <li><strong>空间 4n：</strong>对于 $n$ 个叶子的线段树，数组开 $4n$ 大小即可安全容纳所有节点。精确上界为 $2 \times 2^{\lceil \log_2 n \rceil} - 1 \le 4n$。</li>
+            <li><strong>子节点编号：</strong>根从 1 开始，节点 $i$ 的左子 = $2i$，右子 = $2i + 1$。（也可从 0 开始，左子 = $2i+1$，右子 = $2i+2$。）</li>
+            <li><strong>合并操作需满足结合律：</strong>线段树要求维护的信息可通过满足<strong>结合律</strong>的运算合并（如 $+$、$\max$、$\min$、$\gcd$、矩阵乘法）。不满足结合律的操作不能直接用线段树维护。</li>
+        </ul>
+    </div>
+
+    <!-- 层7 例题 -->
+    <div class="knowledge-card kc-green">
+        <h3>📝 经典例题</h3>
+        <table>
+            <tr><th>题号</th><th>题目</th><th>核心思路</th></tr>
+            <tr><td>LC 307</td><td>区域和检索 - 数组可修改</td><td>线段树入门：单点修改 + 区间求和，直接套模板。</td></tr>
+            <tr><td>LC 315</td><td>计算右侧小于当前元素的个数</td><td>从右往左遍历，值域线段树/BIT 维护已插入元素数量，查询 $[0, a_i - 1]$ 前缀和。</td></tr>
+            <tr><td>LC 218</td><td>天际线问题（The Skyline Problem）</td><td>坐标离散化后用线段树维护区间最大高度，或用扫描线 + 堆。线段树解法需区间赋值 + 区间最大值查询。</td></tr>
+        </table>
+    </div>
+
+    <!-- 层8 对比 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>⚖️ 前缀和 vs 树状数组 (BIT) vs 线段树</h3>
+        <table>
+            <tr><th></th><th>前缀和</th><th>树状数组 (BIT)</th><th>线段树</th></tr>
+            <tr><td>单点修改</td><td>$O(n)$</td><td>$O(\log n)$</td><td>$O(\log n)$</td></tr>
+            <tr><td>区间求和查询</td><td>$O(1)$</td><td>$O(\log n)$</td><td>$O(\log n)$</td></tr>
+            <tr><td>区间最值查询</td><td>❌</td><td>❌</td><td>$O(\log n)$</td></tr>
+            <tr><td>区间修改</td><td>❌</td><td>$O(\log n)$*</td><td>$O(\log n)$</td></tr>
+            <tr><td>代码复杂度</td><td>极简</td><td>简短</td><td>较长</td></tr>
+            <tr><td>适用场景</td><td>静态数组区间和</td><td>动态前缀和 / 逆序对</td><td>通用区间维护、最值、复杂合并</td></tr>
+        </table>
+        <p style="font-size:0.85rem;color:#94a3b8;">* 树状数组区间修改需差分技巧，且仅限可逆运算（如加法、异或）。</p>
+    </div>
+
+    <!-- 层9 易错 -->
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
+        <h3>🔴 易错点</h3>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 忘记根据区间长度乘上 Lazy 值</p>
-<pre><code class="language-python"># 打标记时
-self.tree[node] += val  
-# 大错特错：如果你底下的区间有 10 个人，你告诉上面这帮人总和变了多少？
-# 变了 10*val！而不是变了 val！求偏导的线性关系必须保持。
+                <p>❌ 数组大小开 2n</p>
+<pre><code class="language-python">tree = [0] * (2 * n)  # 不够！
+# 当 n 不是 2 的幂时，2n 无法容纳
+# 所有内部节点，会造成越界
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 附带权重：时刻认清 node 的身份</p>
-<pre><code class="language-python"># 节点涵盖多宽，数值就翻多少倍
-self.tree[node] += (end - start + 1) * val
-self.lazy[node] += val 
+                <p>✅ 数组大小开 4n</p>
+<pre><code class="language-python">tree = [0] * (4 * n)  # 安全上界
+# 4n 对任意 n 都不会越界
 </code></pre>
             </div>
         </div>
+        <div class="code-compare" style="margin-top:1rem;">
+            <div class="wrong">
+                <p>❌ 懒标记更新后忘记下传就访问子节点</p>
+<pre><code class="language-python">def query(self, ql, qr, p, l, r):
+    if ql &lt;= l and r &lt;= qr: return self.tr[p]
+    mid = (l + r) &gt;&gt; 1
+    # 没有 push_down！子节点数据是过期的！
+    ...
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 访问子节点前先 push_down</p>
+<pre><code class="language-python">def query(self, ql, qr, p, l, r):
+    if ql &lt;= l and r &lt;= qr: return self.tr[p]
+    self._push(p, l, r)  # 先下传！
+    mid = (l + r) &gt;&gt; 1
+    ...
+</code></pre>
+            </div>
+        </div>
+        <ul style="margin-top:1rem;">
+            <li><strong>区间边界 off-by-one：</strong><code>mid = (l+r)//2</code> 时，左子区间是 <code>[l, mid]</code>，右子区间是 <code>[mid+1, r]</code>。写成 <code>[l, mid-1]</code> 和 <code>[mid, r]</code> 会漏掉或重复覆盖元素。</li>
+            <li><strong>Lazy 区间修改时忘记乘区间长度：</strong><code>tr[p] += v</code> 应为 <code>tr[p] += (r-l+1) * v</code>，否则聚合值不正确。</li>
+        </ul>
     </div>
 
+    <!-- 层10 演示容器 -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：线段树区间覆盖截断机制 (Lazy)</h3>
+        <h3>🔗 互动演示：线段树 Lazy Propagation</h3>
         <div class="demo-container" id="segDemo"></div>
     </div>
 
+    <!-- 层11 竞赛拓展 -->
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>动态开点线段树：</strong> 如果你要维护的区间是 $1$ 到 $10^9$ 怎么办？开 $4 	imes 10^9$ 的数组内存瞬间爆炸！因为并不是所有节点你都要用到，我们可以“按需分配内存”。使用指针 <code>node.left</code> 和 <code>node.right</code>，只有当访问到时我们才实例化该节点。</p>
-        <p><strong>主席树 (可持久化线段树)：</strong> 在每次 Update 修改节点时，不去修改原节点，而是“复制”一条新的从根到叶子的 $\log N$ 条链并保留旧链。这让你保存了历史所有的版本记录！可以支持查询“第 $t$ 次修改时，区间的情况是什么？”，极其强大。</p>
+        <h3>🏆 竞赛拓展</h3>
+        <ul>
+            <li><strong>可持久化线段树（主席树）：</strong>每次修改只复制根到叶的 $O(\log n)$ 条路径，保留所有历史版本。经典应用：静态区间第 $k$ 小。</li>
+            <li><strong>动态开点线段树：</strong>值域达 $10^9$ 时不预分配全部节点，按需分配，空间 $O(q \log V)$。</li>
+            <li><strong>李超线段树（Li Chao Tree）：</strong>维护一组直线 $y = kx + b$，支持插入直线、查询某 $x$ 处最大/最小 $y$，$O(\log V)$ 每次。用于斜率优化 DP。</li>
+        </ul>
+    </div>
+
+    <!-- 层12 工业应用 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业应用</h3>
+        <ul>
+            <li><strong>数据库区间索引：</strong>某些内存数据库使用类似线段树的区间索引加速范围聚合查询（SUM / COUNT / MAX over range）。</li>
+            <li><strong>时序数据聚合：</strong>监控系统（如 Prometheus、InfluxDB）对时间窗口内的指标求和/最值，底层思想与线段树一致。</li>
+            <li><strong>游戏伤害统计：</strong>MMO 游戏中对大量单位进行区间 AOE 伤害计算与血量查询，线段树 / 懒标记可高效批量处理。</li>
+        </ul>
     </div>
 </section>
 
@@ -291,7 +528,7 @@ self.lazy[node] += val
 <script>hljs.highlightAll();</script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("segDemo");
+    const container = document.getElementById("segTreeDemo");
     if(!container) return;
     
     container.innerHTML = `

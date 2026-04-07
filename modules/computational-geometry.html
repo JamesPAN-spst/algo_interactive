@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>计算几何模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
@@ -51,127 +53,363 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+    <!-- 层0 引子 -->
     <div class="knowledge-card kc-gray">
-        <h3>⚙️ 前置知识</h3>
-        <span class="prereq-tag">向量运算基础</span>
-        <span class="prereq-tag">坐标系概念</span>
-        <p>计算几何主要处理平面内的点、线。将点表示为向量（Vector）可以避免繁琐的解析几何方程，用<strong>叉积</strong>优雅地解决方向问题。</p>
+        <h3>🪡 引子</h3>
+        <p><strong>"给你一堆钉子（点），怎么用最短的橡皮筋把它们全围起来？"</strong></p>
+        <p>这就是<strong>凸包（Convex Hull）</strong>问题——计算几何的"Hello World"。我们将从这个直觉出发，建立向量叉积工具箱，再学习高效算法。</p>
     </div>
 
+    <!-- 层1 前置 -->
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置：向量基本运算与叉积</h3>
+        <span class="prereq-tag">向量加减</span>
+        <span class="prereq-tag">向量数乘</span>
+        <span class="prereq-tag">叉积（2D）</span>
+        <p>设 <strong>a⃗</strong> = (x₁, y₁)，<strong>b⃗</strong> = (x₂, y₂)：</p>
+        <ul>
+            <li><strong>向量减法：</strong> AB⃗ = B − A = (x_B − x_A, y_B − y_A)</li>
+            <li><strong>叉积（2D）：</strong> a⃗ × b⃗ = x₁·y₂ − x₂·y₁（标量，有正负）</li>
+            <li>叉积 &gt; 0 → b⃗ 在 a⃗ 的<strong>逆时针侧（左转）</strong>；&lt; 0 → 顺时针侧（右转）；= 0 → 共线</li>
+        </ul>
+    </div>
+
+    <!-- 层2 动机 naive-vs-smart -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：叉积如何指示转弯方向？</h3>
-        <div class="intuition-box">
-            <strong>核心思想：</strong> 向量叉积的符号等价于右手系的 Z 轴。正值表示逆时针（左转），负值表示顺时针（右转）。
-        </div>
+        <h3>💡 动机：暴力 vs 凸包算法</h3>
         <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">解析几何 (Naive)</h4><p>求斜率 k，比较 y。遇垂直线需特判且有除法精度问题。</p></div>
-            <div class="smart"><h4 class="label">向量叉积 (Smart)</h4><p>把线段视作向量，仅用乘减 `x1*y2 - x2*y1`。无除法，无 ∞ 特判。</p></div>
+            <div class="naive">
+                <h4 class="label">暴力 O(n³)</h4>
+                <p>枚举所有 C(n,2) 条边，逐一检查其余点是否都在同侧。三重循环 + 大量浮点判断。</p>
+            </div>
+            <div class="smart">
+                <h4 class="label">凸包算法 O(n log n)</h4>
+                <p>排序一次 + 线性扫描。仅用整数叉积，无除法、无精度问题。</p>
+            </div>
         </div>
+        <div class="intuition-box">
+            <strong>直觉：</strong>排好序后，沿着边界"走"一圈，只要发现"右拐"就说明上一个点凹了——退回去。这就是 Graham Scan 的核心。
+        </div>
+    </div>
+
+    <!-- 层3 推导 -->
+    <div class="knowledge-card kc-amber">
+        <h3>📐 推导</h3>
+
+        <h4>3.1 叉积判断左转 / 右转</h4>
         <div class="derive-step">
             <div class="derive-num">1</div>
             <div class="derive-body">
-                <strong>向量坐标化：</strong> 设原点 $O(0,0)$，$A(x_1, y_1)$，$B(x_2, y_2)$。向量 $ec{OA} = (x_1, y_1)$，$ec{OB} = (x_2, y_2)$。
+                <strong>三点定向：</strong>给定 O, A, B，令 OA⃗ = (Aₓ−Oₓ, Aᵧ−Oᵧ)，OB⃗ = (Bₓ−Oₓ, Bᵧ−Oᵧ)。
             </div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
             <div class="derive-body">
-                <strong>计算与判定：</strong> $cross = x_1 y_2 - x_2 y_1$。为正时 B 在 OA 逆时针侧，为负时在顺时针侧，0 时共线。
+                <strong>计算叉积：</strong> cross = (Aₓ−Oₓ)(Bᵧ−Oᵧ) − (Aᵧ−Oᵧ)(Bₓ−Oₓ)
             </div>
         </div>
-        <div class="think-block">
-            <div class="q">Q: 为什么叉积的符号就能给出方向？</div>
-            <details>
-                <summary>查看答疑</summary>
-                2D 中的向量叉积可视为 3D 向量 (x,y,0) × (x',y',0)。其结果只在 Z 轴有值，服从右手法则：大拇指朝上（正）即逆时针，朝下（负）即顺时针。
-            </details>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>判定：</strong>cross &gt; 0 → 左转（逆时针），cross &lt; 0 → 右转（顺时针），cross = 0 → 共线。
+            </div>
         </div>
+        <div class="ascii-art">
+  叉积方向示意（三点 O, A, B）
+
+  cross &gt; 0（左转）       cross &lt; 0（右转）       cross = 0（共线）
+
+      B                        A                    A
+     ↗                        ↗                    ↗
+    O ——→ A               O ——→ B               O ——→ B
+  B在OA逆时针侧        B在OA顺时针侧         三点在一条线上
+        </div>
+
+        <h4>3.2 Graham Scan 算法</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><strong>选基准点：</strong>找 y 最小（y 相同取 x 最小）的点 P₀，它必在凸包上。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>极角排序：</strong>其余点按相对 P₀ 的极角从小到大排序（极角相同按距离近者优先）。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body"><strong>逐点入栈：</strong>依次将排序后的点压栈。每压入一个新点 P，检查栈顶两点与 P 是否左转：不左转则弹栈，直到左转为止。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">4</div>
+            <div class="derive-body"><strong>结束：</strong>遍历完所有点后，栈中的点就是凸包顶点（逆时针顺序）。</div>
+        </div>
+        <div class="ascii-art">
+  Graham Scan 过程示例（6 个点）
+
+  原始点集:                排序后（极角序）:
+       D•                  P0 → A → B → C → D → E
+    E•    C•
+       B•                  逐步扫描:
+    A•                     栈 [P0]
+  P0•                      压A → [P0, A]              ✓
+                           压B → [P0, A, B]            ✓
+                           压C → [P0, A, B, C]    A→B→C 右转!
+                              弹B → [P0, A, C]         ✓
+                           压D → [P0, A, C, D]         ✓
+                           压E → [P0, A, C, D, E]      ✓
+
+  最终凸包: P0 → A → C → D → E
+  （B 被弹出：它在凸包内部）
+        </div>
+
+        <h4>3.3 线段相交检测（跨立实验）</h4>
         <div class="think-block">
-            <div class="q">Q: Graham 扫描法如何确保最后是凸包？</div>
+            <div class="q">Q: 如何判断线段 AB 与线段 CD 是否相交？</div>
             <details>
-                <summary>查看答疑</summary>
-                按极角排序后，我们按逆时针顺序绕点集一圈。只要我们每一步都是“向左转” (叉积>0)，最终必然画出一个凸多边形。如果有“右转”，就说明之前的点凹进去了，退栈即可。
+                <summary>查看推导</summary>
+                <p><strong>跨立实验：</strong>线段 AB 与 CD 严格相交 ⇔ 两个条件同时满足：</p>
+                <ol>
+                    <li>C、D 分别在直线 AB 的两侧：<code>cross(A,B,C) * cross(A,B,D) &lt; 0</code></li>
+                    <li>A、B 分别在直线 CD 的两侧：<code>cross(C,D,A) * cross(C,D,B) &lt; 0</code></li>
+                </ol>
+                <p>若某个叉积为 0，说明端点在另一线段所在直线上，需额外判断该端点是否落在线段范围内（处理共线 / 端点重合的特殊情况）。</p>
             </details>
         </div>
     </div>
 
+    <!-- 层4 代码 -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码与复杂度</h3>
-<pre><code class="language-python"># 1. 基础向量操作
-EPS = 1e-9
-
-class Point:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
-    def __sub__(self, other):
-        return Point(self.x - other.x, self.y - other.y)
-
+        <h3>💻 模板代码</h3>
+<pre><code class="language-python"># ---------- 叉积 ----------
 def cross(O, A, B):
-    # 返回 >0 说明 B 在 OA 逆时针侧
-    return (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x)
+    return (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0])
 
-# 2. Andrew 凸包 (Graham扫面变种)
-def convex_hull(points):
-    points = sorted(set(points)) # x 排序
-    if len(points) <= 1: return points
+# ---------- Graham Scan 凸包 ----------
+import math
 
-    lower = []
-    for p in points:
-        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
-            lower.pop() # 右转或共线则弹出
-        lower.append(p)
+def graham_scan(points):
+    pts = list(set(map(tuple, points)))
+    if len(pts) <= 1:
+        return pts
+    p0 = min(pts, key=lambda p: (p[1], p[0]))
 
-    upper = []
-    for p in reversed(points):
-        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
-            upper.pop()
-        upper.append(p)
+    def key_fn(p):
+        return (math.atan2(p[1]-p0[1], p[0]-p0[0]),
+                (p[0]-p0[0])**2 + (p[1]-p0[1])**2)
 
-    return lower[:-1] + upper[:-1]
+    pts.sort(key=key_fn)
+    stack = []
+    for p in pts:
+        while len(stack) >= 2 and cross(stack[-2], stack[-1], p) <= 0:
+            stack.pop()
+        stack.append(p)
+    return stack
+
+# ---------- 点在多边形内（射线法） ----------
+def point_in_polygon(px, py, polygon):
+    n, inside = len(polygon), False
+    j = n - 1
+    for i in range(n):
+        xi, yi = polygon[i]
+        xj, yj = polygon[j]
+        if ((yi > py) != (yj > py)) and \
+           (px < (xj - xi) * (py - yi) / (yj - yi) + xi):
+            inside = not inside
+        j = i
+    return inside
 </code></pre>
-        <table>
-            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>叉积判断</td><td>O(1)</td><td>O(1)</td><td>仅乘减运算。</td></tr>
-            <tr><td>凸包(Andrew)</td><td>O(n log n)</td><td>O(n)</td><td>时间由初始的点的排序主导，后续遍历操作均为摊还 O(1)。</td></tr>
-        </table>
-    </div>
-
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题：凸包变形</h3>
         <details>
-            <summary>变种：如果我们要边界上的所有共线点怎么办？</summary>
-            <p>标准的凸包算法中 <code>cross <= 0</code> 时退栈以剔除共线中间点。如果需要包含边界上所有点，则需要改为 <code>cross < 0</code>，同时最后不要弹出共线点。</p>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef pair&lt;long long, long long&gt; P;
+
+long long cross(P O, P A, P B) {
+    return (A.first-O.first)*(long long)(B.second-O.second)
+         - (A.second-O.second)*(long long)(B.first-O.first);
+}
+
+vector&lt;P&gt; graham_scan(vector&lt;P&gt; pts) {
+    P p0 = *min_element(pts.begin(), pts.end(),
+        [](const P&amp; a, const P&amp; b) {
+            return make_pair(a.second, a.first)
+                 &lt; make_pair(b.second, b.first);
+        });
+    sort(pts.begin(), pts.end(), [&amp;](const P&amp; a, const P&amp; b) {
+        long long v = cross(p0, a, b);
+        if (v != 0) return v &gt; 0;
+        auto da = (a.first-p0.first)*(a.first-p0.first)
+                + (a.second-p0.second)*(a.second-p0.second);
+        auto db = (b.first-p0.first)*(b.first-p0.first)
+                + (b.second-p0.second)*(b.second-p0.second);
+        return da &lt; db;
+    });
+    vector&lt;P&gt; hull;
+    for (auto&amp; p : pts) {
+        while (hull.size() &gt;= 2 &amp;&amp;
+               cross(hull[hull.size()-2], hull.back(), p) &lt;= 0)
+            hull.pop_back();
+        hull.push_back(p);
+    }
+    return hull;
+}
+</code></pre>
+        </details>
+        <details>
+            <summary>Rust 版本</summary>
+<pre><code class="language-rust">fn cross(o: (i64,i64), a: (i64,i64), b: (i64,i64)) -&gt; i64 {
+    (a.0-o.0)*(b.1-o.1) - (a.1-o.1)*(b.0-o.0)
+}
+
+fn graham_scan(points: &amp;mut Vec&lt;(i64,i64)&gt;) -&gt; Vec&lt;(i64,i64)&gt; {
+    points.sort();
+    points.dedup();
+    if points.len() &lt;= 1 { return points.clone(); }
+    let p0 = *points.iter().min_by_key(|p| (p.1, p.0)).unwrap();
+    points.sort_by(|a, b| {
+        let v = cross(p0, *a, *b);
+        if v != 0 { return 0i64.cmp(&amp;v); }
+        let da = (a.0-p0.0).pow(2) + (a.1-p0.1).pow(2);
+        let db = (b.0-p0.0).pow(2) + (b.1-p0.1).pow(2);
+        da.cmp(&amp;db)
+    });
+    let mut hull: Vec&lt;(i64,i64)&gt; = Vec::new();
+    for &amp;p in points.iter() {
+        while hull.len() &gt;= 2 &amp;&amp;
+              cross(hull[hull.len()-2], *hull.last().unwrap(), p) &lt;= 0 {
+            hull.pop();
+        }
+        hull.push(p);
+    }
+    hull
+}
+</code></pre>
         </details>
     </div>
 
-    <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 错误判断共线</p>
-<pre><code class="language-python">if cross(O, A, B) == 0:
-    print("共线")
-</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 正确判断共线 (加 EPS)</p>
-<pre><code class="language-python">EPS = 1e-9
-if abs(cross(O, A, B)) < EPS:
-    print("共线")
-</code></pre>
-            </div>
+    <!-- 层5 复杂度表 -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查表</h3>
+        <table>
+            <tr><th>算法 / 问题</th><th>时间</th><th>空间</th><th>说明</th></tr>
+            <tr><td>叉积计算</td><td>O(1)</td><td>O(1)</td><td>两次乘法一次减法</td></tr>
+            <tr><td>Graham Scan 凸包</td><td>O(n log n)</td><td>O(n)</td><td>排序主导</td></tr>
+            <tr><td>Andrew 单调链凸包</td><td>O(n log n)</td><td>O(n)</td><td>按 x 排序，构建上下壳</td></tr>
+            <tr><td>Jarvis March</td><td>O(nh)</td><td>O(h)</td><td>h = 凸包顶点数</td></tr>
+            <tr><td>最近点对（分治）</td><td>O(n log n)</td><td>O(n)</td><td>分治 + 带区合并</td></tr>
+            <tr><td>线段相交检测</td><td>O(1)</td><td>O(1)</td><td>两次跨立实验</td></tr>
+            <tr><td>点在多边形内（射线法）</td><td>O(n)</td><td>O(1)</td><td>凸多边形可 O(log n) 二分</td></tr>
+        </table>
+    </div>
+
+    <!-- 层6 性质 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 关键性质</h3>
+        <ul>
+            <li><strong>凸包顶点是原始点集的子集</strong>——不会创造新点，只做选择。</li>
+            <li><strong>凸包面积 = 所有相邻顶点叉积之和 / 2</strong>（Shoelace 公式）：S = ½ |Σ(xᵢ·yᵢ₊₁ − xᵢ₊₁·yᵢ)|</li>
+            <li>凸包的周长是所有包围该点集的凸多边形中最短的。</li>
+            <li>凸多边形内任意两点的连线段都在多边形内部（凸性定义）。</li>
+        </ul>
+    </div>
+
+    <!-- 层7 例题 -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题</h3>
+        <details>
+            <summary><strong>LC 587 安装栅栏</strong>（凸包 + 共线点）</summary>
+            <p>给定一组点，求凸包顶点（含边上共线点）。用 Graham Scan / Andrew 单调链，但将弹栈条件从 <code>cross &lt;= 0</code> 改为 <code>cross &lt; 0</code> 以保留共线点。最后一条边上的共线点需要按反序排列。</p>
+        </details>
+        <details>
+            <summary><strong>LC 149 直线上最多的点</strong></summary>
+            <p>枚举每个点作为基准，用斜率（gcd 约分后的 dx/dy 对）做哈希计数。O(n²)，注意 dx=0 和 dy=0 分别对应垂直 / 水平线特判。</p>
+        </details>
+        <details>
+            <summary><strong>最近点对（分治经典）</strong></summary>
+            <p>按 x 排序后递归分治左右两半。合并时取中线两侧距离 &lt; 当前最小值 d 的点，按 y 排序后每个点最多比较 7 个邻居。整体 O(n log n)。</p>
+        </details>
+    </div>
+
+    <!-- 层8 对比 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 凸包算法对比</h3>
+        <table>
+            <tr><th>算法</th><th>排序方式</th><th>时间</th><th>优点</th><th>缺点</th></tr>
+            <tr>
+                <td>Graham Scan</td>
+                <td>极角排序</td>
+                <td>O(n log n)</td>
+                <td>经典直观</td>
+                <td>需处理共线 / atan2 精度</td>
+            </tr>
+            <tr>
+                <td>Andrew's Monotone Chain</td>
+                <td>按 x 坐标</td>
+                <td>O(n log n)</td>
+                <td>实现简洁，无极角特殊情况</td>
+                <td>需分别构建上下凸壳</td>
+            </tr>
+            <tr>
+                <td>Jarvis March (Gift Wrapping)</td>
+                <td>无需排序</td>
+                <td>O(nh)</td>
+                <td>h 小时极快，代码短</td>
+                <td>最坏 O(n²)</td>
+            </tr>
+        </table>
+        <div class="intuition-box">
+            <strong>选择建议：</strong>竞赛中推荐 Andrew 单调链（代码最短、最不易出错）。Jarvis March 仅在已知凸包顶点很少时考虑。
         </div>
     </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：Andrew单调链动态过程</h3>
-        <div class="demo-container" id="cgDemo"></div>
+    <!-- 层9 易错 -->
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 用浮点叉积判共线</p>
+<pre><code class="language-python">if cross(O, A, B) == 0:  # 浮点误差!
+    print("共线")</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 用整数坐标 → 叉积精确为 0</p>
+<pre><code class="language-python"># 坐标用整数，叉积精确无误差
+# 若必须浮点: abs(cross) &lt; EPS
+if cross(O, A, B) == 0:
+    print("共线")  # 整数坐标下精确</code></pre>
+            </div>
+        </div>
+        <ul>
+            <li><strong>共线点处理：</strong><code>cross &lt;= 0</code> 弹栈会丢弃共线点。LC 587 需改为 <code>cross &lt; 0</code> 并特殊处理最后一段共线点的顺序。</li>
+            <li><strong>浮点精度：</strong>竞赛中尽量<strong>全程用整数坐标和整数叉积</strong>，避免 <code>atan2</code>、除法。若不得已用浮点，设 <code>EPS = 1e-9</code>。</li>
+            <li><strong>极角排序起点：</strong>Graham Scan 必须选 y 最小（y 相同取 x 最小）的点做基准。选错基准会导致极角排序失效。</li>
+        </ul>
     </div>
 
+    <!-- 层10 演示 -->
+    <div class="knowledge-card kc-purple">
+        <h3>🔗 互动演示</h3>
+        <div class="demo-container" id="geoDemo"></div>
+    </div>
+
+    <!-- 层11 竞赛进阶 -->
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>旋转卡壳（Rotating Calipers）：</strong> 线性扫描凸包用于求最远两点（直径）。通过维护两根平行的扫描线在多边形外部滚动，O(n) 内可以求解。</p>
-        <p><strong>如何判断点在凸包内：</strong> 相比于射线法的 O(n)，如果点集是凸包，可以二分查找，达到 O(log n)。</p>
+        <h3>🏆 竞赛进阶</h3>
+        <ul>
+            <li><strong>旋转卡壳（Rotating Calipers）：</strong>在凸包上线性扫描求直径（最远点对）、最小面积外接矩形等。凸包建完后 O(n)。</li>
+            <li><strong>Voronoi 图：</strong>平面划分为"到各点最近的区域"。Fortune 算法 O(n log n)，用于最近邻查询、路径规划。</li>
+            <li><strong>半平面交：</strong>将多个线性约束求交集。排序 + 双端队列维护，O(n log n)。结果为凸多边形（或空集 / 无界区域）。</li>
+        </ul>
+    </div>
+
+    <!-- 层12 工业应用 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业应用</h3>
+        <ul>
+            <li><strong>GIS 地理围栏：</strong>用多边形 / 凸包围出区域，判断 GPS 坐标是否在围栏内（射线法 / 叉积判断）。外卖配送范围、共享单车运营区都依赖此技术。</li>
+            <li><strong>碰撞检测（游戏引擎）：</strong>GJK 算法用闵可夫斯基差 + 凸包判断两凸体是否重叠；SAT（分离轴定理）将凸多边形投影到法线轴上检测分离。Unity / Unreal 底层都用。</li>
+            <li><strong>3D 打印切片：</strong>模型按层切割为 2D 截面（多边形），用计算几何算法求轮廓、填充路径。凸包 / 多边形布尔运算是核心。</li>
+        </ul>
     </div>
 </section>
 
@@ -280,7 +518,7 @@ if abs(cross(O, A, B)) < EPS:
 <script>hljs.highlightAll();</script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("cgDemo");
+    const container = document.getElementById("geoDemo");
     if(!container) return;
     
     container.innerHTML = `

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>位运算模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
@@ -71,127 +73,483 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <!-- 0. 前置知识 -->
+
+    <!-- 层0: 引子 -->
+    <div class="knowledge-card kc-gray">
+        <h3>🎯 引子：为什么 <code>n &amp; (n-1)</code> 能判断 2 的幂？</h3>
+        <p>2 的幂（1, 2, 4, 8, 16…）在二进制中只有<strong>一个 1</strong>：<code>10000…0</code>。</p>
+        <p>如果 <code>n</code> 恰好只有一个 1，那 <code>n-1</code> 借位后把该位变 0、右侧全变 1，AND 恰好得 0。</p>
+        <div class="ascii-art">n   = 0b 0001 0000     (=16, 只有一个1)
+n-1 = 0b 0000 1111
+n &amp; (n-1) = 0b 0000 0000  → 结果为 0 ➜ 是 2 的幂
+
+n   = 0b 0001 0100     (=20, 有两个1)
+n-1 = 0b 0001 0011
+n &amp; (n-1) = 0b 0001 0000  → 结果非 0 ➜ 不是 2 的幂</div>
+        <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">这个技巧背后是<strong>二进制借位</strong>的规律——学完本模块你将完全掌握它的来龙去脉。</p>
+    </div>
+
+    <!-- 层1: 前置知识 -->
     <div class="knowledge-card kc-gray">
         <h3>📋 前置知识</h3>
         <span class="prereq-tag">二进制表示</span>
         <span class="prereq-tag">补码（Two's complement）</span>
-        <span class="prereq-tag">整数的内存表示</span>
-        <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">
-            <strong>补码复习：</strong> 对于 n 位整数，<code>-x</code> 的补码 = <code>~x + 1</code>（按位取反再加1）。例：<code>x=5=0101</code>，<code>~x=1010</code>，<code>-x = 1011 = -5</code>（4位补码）。这是 <code>x & (-x)</code> = lowbit 等技巧的基础。
-        </p>
-        <p style="font-size:0.9rem; color:var(--subtle-text)">
-            <strong>Python 特殊性：</strong> Python 整数是无限精度的（无溢出），<code>~x = -x-1</code>（总是负数）。模拟 32 位运算需要 <code>& 0xFFFFFFFF</code> 掩码截断。
-        </p>
+
+        <p style="margin-top:0.8rem"><strong>二进制表示：</strong> 十进制 13 = 1×2³ + 1×2² + 0×2¹ + 1×2⁰ = <code>0b1101</code>。每一位叫 bit，最低位（bit 0）在最右侧。</p>
+
+        <p><strong>补码（Two's complement）：</strong> n 位有符号整数中，<code>-x</code> 的表示 = <code>~x + 1</code>（按位取反再加 1）。</p>
+        <div class="ascii-art">x  = 0b 0000 0101  (= 5)
+~x = 0b 1111 1010
+-x = ~x+1 = 0b 1111 1011  (= -5, 8位补码)</div>
+        <p>这是 <code>x &amp; (-x)</code> = lowbit 等技巧的数学基础。</p>
+
+        <p><strong>Python 特殊性：</strong> Python 整数是<em>无限精度</em>的（无溢出），<code>~x = -x-1</code>（总是负数）。模拟 32 位运算需要 <code>&amp; 0xFFFFFFFF</code> 掩码截断。</p>
     </div>
 
-    <!-- 1. 为什么用位运算？ -->
+    <!-- 层2: 动机 -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 为什么要学位运算？不只是"快"</h3>
+        <h3>💡 动机：位运算 O(1) 替代循环</h3>
 
-        <p>位运算之所以重要，不仅仅是因为比乘除法快。更根本的原因是：</p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>🐢 朴素做法：判断 2 的幂</p>
+<pre><code class="language-python">def is_power_of_two(n):
+    if n &lt;= 0: return False
+    while n &gt; 1:           # O(log n) 循环
+        if n % 2 != 0:
+            return False
+        n //= 2
+    return True</code></pre>
+            </div>
+            <div class="right">
+                <p>⚡ 位运算：O(1)</p>
+<pre><code class="language-python">def is_power_of_two(n):
+    return n &gt; 0 and (n &amp; (n - 1)) == 0
+    # 一条表达式，CPU 一两条指令</code></pre>
+            </div>
+        </div>
+
+        <p style="margin-top:1rem">位运算之所以重要，不仅仅因为快：</p>
         <ul>
             <li><strong>状态压缩：</strong> 用一个整数的每一位表示一个布尔状态，n 个状态只需一个 int，枚举所有子集 O(2ⁿ)。</li>
-            <li><strong>原子操作：</strong> 某些变换用位运算一行搞定（如交换两数、检测单个位），代码简洁且语义清晰。</li>
-            <li><strong>数学性质：</strong> 异或的交换律、结合律，与的单调性，使某类问题的数学推导更简洁。</li>
+            <li><strong>原子操作：</strong> 某些变换用位运算一行搞定（检测单个位、消去最低 1），代码简洁且语义清晰。</li>
+            <li><strong>数学性质：</strong> 异或的交换律、结合律使某类"找落单数"问题降到 O(1) 空间。</li>
         </ul>
+    </div>
+
+    <!-- 层3: 推导 -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：位运算基础 &amp; 核心技巧</h3>
+
+        <p><strong>六种基本运算的真值表</strong></p>
+        <table>
+            <tr><th>a</th><th>b</th><th>a &amp; b</th><th>a | b</th><th>a ^ b</th><th>~a</th></tr>
+            <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+            <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td></tr>
+            <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+            <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td></tr>
+        </table>
+        <table style="margin-top:0.5rem">
+            <tr><th>运算</th><th>含义</th><th>等价</th></tr>
+            <tr><td><code>x &lt;&lt; n</code></td><td>左移 n 位，右侧补 0</td><td>× 2ⁿ</td></tr>
+            <tr><td><code>x &gt;&gt; n</code></td><td>右移 n 位（算术移位保持符号位）</td><td>÷ 2ⁿ（下取整）</td></tr>
+        </table>
 
         <div class="intuition-box">
-            <strong>核心记忆口诀：</strong><br>
-            <code>&</code>（与）= 过滤/取出某些位 &nbsp;|&nbsp;
-            <code>|</code>（或）= 置位（设为1） &nbsp;|&nbsp;
-            <code>^</code>（异或）= 翻转/去重 &nbsp;|&nbsp;
-            <code>&lt;&lt;</code> = ×2ⁿ &nbsp;|&nbsp;
+            <strong>口诀：</strong>
+            <code>&amp;</code> = 过滤/取位 ｜
+            <code>|</code> = 置位 ｜
+            <code>^</code> = 翻转/去重 ｜
+            <code>&lt;&lt;</code> = ×2ⁿ ｜
             <code>&gt;&gt;</code> = ÷2ⁿ
         </div>
+
+        <hr style="border-color:#1e293b; margin:1rem 0">
+
+        <p><strong>技巧一：<code>x &amp; (x-1)</code> —— 清除最低位的 1</strong></p>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">设 <code>x = A1 0…0</code>（最低位的 1 在某位，其右侧全 0）。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><code>x-1 = A0 1…1</code>（借位：最低 1 变 0，右侧全变 1）。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body"><code>x &amp; (x-1)</code>：最低 1 位及右侧完全互补，AND 为 0；高位 A 不变。<strong>结论：消去最低位的 1。</strong></div>
+        </div>
+
+        <hr style="border-color:#1e293b; margin:1rem 0">
+
+        <p><strong>技巧二：<code>x &amp; (-x)</code> —— 取最低位的 1（lowbit）</strong></p>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><code>-x = ~x + 1</code>。设 <code>x = A 1 0…0</code>。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><code>~x = Ā 0 1…1</code>，加 1 后 <code>-x = Ā 1 0…0</code>（进位链）。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body"><code>x &amp; (-x)</code>：高位 <code>A &amp; Ā = 0</code>，最低 1 位 <code>1&amp;1=1</code>，右侧 <code>0&amp;0=0</code>。<strong>只保留最低位的 1。</strong></div>
+        </div>
+
+        <hr style="border-color:#1e293b; margin:1rem 0">
+
+        <p><strong>技巧三：子集枚举 <code>sub = (sub-1) &amp; mask</code></strong></p>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><code>sub - 1</code> 借位：最低 1 变 0、右侧全变 1（可能出现 mask 中没有的位）。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">再 <code>&amp; mask</code> 过滤掉 mask 以外的位，得到下一个更小的子集。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">循环直到 <code>sub = 0</code>，总枚举量 = 2^|mask|。对所有 mask 总计 O(3ⁿ)。</div>
+        </div>
+
+        <hr style="border-color:#1e293b; margin:1rem 0">
+
+        <p><strong>Brian Kernighan 算法：统计 1 的个数</strong></p>
+        <p>核心：每次 <code>n &amp;= n-1</code> 消去一个 1，循环次数 = popcount(n)。</p>
+        <div class="ascii-art">n = 0b 1011 0100  (popcount = 4)
+
+第1轮: n &amp; (n-1)
+  n   = 1011 0100
+  n-1 = 1011 0011
+  &amp;   = 1011 0000   ← 消去了 bit2 的 1    count=1
+
+第2轮: n &amp; (n-1)
+  n   = 1011 0000
+  n-1 = 1010 1111
+  &amp;   = 1010 0000   ← 消去了 bit4 的 1    count=2
+
+第3轮: n &amp; (n-1)
+  n   = 1010 0000
+  n-1 = 1001 1111
+  &amp;   = 1000 0000   ← 消去了 bit5 的 1    count=3
+
+第4轮: n &amp; (n-1)
+  n   = 1000 0000
+  n-1 = 0111 1111
+  &amp;   = 0000 0000   ← 消去了 bit7 的 1    count=4
+
+n=0 → 停止，共 4 轮 = 4 个 1  ✓</div>
+
+        <div class="think-block">
+            <div class="q">🤔 位掩码与集合映射：mask = 0b1011 对应哪个子集？枚举它的所有子集有几个？</div>
+            <details>
+                <summary>展开答案</summary>
+                <p><code>mask = 0b1011 = 11</code>，第 0、1、3 位为 1 → 对应集合 {e₀, e₁, e₃}。</p>
+                <p>|mask| = 3（3 个 1），子集数 = 2³ = 8 个（含空集）。</p>
+                <p>枚举过程：<code>1011 → 1010 → 1001 → 1000 → 0011 → 0010 → 0001 → 0000</code></p>
+                <p><strong>推广：</strong> 对 n 位所有 mask 的子集总和 = Σ C(n,k)·2ᵏ = (1+2)ⁿ = <strong>3ⁿ</strong>（二项式定理）。</p>
+            </details>
+        </div>
     </div>
 
-    <!-- 2. 关键技巧的推导 -->
-    <div class="knowledge-card kc-amber">
-        <h3>💡 三大技巧的推导：不要死背，理解原理</h3>
+    <!-- 层4: 代码模板 -->
+    <div class="knowledge-card kc-blue">
+        <h3>🔵 代码模板</h3>
 
-        <p><strong>技巧一：x &amp; (x-1) —— 消去最低位的1</strong></p>
-        <div class="derive-step">
-            <div class="derive-num">1</div>
-            <div class="derive-body">
-                设 <code>x = ...1 0 0 0...0</code>（最低位的1在某位，其右侧全是0）。
-            </div>
-        </div>
-        <div class="derive-step">
-            <div class="derive-num">2</div>
-            <div class="derive-body">
-                则 <code>x-1 = ...0 1 1 1...1</code>（借位：最低位的1变0，其右侧全变1）。
-            </div>
-        </div>
-        <div class="derive-step">
-            <div class="derive-num">3</div>
-            <div class="derive-body">
-                <code>x &amp; (x-1)</code>：两者在最低1位及右侧完全互补，AND结果为0；左侧高位不变。
-                <strong>结论：消去最低位的1。</strong>
-            </div>
-        </div>
-        <p><strong>应用：</strong> 判断2的幂（<code>x &amp; (x-1) == 0</code>，2的幂只有1个1）；统计1的个数（Brian Kernighan）。</p>
+        <p><strong>① 计数 1 的位数（Brian Kernighan）</strong></p>
+<pre><code class="language-python">def count_bits(n: int) -&gt; int:
+    count = 0
+    while n:
+        n &amp;= n - 1    # 消去最低位的 1
+        count += 1
+    return count</code></pre>
+        <details>
+            <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">// C++
+int countBits(uint32_t n) {
+    int count = 0;
+    while (n) { n &amp;= n - 1; ++count; }
+    return count;
+    // 或直接 __builtin_popcount(n)
+}</code></pre>
+<pre><code class="language-rust">// Rust
+fn count_bits(mut n: u32) -&gt; u32 {
+    let mut count = 0;
+    while n != 0 { n &amp;= n - 1; count += 1; }
+    count
+    // 或直接 n.count_ones()
+}</code></pre>
+        </details>
 
-        <hr style="border-color:#1e293b; margin:1rem 0">
+        <p style="margin-top:1rem"><strong>② 判断 2 的幂</strong></p>
+<pre><code class="language-python">def is_power_of_two(n: int) -&gt; bool:
+    return n &gt; 0 and (n &amp; (n - 1)) == 0</code></pre>
+        <details>
+            <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">bool isPowerOfTwo(int n) {
+    return n &gt; 0 &amp;&amp; (n &amp; (n - 1)) == 0;
+}</code></pre>
+<pre><code class="language-rust">fn is_power_of_two(n: i32) -&gt; bool {
+    n &gt; 0 &amp;&amp; (n &amp; (n - 1)) == 0
+}</code></pre>
+        </details>
 
-        <p><strong>技巧二：x &amp; (-x) —— 取最低位的1（lowbit）</strong></p>
-        <div class="derive-step">
-            <div class="derive-num">1</div>
-            <div class="derive-body">
-                <code>-x</code> 的补码 = <code>~x + 1</code>。设 <code>x = A 1 0...0</code>（A是高位部分，最低1在某位，右侧全0）。
-            </div>
-        </div>
-        <div class="derive-step">
-            <div class="derive-num">2</div>
-            <div class="derive-body">
-                <code>~x = Ā 0 1...1</code>（按位取反），<code>-x = ~x+1 = Ā 1 0...0</code>（加1进位链）。
-            </div>
-        </div>
-        <div class="derive-step">
-            <div class="derive-num">3</div>
-            <div class="derive-body">
-                <code>x &amp; (-x)</code>：高位 <code>A &amp; Ā = 0</code>，最低1位 <code>1&1=1</code>，右侧 <code>0&0=0</code>。
-                <strong>结论：只保留最低位的1，即 lowbit(x)。</strong>
-            </div>
-        </div>
-        <p><strong>应用：</strong> 树状数组（BIT/Fenwick tree）的核心，每次 <code>i += lowbit(i)</code> 或 <code>i -= lowbit(i)</code> 跳跃。</p>
+        <p style="margin-top:1rem"><strong>③ 只出现一次的数（LC 136）</strong></p>
+<pre><code class="language-python">def single_number(nums: list[int]) -&gt; int:
+    result = 0
+    for x in nums:
+        result ^= x   # 成对的数异或消去
+    return result</code></pre>
+        <details>
+            <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">int singleNumber(vector&lt;int&gt;&amp; nums) {
+    int result = 0;
+    for (int x : nums) result ^= x;
+    return result;
+}</code></pre>
+<pre><code class="language-rust">fn single_number(nums: &amp;[i32]) -&gt; i32 {
+    nums.iter().fold(0, |acc, &amp;x| acc ^ x)
+}</code></pre>
+        </details>
 
-        <hr style="border-color:#1e293b; margin:1rem 0">
+        <p style="margin-top:1rem"><strong>④ 子集枚举（位掩码）</strong></p>
+<pre><code class="language-python"># 枚举 n 个元素的所有子集
+for mask in range(1 &lt;&lt; n):
+    for i in range(n):
+        if (mask &gt;&gt; i) &amp; 1:
+            pass  # 第 i 个元素被选中
 
-        <p><strong>技巧三：x ^ x = 0 —— 异或去重</strong></p>
-        <p>异或的本质：<strong>同位比较，相同归0，不同归1</strong>。</p>
-        <p>性质：交换律（<code>a^b = b^a</code>）+ 结合律（<code>(a^b)^c = a^(b^c)</code>）+ 自身消去（<code>a^a=0</code>）+ 零元（<code>a^0=a</code>）。</p>
+# 枚举 mask 的所有非空子集
+sub = mask
+while sub:
+    process(sub)
+    sub = (sub - 1) &amp; mask</code></pre>
+        <details>
+            <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">// C++ 枚举 mask 的所有非空子集
+for (int sub = mask; sub; sub = (sub - 1) &amp; mask) {
+    process(sub);
+}</code></pre>
+<pre><code class="language-rust">// Rust 枚举 mask 的所有非空子集
+let mut sub = mask;
+while sub != 0 {
+    process(sub);
+    sub = (sub - 1) &amp; mask;
+}</code></pre>
+        </details>
+    </div>
+
+    <!-- 层5: 复杂度表 -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度速查</h3>
+        <table>
+            <tr><th>操作</th><th>时间</th><th>说明</th></tr>
+            <tr><td>基本位运算（&amp;, |, ^, ~, &lt;&lt;, &gt;&gt;）</td><td>O(1)</td><td>单指令，CPU 原生支持</td></tr>
+            <tr><td>Brian Kernighan 统计 popcount</td><td>O(popcount)</td><td>循环次数 = 1 的个数</td></tr>
+            <tr><td>判断 2 的幂</td><td>O(1)</td><td>一次 AND + 比较</td></tr>
+            <tr><td>全异或找单数</td><td>O(n)</td><td>遍历一次，空间 O(1)</td></tr>
+            <tr><td>枚举 n 位所有子集</td><td>O(2ⁿ)</td><td>共 2ⁿ 个状态</td></tr>
+            <tr><td>枚举 mask 的所有子集</td><td>O(2^|mask|)</td><td>对所有 mask 总计 O(3ⁿ)</td></tr>
+            <tr><td>状压 DP</td><td>O(2ⁿ × n)</td><td>n ≤ 20 时约 2×10⁷</td></tr>
+        </table>
+    </div>
+
+    <!-- 层6: 性质 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 位运算代数性质</h3>
+        <table>
+            <tr><th>性质</th><th>公式</th><th>意义</th></tr>
+            <tr><td>自反性</td><td><code>a ^ a = 0</code></td><td>任何数与自身异或为 0</td></tr>
+            <tr><td>零元</td><td><code>a ^ 0 = a</code></td><td>异或 0 不变</td></tr>
+            <tr><td>交换律</td><td><code>a ^ b = b ^ a</code></td><td>顺序无关</td></tr>
+            <tr><td>结合律</td><td><code>(a ^ b) ^ c = a ^ (b ^ c)</code></td><td>可任意分组</td></tr>
+            <tr><td>AND 单调性</td><td><code>a &amp; b ≤ min(a, b)</code></td><td>AND 只能使值变小或不变</td></tr>
+            <tr><td>OR 单调性</td><td><code>a | b ≥ max(a, b)</code></td><td>OR 只能使值变大或不变</td></tr>
+        </table>
+
         <div class="intuition-box">
-            <strong>推论：</strong>对一组数全部异或，两两出现的数消去，只留下落单的数。<br>
-            证明：<code>a^b^b^c^a = a^a ^ b^b ^ c = 0^0^c = c</code>。顺序无关（交换律+结合律）。
+            <strong>关键推论：</strong> 对一组数全部异或，两两出现的数消去，只留下落单的数。<br>
+            <code>a^b^b^c^a = (a^a)^(b^b)^c = 0^0^c = c</code>（交换律 + 结合律 + 自反性）。
         </div>
 
-        <div class="think-block">
-            <div class="q">🤔 如何用位运算不用临时变量交换两个数？为什么这个方法有局限？</div>
-            <details>
-                <summary>展开答案</summary>
-                <p><code>a ^= b; b ^= a; a ^= b;</code></p>
-                <p>分析：第一步后 <code>a = a^b</code>；第二步 <code>b = b^(a^b) = a</code>；第三步 <code>a = (a^b)^a = b</code>。</p>
-                <p><strong>局限：</strong> 如果 <code>a</code> 和 <code>b</code> 指向同一内存地址（如 <code>swap(arr[i], arr[i])</code>），三步异或都对同一位置操作，结果变成0（自身异或归零），数据丢失。所以实际代码需要先检查 <code>if a != b</code> 或用临时变量。</p>
-            </details>
-        </div>
+        <p><strong>位运算不会溢出？</strong> 严格说 AND / OR / XOR 不产生进位，结果位数不超过操作数位数。但<strong>左移可能溢出</strong>（在 C/Java 的固定位宽下），Python 无此问题。</p>
+    </div>
+
+    <!-- 层7: 例题 -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题</h3>
+
+        <details>
+            <summary>LC 191 位1的个数（Number of 1 Bits）</summary>
+            <p><strong>题意：</strong> 给定无符号整数 n，返回二进制中 1 的个数。</p>
+            <p><strong>思路：</strong> Brian Kernighan 法——每次 <code>n &amp;= n-1</code> 消去最低 1，计数循环次数。</p>
+<pre><code class="language-python">def hammingWeight(n: int) -&gt; int:
+    count = 0
+    while n:
+        n &amp;= n - 1
+        count += 1
+    return count
+# n=11 (0b1011) → 3轮 → 返回 3</code></pre>
+        </details>
+
+        <details>
+            <summary>LC 136 只出现一次的数字（Single Number）</summary>
+            <p><strong>题意：</strong> 数组中每个元素出现两次，只有一个出现一次，找出它。要求 O(1) 空间。</p>
+            <p><strong>思路：</strong> 全部异或，成对的抵消，剩下单独的。</p>
+<pre><code class="language-python">def singleNumber(nums: list[int]) -&gt; int:
+    r = 0
+    for x in nums:
+        r ^= x
+    return r
+# [4,1,2,1,2] → 4^1^2^1^2 = 4</code></pre>
+        </details>
+
+        <details>
+            <summary>LC 260 只出现一次的数字 III（两个落单数）</summary>
+            <p><strong>题意：</strong> 数组中恰好两个数各出现一次，其余出现两次。找出这两个数。</p>
+            <div class="derive-step">
+                <div class="derive-num">1</div>
+                <div class="derive-body">全部异或得 <code>xor = a ^ b</code>（a, b 是两个目标数），<code>xor ≠ 0</code>。</div>
+            </div>
+            <div class="derive-step">
+                <div class="derive-num">2</div>
+                <div class="derive-body">取 <code>diff = xor &amp; (-xor)</code>（lowbit），是 a, b 某一位不同的标记。</div>
+            </div>
+            <div class="derive-step">
+                <div class="derive-num">3</div>
+                <div class="derive-body">按 diff 将数组分两组，各组内部异或即得 a 和 b。</div>
+            </div>
+<pre><code class="language-python">def singleNumber(nums: list[int]) -&gt; list[int]:
+    xor = 0
+    for x in nums: xor ^= x
+    diff = xor &amp; (-xor)           # 分组依据
+    a = b = 0
+    for x in nums:
+        if x &amp; diff: a ^= x
+        else:        b ^= x
+    return [a, b]</code></pre>
+        </details>
+
+        <details>
+            <summary>LC 78 子集（位掩码法）</summary>
+            <p><strong>题意：</strong> 给定无重复整数数组，返回所有子集。</p>
+            <p><strong>思路：</strong> n 个元素共 2ⁿ 个子集，用 0 到 2ⁿ-1 的整数作掩码，第 i 位为 1 表示选第 i 个元素。</p>
+<pre><code class="language-python">def subsets(nums: list[int]) -&gt; list[list[int]]:
+    n = len(nums)
+    result = []
+    for mask in range(1 &lt;&lt; n):
+        subset = [nums[i] for i in range(n) if (mask &gt;&gt; i) &amp; 1]
+        result.append(subset)
+    return result
+# nums=[1,2,3] → [[], [1], [2], [1,2], [3], [1,3], [2,3], [1,2,3]]</code></pre>
+        </details>
+    </div>
+
+    <!-- 层8: 对比 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 方法对比：解"只出现一次的数"</h3>
+        <table>
+            <tr><th>方法</th><th>时间</th><th>空间</th><th>优劣</th></tr>
+            <tr>
+                <td><strong>位运算（异或）</strong></td>
+                <td>O(n)</td>
+                <td>O(1)</td>
+                <td>最优；利用 XOR 自反性，一次遍历</td>
+            </tr>
+            <tr>
+                <td>哈希表计数</td>
+                <td>O(n)</td>
+                <td>O(n)</td>
+                <td>通用；适用于出现 k 次的变体</td>
+            </tr>
+            <tr>
+                <td>排序后扫描</td>
+                <td>O(n log n)</td>
+                <td>O(1)*</td>
+                <td>无额外空间（原地排序）但时间差</td>
+            </tr>
+        </table>
+        <p style="font-size:0.85rem; color:var(--subtle-text)">* 取决于排序算法是否原地。</p>
 
         <div class="think-block">
-            <div class="q">🤔 为什么枚举 mask 的所有子集，对所有 mask 的总复杂度是 O(3ⁿ)？</div>
+            <div class="q">🤔 如果每个元素出现三次只有一个出现一次（LC 137），还能用异或吗？</div>
             <details>
                 <summary>展开答案</summary>
-                <p>对于 n 位的每一位，枚举子集时该位有三种情况：①在 mask 中为0（mask 不含这位，子集也不含）；②在 mask 中为1且子集也选这位；③在 mask 中为1但子集不选这位。</p>
-                <p>所以对 n 位，总组合数 = 每位 3 种选择 = 3ⁿ（二项式定理：Σ C(n,k)·2ᵏ = (1+2)ⁿ = 3ⁿ）。</p>
+                <p>不能直接用异或（三个相同数异或 = 原数而非 0）。需按位统计：每一位上 1 出现的次数 mod 3，余数就是目标数在该位的值。或者用两个计数变量模拟"三进制计数器"。</p>
             </details>
         </div>
     </div>
 
-    <!-- 3. 互动演示：位运算可视化 -->
+    <!-- 层9: 易错 -->
+    <div class="knowledge-card kc-red">
+        <h3>🔴 易错点</h3>
+
+        <p><strong>① 运算符优先级：位运算低于比较运算符</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 优先级陷阱</p>
+<pre><code class="language-python">if x &amp; 1 == 0:    # 解析为 x &amp; (1==0) = x &amp; 0 = 0
+    pass           # 条件永远 False！</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 加括号</p>
+<pre><code class="language-python">if (x &amp; 1) == 0:
+    pass</code></pre>
+            </div>
+        </div>
+
+        <p><strong>② 有符号右移 vs 无符号右移</strong></p>
+        <table>
+            <tr><th>语言</th><th><code>&gt;&gt;</code></th><th>无符号右移</th></tr>
+            <tr><td>C/C++</td><td>实现定义（通常算术移位）</td><td>用 <code>(unsigned)x &gt;&gt; n</code></td></tr>
+            <tr><td>Java</td><td>算术右移（保留符号位）</td><td><code>&gt;&gt;&gt;</code>（逻辑右移，补 0）</td></tr>
+            <tr><td>Python</td><td>算术右移（无限精度，-1 &gt;&gt; n = -1）</td><td>不存在；用 <code>(x &amp; 0xFFFFFFFF) &gt;&gt; n</code></td></tr>
+        </table>
+        <p style="font-size:0.9rem; color:var(--subtle-text)">负数右移在不同语言行为不同，跨语言移植时务必注意。</p>
+
+        <p><strong>③ Python 无限精度整数</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 误以为溢出</p>
+<pre><code class="language-python">~5   # Python: -6（不是 0xFFFFFFFA）
+     # ~x = -x-1（无限精度补码）</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 模拟 32 位</p>
+<pre><code class="language-python">MASK = 0xFFFFFFFF
+(~5) &amp; MASK   # 0xFFFFFFFA = 4294967290
+# 或
+5 ^ MASK      # 翻转低 32 位</code></pre>
+            </div>
+        </div>
+
+        <p><strong>④ 子集枚举漏空集</strong></p>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ sub=0 时退出，漏掉空集</p>
+<pre><code class="language-python">sub = mask
+while sub:
+    process(sub)
+    sub = (sub - 1) &amp; mask
+# 没有处理 sub=0（空集）</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 用 do-while 模式</p>
+<pre><code class="language-python">sub = mask
+while True:
+    process(sub)
+    if sub == 0: break
+    sub = (sub - 1) &amp; mask</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- 层10: 演示容器 -->
     <div class="knowledge-card kc-purple">
         <h3>🎮 互动演示：位运算可视化器</h3>
-        <p style="font-size:0.9rem; color:var(--subtle-text)">输入一个整数（0-255，8位），选择操作后查看每一位的变化。</p>
+        <p style="font-size:0.9rem; color:var(--subtle-text)">输入一个整数（0-255，8 位），选择操作查看每一位的变化。</p>
 
-        <div class="demo-container">
+        <div class="demo-container" id="bitDemo">
             <div class="demo-controls">
                 <label style="color:#94a3b8; font-size:0.85rem">x = </label>
                 <input type="number" id="bit-input" class="demo-input" value="12" min="0" max="255" oninput="bitUpdate()">
@@ -213,255 +571,57 @@
         </div>
 
         <p style="font-size:0.85rem; color:var(--subtle-text)">
-            <span style="color:#a5b4fc">■</span> x 中为1的位 &nbsp;
+            <span style="color:#a5b4fc">■</span> x 中为 1 的位 &nbsp;
             <span style="color:#fcd34d">■</span> 操作涉及的位 &nbsp;
-            <span style="color:#6ee7b7">■</span> 结果中为1的位
+            <span style="color:#6ee7b7">■</span> 结果中为 1 的位
         </p>
     </div>
 
-    <!-- 4. 核心模板 -->
-    <div class="knowledge-card kc-blue">
-        <h3>🔵 核心技巧速查表</h3>
-<pre><code class="language-python"># ===== 基本操作 =====
-x & y     # 按位与：过滤（取出想要的位）
-x | y     # 按位或：置位（设为1）
-x ^ y     # 按位异或：翻转/去重
-~x        # 按位取反（Python：~x = -x-1）
-x << n    # 左移n位（× 2^n）
-x >> n    # 右移n位（÷ 2^n，Python保持符号位）
-
-# ===== 单位操作 =====
-(x >> i) & 1      # 取第i位（0或1）
-x | (1 << i)      # 将第i位置1
-x & ~(1 << i)     # 将第i位清0
-x ^ (1 << i)      # 翻转第i位
-
-# ===== 经典技巧 =====
-x & (x - 1)       # 消去最低位的1
-x & (-x)          # lowbit：取最低位的1（值，非位置）
-x & (x - 1) == 0  # 判断x是2的幂（且x>0）
-bin(x).count('1') # 统计1的个数（Python 内置）
-
-# ===== 子集枚举 =====
-for mask in range(1 << n):       # 枚举n元素的所有子集
-    for i in range(n):
-        if (mask >> i) & 1:      # 第i个元素是否被选中
-            pass
-
-sub = mask                        # 枚举mask的所有子集（含空集）
-while sub:
-    # 处理 sub
-    sub = (sub - 1) & mask       # 下一个子集
-
-# ===== 32位运算（Python需掩码）=====
-MASK = 0xFFFFFFFF
-MAX  = 0x7FFFFFFF
-result = (a + b) & MASK          # 截断到32位
-if result > MAX: result = ~(result ^ MASK)  # 还原有符号数
-</code></pre>
-    </div>
-
-    <!-- 5. 复杂度速查 -->
-    <div class="knowledge-card kc-blue">
-        <h3>📊 复杂度速查</h3>
-        <table>
-            <tr><th>操作</th><th>时间</th><th>原因</th></tr>
-            <tr><td>基本位运算（&, |, ^, ~, &lt;&lt;, &gt;&gt;）</td><td>O(1)</td><td>单指令，CPU 原生支持</td></tr>
-            <tr><td>Brian Kernighan 统计1个数</td><td>O(popcount(x))</td><td>循环次数 = 1的个数，最多 32/64 次</td></tr>
-            <tr><td>枚举n位所有子集</td><td>O(2ⁿ)</td><td>共 2ⁿ 个状态</td></tr>
-            <tr><td>枚举 mask 的所有子集</td><td>O(2^|mask|)</td><td>对所有 mask 总计 O(3ⁿ)（三项式定理）</td></tr>
-            <tr><td>状压 DP</td><td>O(2ⁿ × n)</td><td>n ≤ 20 时约 2×10⁷，可接受</td></tr>
-            <tr><td>01-Trie 最大异或对</td><td>O(32n) 建表，O(32) 查询</td><td>固定32层，每层 O(1)</td></tr>
-        </table>
-    </div>
-
-    <!-- 6. 典型例题 -->
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题详解</h3>
-
-        <details>
-            <summary>例题1：只出现一次的数字（LeetCode 136）—— 异或自消</summary>
-            <p><strong>直觉：</strong> 出现两次的数异或自身为0消去，只剩单次出现的数。</p>
-            <p><strong>为什么 O(1) 空间？</strong> 不需要哈希表记录频率，用 XOR 的代数性质直接消除成对元素。</p>
-<pre><code class="language-python">def singleNumber(nums):
-    result = 0
-    for num in nums:
-        result ^= num   # 相同数对消，剩下唯一数
-    return result
-# 例：[2,2,3,3,4] → 2^2^3^3^4 = 0^0^4 = 4</code></pre>
-            <p><strong>扩展（LeetCode 137，出现三次找单次）：</strong> 用两个变量模拟"三进制计数器"，每位单独统计模3的余数。</p>
-        </details>
-
-        <details>
-            <summary>例题2：两个出现一次的数（LeetCode 260）—— lowbit 分组</summary>
-            <p><strong>推导过程：</strong></p>
-            <div class="derive-step">
-                <div class="derive-num">1</div>
-                <div class="derive-body">全部异或得 <code>xor = a ^ b</code>（a, b 是两个单次数）。</div>
-            </div>
-            <div class="derive-step">
-                <div class="derive-num">2</div>
-                <div class="derive-body"><code>xor != 0</code>，说明 a 和 b 至少有一位不同。取 <code>mask = xor & (-xor)</code>（lowbit），找到 a, b 在这一位的差异位。</div>
-            </div>
-            <div class="derive-step">
-                <div class="derive-num">3</div>
-                <div class="derive-body">用 mask 把数组分成两组：该位为1的和该位为0的。a 在一组，b 在另一组。成对的数同时在某组，异或自消，每组剩下一个答案。</div>
-            </div>
-<pre><code class="language-python">def singleNumbers(nums):
-    xor = 0
-    for n in nums: xor ^= n         # a ^ b
-
-    mask = xor & (-xor)              # 找到a,b在某位的差异
-    a = b = 0
-    for n in nums:
-        if n & mask: a ^= n          # 该位为1的组
-        else:        b ^= n          # 该位为0的组
-    return [a, b]</code></pre>
-        </details>
-
-        <details>
-            <summary>例题3：位运算加法（LeetCode 371）—— 模拟半加器</summary>
-            <p><strong>半加器原理：</strong> 无进位和 = <code>a ^ b</code>（XOR），进位 = <code>(a & b) &lt;&lt; 1</code>（AND左移）。</p>
-            <p><strong>迭代模拟：</strong> 反复计算无进位和 + 进位，直到进位为0。</p>
-<pre><code class="language-python">def getSum(a, b):
-    MASK = 0xFFFFFFFF; MAX = 0x7FFFFFFF
-    while b:
-        carry = (a & b) << 1        # 进位
-        a = (a ^ b) & MASK          # 无进位和（截断32位）
-        b = carry & MASK
-    return a if a <= MAX else ~(a ^ MASK)  # 负数还原</code></pre>
-        </details>
-
-        <details>
-            <summary>例题4：状压 DP —— 旅行商问题（TSP）最短路</summary>
-            <p><strong>状态设计：</strong> <code>dp[mask][i]</code> = 已访问集合为 mask，当前在城市 i 的最短路。</p>
-            <p><strong>mask 的意义：</strong> 第 j 位为1表示城市 j 已访问，这样 n 个城市的所有子集用 2ⁿ 个整数完美表示。</p>
-<pre><code class="language-python">import math
-def tsp(dist, n):
-    INF = float('inf')
-    dp = [[INF] * n for _ in range(1 << n)]
-    dp[1][0] = 0   # 从城市0出发，mask = 0b...0001（只访问了0）
-
-    for mask in range(1 << n):
-        for u in range(n):
-            if not (mask >> u & 1): continue   # u未被访问
-            if dp[mask][u] == INF: continue
-            for v in range(n):
-                if mask >> v & 1: continue     # v已访问
-                new_mask = mask | (1 << v)     # 标记v为已访问
-                dp[new_mask][v] = min(dp[new_mask][v], dp[mask][u] + dist[u][v])
-
-    full = (1 << n) - 1   # 所有城市都访问的mask
-    return min(dp[full][i] + dist[i][0] for i in range(n))</code></pre>
-        </details>
-    </div>
-
-    <!-- 7. 变种对比 -->
-    <div class="knowledge-card kc-cyan">
-        <h3>🔷 变种对比：同一问题的不同位运算解法</h3>
-        <table>
-            <tr><th>问题</th><th>暴力</th><th>位运算</th><th>复杂度优势</th></tr>
-            <tr><td>判断奇偶</td><td><code>x % 2 == 0</code></td><td><code>x & 1 == 0</code></td><td>等价，但&更快</td></tr>
-            <tr><td>判断2的幂</td><td>循环整除</td><td><code>x & (x-1) == 0</code></td><td>O(1) vs O(log x)</td></tr>
-            <tr><td>统计1个数</td><td>逐位检查 O(32)</td><td>Brian Kernighan O(popcount)</td><td>稀疏时更快</td></tr>
-            <tr><td>去重找单数</td><td>哈希表 O(n) 空间</td><td>全部异或 O(1) 空间</td><td>空间 O(n)→O(1)</td></tr>
-            <tr><td>x/2（整数）</td><td><code>x // 2</code></td><td><code>x >> 1</code></td><td>等价，>>更快</td></tr>
-            <tr><td>交换两数</td><td>临时变量</td><td><code>a^=b;b^=a;a^=b</code></td><td>同地址时危险！</td></tr>
-        </table>
-    </div>
-
-    <!-- 8. 易错点 -->
-    <div class="knowledge-card kc-red">
-        <h3>🔴 易错点</h3>
-
-        <p><strong>① 位运算优先级低，必须加括号</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 优先级陷阱</p>
-<pre><code class="language-python">if x & 1 == 0:
-    pass
-# 等价于 x & (1 == 0) = x & False = 0
-# 条件永远为 False！</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 加括号</p>
-<pre><code class="language-python">if (x & 1) == 0:
-    pass
-# 或：
-if not (x & 1):
-    pass</code></pre>
-            </div>
-        </div>
-
-        <p><strong>② Python 的 ~x 不等于 C 的无符号取反</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 误解</p>
-<pre><code class="language-python">x = 5       # 0b0101
-~x          # Python: -6（无限精度补码）
-            # 不是 0b11111010</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 用掩码模拟</p>
-<pre><code class="language-python">MASK = 0xFFFFFFFF
-(~x) & MASK   # 模拟32位取反
-# 等价于：
-x ^ MASK      # 翻转所有32位</code></pre>
-            </div>
-        </div>
-
-        <p><strong>③ 子集枚举：(sub-1)&mask 在 sub=0 时会死循环</strong></p>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 未处理 sub=0</p>
-<pre><code class="language-python">sub = mask
-while sub:     # sub=0时退出，但0是子集！
-    process(sub)
-    sub = (sub-1) & mask</code></pre>
-            </div>
-            <div class="right">
-                <p>✅ 也处理空集</p>
-<pre><code class="language-python">sub = mask
-while True:
-    process(sub)
-    if sub == 0: break
-    sub = (sub-1) & mask</code></pre>
-            </div>
-        </div>
-
-        <p><strong>④ 左移溢出（Python 无影响，C/Java 需注意）</strong></p>
-        <p style="font-size:0.9rem"><code>1 &lt;&lt; 31</code> 在 Python 中安全（大整数），但在 Java/C 的 int 中会变成负数（符号位变1）。状压 DP 中 n 较大时，用 <code>1 &lt;&lt; n</code> 要确认语言位宽。</p>
-    </div>
-
-    <!-- 9. 竞赛拓展 -->
+    <!-- 层11: 竞赛拓展 -->
     <div class="knowledge-card kc-cyan">
         <h3>🔷 竞赛拓展</h3>
 
-        <p><strong>按位贡献法（汉明距离总和）：</strong> 各位独立计算，O(32n) 求所有对的 XOR/AND/OR 之和。</p>
-<pre><code class="language-python">def totalHammingDistance(nums):
-    total = 0
-    for bit in range(32):
-        ones = sum((n >> bit) & 1 for n in nums)
-        zeros = len(nums) - ones
-        total += ones * zeros   # 每对(一个1, 一个0)贡献1
-    return total</code></pre>
+        <p><strong>位并行（Bitboard）：</strong> 用 64 位整数表示 8×8 棋盘，每位代表一个格子。一次 AND/OR/XOR 即可并行处理 64 个格子的状态（国际象棋引擎 Stockfish 的核心技术）。</p>
 
-        <p><strong>01-Trie 求最大异或对：</strong> 将所有数的二进制高位到低位插入 Trie，查询时在每一位贪心选择与当前位相反的分支（使 XOR 最大）。建 Trie O(32n)，每次查询 O(32)。</p>
-
-        <p><strong>Gray 码：</strong> <code>g(n) = n XOR (n >> 1)</code>，相邻数字恰好差一位。逆变换（Gray→binary）：<code>b = g; b ^= g>>1; b ^= g>>2; ...</code>。用于减少状态切换次数（工业电路、循环码）。</p>
+        <p><strong>GCC/Clang 内建函数（C/C++）：</strong></p>
+        <table>
+            <tr><th>函数</th><th>功能</th><th>等价</th></tr>
+            <tr><td><code>__builtin_popcount(x)</code></td><td>1 的个数</td><td>Brian Kernighan</td></tr>
+            <tr><td><code>__builtin_clz(x)</code></td><td>前导零个数</td><td>最高位 1 的位置</td></tr>
+            <tr><td><code>__builtin_ctz(x)</code></td><td>末尾零个数</td><td>最低位 1 的位置</td></tr>
+            <tr><td><code>__builtin_parity(x)</code></td><td>1 的个数奇偶性</td><td>popcount % 2</td></tr>
+        </table>
+        <p style="font-size:0.85rem; color:var(--subtle-text)">这些通常编译为单条 CPU 指令（POPCNT, LZCNT, TZCNT），比手写循环快得多。</p>
 
         <p><strong>Gosper's Hack（枚举所有 popcount=k 的 mask）：</strong></p>
-<pre><code class="language-python">def next_mask(mask):
-    # 找下一个popcount相同的更大mask
-    c = mask & -mask
-    r = mask + c
-    return (((r ^ mask) >> 2) // c) | r
+<pre><code class="language-python">def gosper_hack(n, k):
+    """枚举 n 位中恰好选 k 个的所有 mask"""
+    mask = (1 &lt;&lt; k) - 1          # 初始：最低 k 位全 1
+    while mask &lt; (1 &lt;&lt; n):
+        yield mask
+        c = mask &amp; -mask         # lowbit
+        r = mask + c             # 进位
+        mask = (((r ^ mask) &gt;&gt; 2) // c) | r</code></pre>
+    </div>
 
-# 枚举n位中恰好选k个的所有mask
-mask = (1 << k) - 1   # 初始：最低k位全1
-while mask < (1 << n):
-    process(mask)
-    mask = next_mask(mask)</code></pre>
+    <!-- 层12: 工业应用 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔷 工业应用</h3>
+
+        <p><strong>权限系统位掩码：</strong> 用每一位表示一种权限，一个整数即可编码多个权限组合。</p>
+<pre><code class="language-python">READ    = 1 &lt;&lt; 0   # 0b0001
+WRITE   = 1 &lt;&lt; 1   # 0b0010
+EXECUTE = 1 &lt;&lt; 2   # 0b0100
+ADMIN   = 1 &lt;&lt; 3   # 0b1000
+
+user_perm = READ | WRITE           # 授予读写
+has_read  = bool(user_perm &amp; READ) # 检查读权限 → True
+user_perm &amp;= ~WRITE                # 撤销写权限
+# Linux 文件权限 chmod 755 = rwxr-xr-x 就是这个原理</code></pre>
+
+        <p><strong>布隆过滤器（Bloom Filter）：</strong> 用 m 位的位数组 + k 个哈希函数实现概率型集合查询。插入时设置 k 位为 1，查询时检查 k 位是否全为 1。<strong>可能误判（false positive），绝不漏判（no false negative）</strong>。广泛用于缓存穿透防护、垃圾邮件过滤。</p>
+
+        <p><strong>SIMD（Single Instruction Multiple Data）：</strong> 现代 CPU 的向量指令集（SSE/AVX/NEON）在 128/256/512 位宽的寄存器上并行执行位运算，是图像处理、机器学习推理、高性能计算的基础——本质上是"超宽位运算"。</p>
     </div>
 </section>
 

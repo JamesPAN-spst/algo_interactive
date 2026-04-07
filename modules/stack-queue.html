@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>栈与队列模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,155 +33,592 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
-    
-        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
-        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
-        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
-        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
-        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
-        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
-        .derive-body { flex:1; }
-        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
-        .intuition-box strong { color:#10b981; }
-        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
-        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
-        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
-        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
-        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+        .naive-vs-smart { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.8rem 0; }
+        .naive-vs-smart .naive { border-left: 3px solid #f43f5e; padding-left: 0.8rem; }
+        .naive-vs-smart .smart { border-left: 3px solid #10b981; padding-left: 0.8rem; }
+        .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
+        @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
+
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
     </style>
 </head>
 <body data-theme="day">
     <header>
         <div class="container header-inner">
-            <div><h1>栈与队列模块</h1><p><a href="../index.html">返回主页面</a></p></div>
-            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+            <div>
+                <h1>栈与队列模块</h1>
+                <p><a href="../index.html">返回主页面</a></p>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="primary">切换模式</button>
+            </div>
         </div>
     </header>
     <main class="container">
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+
+    <!-- ═══ 层 0: 引子问题 ═══ -->
+    <div class="knowledge-card kc-gray">
+        <h3>🎯 引子问题</h3>
+        <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+            "一堆人排队买奶茶，怎么在任何时刻都能 O(1) 知道队列中最高的那个人有多高？"
+        </p>
+        <p>如果每来一个新人你就全部扫一遍 O(N)，效率太低。有没有一种数据结构，能让你在 push/pop 的同时始终用 O(1) 拿到当前极值？带着这个问题，我们来深入栈与队列的高级变种。</p>
+    </div>
+
+    <!-- ═══ 层 1: 前置知识 ═══ -->
     <div class="knowledge-card kc-gray">
         <h3>⚙️ 前置知识</h3>
         <span class="prereq-tag">线性表操作</span>
-        <span class="prereq-tag">时间线倒流</span>
-        <p>栈（LIFO）与队列（FIFO）本质上是被“封印”了随机访问能力的数组。它们存在的意义不是为了灵活，而是为了在特定的出入顺序下（如历史回退、广度扩散）提供极致简单的 <strong>O(1) 状态管理</strong>。学会这两种数据结构，就是学会了如何掌控程序的“时间沙漏”。</p>
+        <span class="prereq-tag">递归与调用栈</span>
+        <span class="prereq-tag">Big-O 复杂度</span>
+        <span class="prereq-tag">LIFO / FIFO 概念</span>
+        <p><strong>栈 (Stack, LIFO)</strong>：后进先出。类比一摞碗碟，只能从顶部取放。<code>push</code>/<code>pop</code> 均 O(1)。Python 用 <code>list</code>，C++ 用 <code>std::stack</code>，Rust 用 <code>Vec</code>。</p>
+        <p><strong>队列 (Queue, FIFO)</strong>：先进先出。类比排队结账。Python 用 <code>collections.deque</code>，C++ 用 <code>std::queue</code>，Rust 用 <code>VecDeque</code>。</p>
+        <p><strong>双端队列 (Deque)</strong>：两端都能 O(1) push/pop。它是单调队列的底层载体。</p>
+        <p>如果对数组和链表的基本操作不熟悉，建议先阅读 <a href="arrays.html">数组模块</a> 和 <a href="linked-list.html">链表模块</a>。</p>
     </div>
 
+    <!-- ═══ 层 2: 研究动机与问题建模 ═══ -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：特殊栈与特殊队列的诞生</h3>
-
-        <h4>1. 最小栈 (Min-Stack) —— 为什么不开两个指针找最小值？</h4>
+        <h3>🔬 研究动机——为什么需要"特殊"的栈和队列？</h3>
+        <p>普通栈/队列只支持基本的 push/pop。但在实际问题中，我们常常需要<strong>在受限操作下维护额外信息</strong>——比如当前最大值、左右边界、运算优先级。这催生了三种核心变种：</p>
         <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">全局一个最小值 (Naive)</h4><p>因为如果当前最小的元素（比如 1）被 Pop 出栈了，栈里仅次于它的“第二小”元素（比如 3）没人记得！你需要 O(N) 遍历重新找。这违背了栈 O(1) 的初衷。</p></div>
-            <div class="smart"><h4 class="label">伴生备忘录 (Smart)</h4><p>我们在向栈内压入数据的时候，顺便压入一个元组 <code>(val, 当前最小)</code>。每个元素都像带着一个紧箍咒一样记住了它进栈“那一刻”的全局最小值！它死了哪怕第二小元素漏了，第二小元素的紧箍咒也会瞬间恢复之前的最小值。</p></div>
+            <div class="naive">
+                <h4 class="label">🐢 暴力法 (Naive)</h4>
+                <p>每次需要极值时，遍历整个栈/队列 → O(N)。</p>
+                <p>找 Next Greater Element：对每个元素向右扫到底 → O(N²)。</p>
+                <p>滑动窗口最大值：每滑一步遍历窗口 → O(NK)。</p>
+            </div>
+            <div class="smart">
+                <h4 class="label">⚡ 最优解 (Smart)</h4>
+                <p><strong>最小/最大栈</strong>：辅助栈同步记录当前极值 → O(1) 查询。</p>
+                <p><strong>单调栈</strong>：维护单调不变量，每个元素至多入栈出栈各一次 → O(N) 总计。</p>
+                <p><strong>单调队列</strong>：双端队列 + 过期淘汰 → O(N) 总计。</p>
+            </div>
         </div>
+        <p><strong>形式化定义（以 Next Greater Element 为例）</strong>：</p>
+        <p>给定数组 <code>nums[0..n-1]</code>，对每个 <code>i</code>，求最小的 <code>j &gt; i</code> 使得 <code>nums[j] &gt; nums[i]</code>。若不存在则为 -1。</p>
+    </div>
 
-        <h4>2. 单调栈 (Monotonic Stack) —— 寻找“下一个更大元素”</h4>
+    <!-- ═══ 层 3: 推导卡片 ═══ -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：从暴力到最优的思维演化</h3>
+
+        <h4>1. 单调栈——寻找 Next Greater Element</h4>
         <div class="derive-step">
             <div class="derive-num">1</div>
             <div class="derive-body">
-                <strong>破而后立：</strong>如果我正在维护一个递减栈 <code>[10, 8, 5]</code>，此时来了一个庞然大物 <code>9</code>。它破坏了递减性！
+                <strong>暴力出发</strong>：对每个 <code>nums[i]</code>，向右逐个扫描，找到第一个更大的就停。两层循环 O(N²)。能不能避免重复扫描？
             </div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
             <div class="derive-body">
-                <strong>榨干剩余价值：</strong>9 嚣张地要把之前的 5 和 8 挤走。但在它们滚蛋（Pop）之前，我们恍然大悟：<strong>把他们挤走的人，不正是它们苦苦寻找的右侧“下一个更大元素”吗？！</strong> 于是我们记录 <code>5的右霸=9</code>，<code>8的右霸=9</code>，然后 9 坐稳了它的位置 <code>[10, 9]</code>。
+                <strong>关键转变——从"每个人找大哥"变成"大哥来了结算小弟"</strong>：维护一个「从栈底到栈顶递减」的栈。当新元素 <code>x</code> 入栈时，把栈中所有 <code>&lt; x</code> 的元素弹出——x 就是它们苦苦等待的 Next Greater！
             </div>
         </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>不变量（Invariant）</strong>：栈中元素始终<strong>从底到顶单调递减</strong>（对于找 Next Greater）；因为如果栈中存在 <code>a &lt; b</code>（a 在下方），那 b 进栈时就已经把 a 弹掉了。
+            </div>
+        </div>
+
+        <div class="intuition-box">
+            <strong>💡 核心洞察</strong>：单调栈的本质是——当一个更强的元素出现时，之前所有比它弱的「悬而未决」的元素一次性结算。每个元素一生只入栈一次、出栈一次，所以总操作数 ≤ 2N，均摊 O(1)。
+        </div>
+
         <div class="think-block">
-            <div class="q">Q: 为什么单调栈能把寻找所有 Next Greater 的死循环降低到了 O(N)？</div>
+            <div class="q">Q: 如果找的是 Next Smaller（下一个更小），单调性要反过来吗？</div>
             <details>
-                <summary>查看答疑</summary>
-                因为在这个暴力的“弱肉强食”淘汰赛中，虽然新来的元素可能一下子踢出去了好几个较小的元素（看作多层循环）。但是，所有在数组里的元素，<strong>一生都只进栈一次，出栈一次</strong>！不论你怎么循环，总的进出次数严格限定在 2N 之内。这就是均摊分析出的极限 O(N)。
+                <summary>展开解答</summary>
+                <p>是的。找 Next Greater 用「递减栈」（栈顶最小），找 Next Smaller 用「递增栈」（栈顶最大）。记忆口诀：<strong>要找大的，维护小的升序排列；要找小的，维护大的降序排列</strong>——待决者从弱到强排队，来一个更极端的就结算所有不满足条件的。</p>
             </details>
         </div>
 
-        <h4>3. 滑动窗口最大值与单调队列 (Monotonic Queue)</h4>
-        <div class="intuition-box">
-            这本质上是一个有寿命限制的“选秀节目”。如果一个选手 <code>x</code> 来了，发现前面有个选手 <code>y</code> 年纪比他大（位置更靠前，死得早）还比他弱（数值小）：那 <code>y</code> 就连一点残存价值都没有了（它不可能成为最大值了），直接从队尾踢掉！<br>
-            然而，为什么不能用单调栈？因为栈只能在一头操作，而这里活得太老的选手（寿命到了逃出窗口）需要从队头 <code>popleft()</code> 离开！所以必须使用<strong>双端队列 (Deque)</strong>。
+        <h4>2. 单调队列——滑动窗口最大值</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>为什么不能用单调栈？</strong>栈只能操作一端。但滑动窗口有「过期」概念——左边界滑出窗口的元素必须从<strong>队头</strong>移除，而新元素从<strong>队尾</strong>加入。需要双端操作 → 必须用 <strong>Deque</strong>。
+            </div>
         </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>淘汰规则</strong>：新元素入队前，把队尾所有「比它小又比它老」的元素踢掉——它们不可能再成为任何未来窗口的最大值。同时检查队头是否已过期（下标超出窗口左边界）。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>结果</strong>：队列始终<strong>从头到尾递减</strong>，队头就是当前窗口的最大值。
+            </div>
+        </div>
+
+        <h4>3. 表达式求值——Shunting-Yard 算法</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>问题</strong>：中缀表达式 <code>3 + 4 * 2 - (1 + 5)</code> 怎么正确计算？乘号要优先于加号，括号要优先于一切。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>双栈法</strong>：一个<strong>数字栈</strong>存操作数，一个<strong>运算符栈</strong>存运算符。遇到运算符时，如果栈顶优先级 ≥ 当前运算符，先弹出栈顶运算符计算，再压入当前运算符。遇到 <code>(</code> 直接压入，遇到 <code>)</code> 弹出到 <code>(</code>。
+            </div>
+        </div>
+
+        <h4>示意图：x86-64 函数调用栈帧布局</h4>
+<pre class="ascii-art">
+高地址 ┌──────────────────────────┐
+       │   调用者的栈帧 (caller)    │
+       ├──────────────────────────┤
+       │   返回地址 (RIP saved)     │  ← call 指令自动压入
+       ├──────────────────────────┤
+       │   旧 RBP (frame pointer)  │  ← push rbp; mov rbp, rsp
+       ├──────────────────────────┤ ← RBP 指向这里
+       │   局部变量 1              │  [rbp - 8]
+       │   局部变量 2              │  [rbp - 16]
+       │   ...                    │
+       ├──────────────────────────┤
+       │   被保存的寄存器          │  (callee-saved: rbx, r12-r15)
+       ├──────────────────────────┤ ← RSP 指向这里
+低地址 └──────────────────────────┘
+
+每次函数调用 push 一个栈帧，return 时 pop。
+递归过深 → 栈帧累积 → Stack Overflow!
+</pre>
+
+        <h4>示意图：单调栈处理 [4, 2, 6, 1, 3] 的状态变化</h4>
+<pre class="ascii-art">
+处理 nums = [4, 2, 6, 1, 3]，找 Next Greater Element
+栈存索引，下方标注对应值。res 初始 [-1,-1,-1,-1,-1]
+
+Step 1: push idx=0(4)        栈: [0]        即 [4]
+Step 2: push idx=1(2)        栈: [0,1]      即 [4,2] ← 2&lt;4 不破坏递减
+Step 3: 来了 6!
+        pop idx=1(2) → res[1]=6   栈: [0]
+        pop idx=0(4) → res[0]=6   栈: []
+        push idx=2(6)             栈: [2]      即 [6]
+Step 4: push idx=3(1)        栈: [2,3]      即 [6,1]
+Step 5: 来了 3!
+        pop idx=3(1) → res[3]=3   栈: [2]
+        push idx=4(3)             栈: [2,4]    即 [6,3]
+遍历结束，栈中剩余 [6,3] 没有 next greater → 保持 -1
+
+最终 res = [6, 6, -1, 3, -1]
+</pre>
     </div>
 
+    <!-- ═══ 层 4: 模板代码 ═══ -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：单调栈与双端单调队列</h3>
-<pre><code class="language-python"># 1. 单调栈找 Next Greater Element
-def next_greater(nums):
-    res = [-1] * len(nums)
-    stack = [] # 里面存放的是索引 (index)
-    
-    for i in range(len(nums)):
-        # 当遇到高个子，把栈里不如它高的直接踢了，并结算它们的答案
-        while stack and nums[i] > nums[stack[-1]]:
-            popped_idx = stack.pop()
-            res[popped_idx] = nums[i]
-        stack.append(i) # 当前小弟老老实实进栈排队
-    return res
+        <h3>💻 模板代码</h3>
 
-# 2. 单调队列：滑动窗口的最大值
-from collections import deque
-def max_sliding_window(nums, k):
-    res = []
-    dq = deque() # 单调递减队列，存放索引
-    
-    for i in range(len(nums)):
-        # 1. 淘汰太老的队员（如果队头的寿命超出了窗口左边界）
-        if dq and dq[0] < i - k + 1:
-            dq.popleft()
-            
-        # 2. 从队尾把不如自己大、不仅老还菜的全踢了！
-        while dq and nums[i] >= nums[dq[-1]]:
-            dq.pop()
-            
-        # 3. 自己成为新一届的尾巴入队
-        dq.append(i)
-        
-        # 什么时候记录答案？当窗口完全成型时。
-        if i >= k - 1:
-            res.append(nums[dq[0]])  # 当前窗口毫无疑问最大的是谁？队头！
-    
+        <h4>A. 单调栈——Next Greater Element</h4>
+<pre><code class="language-python">def next_greater(nums: list[int]) -> list[int]:
+    """对每个元素找右侧最近的更大值，不存在则 -1"""
+    n = len(nums)
+    res = [-1] * n
+    stack: list[int] = []          # [why] 存索引而非值，方便写回 res
+
+    for i in range(n):
+        # [why] 新元素比栈顶大 → 栈顶找到了 Next Greater，结算弹出
+        while stack and nums[i] > nums[stack[-1]]:
+            idx = stack.pop()
+            res[idx] = nums[i]
+        stack.append(i)            # [why] 当前元素暂时没找到 NG，入栈等待
     return res
 </code></pre>
+
+        <h4>B. 单调队列——滑动窗口最大值</h4>
+<pre><code class="language-python">from collections import deque
+
+def max_sliding_window(nums: list[int], k: int) -> list[int]:
+    """返回每个大小为 k 的滑动窗口中的最大值"""
+    res: list[int] = []
+    dq: deque[int] = deque()       # [why] 存索引，维护从头到尾递减
+
+    for i in range(len(nums)):
+        # ─── Phase 1: 过期淘汰 ───
+        if dq and dq[0] < i - k + 1:
+            dq.popleft()           # [why] 队头超出窗口左边界
+
+        # ─── Phase 2: 尾部清洗 ───
+        while dq and nums[i] >= nums[dq[-1]]:
+            dq.pop()               # [why] 比新人老又弱的元素永远不可能当最大值
+
+        # ─── Phase 3: 入队 ───
+        dq.append(i)
+
+        # ─── Phase 4: 收集答案 ───
+        if i >= k - 1:             # [why] 窗口满了才开始输出
+            res.append(nums[dq[0]])
+    return res
+</code></pre>
+
+        <h4>C. 表达式求值（简化版 Shunting-Yard）</h4>
+<pre><code class="language-python">def evaluate(expression: str) -> int:
+    """计算含 +, -, *, / 和括号的整数表达式"""
+    precedence = {'+': 1, '-': 1, '*': 2, '/': 2}
+    nums: list[int] = []
+    ops: list[str] = []
+
+    def apply_op() -> None:
+        b, a = nums.pop(), nums.pop()  # [why] 注意顺序：b 是后操作数
+        op = ops.pop()
+        if   op == '+': nums.append(a + b)
+        elif op == '-': nums.append(a - b)
+        elif op == '*': nums.append(a * b)
+        elif op == '/': nums.append(int(a / b))  # [why] 截断除法
+
+    i, n = 0, len(expression)
+    while i < n:
+        ch = expression[i]
+        if ch == ' ':
+            i += 1; continue
+        if ch.isdigit():
+            j = i
+            while j < n and expression[j].isdigit():
+                j += 1
+            nums.append(int(expression[i:j]))
+            i = j; continue
+        if ch == '(':
+            ops.append(ch)
+        elif ch == ')':
+            while ops[-1] != '(':      # [why] 弹出到匹配的左括号
+                apply_op()
+            ops.pop()                  # [why] 弹掉左括号本身
+        else:  # 运算符
+            while ops and ops[-1] != '(' and precedence.get(ops[-1], 0) >= precedence[ch]:
+                apply_op()             # [why] 栈顶优先级 >= 当前，先算栈顶
+            ops.append(ch)
+        i += 1
+
+    while ops:
+        apply_op()
+    return nums[0]
+</code></pre>
+
+        <details>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;vector&gt;
+#include &lt;stack&gt;
+#include &lt;deque&gt;
+using namespace std;
+
+// A. 单调栈 — Next Greater Element
+vector&lt;int&gt; nextGreater(const vector&lt;int&gt;&amp; nums) {
+    int n = nums.size();
+    vector&lt;int&gt; res(n, -1);
+    stack&lt;int&gt; stk;                // 存索引
+    for (int i = 0; i &lt; n; ++i) {
+        while (!stk.empty() &amp;&amp; nums[i] &gt; nums[stk.top()]) {
+            res[stk.top()] = nums[i];
+            stk.pop();
+        }
+        stk.push(i);
+    }
+    return res;
+}
+
+// B. 单调队列 — 滑动窗口最大值
+vector&lt;int&gt; maxSlidingWindow(const vector&lt;int&gt;&amp; nums, int k) {
+    vector&lt;int&gt; res;
+    deque&lt;int&gt; dq;                 // 存索引，从头到尾递减
+    for (int i = 0; i &lt; (int)nums.size(); ++i) {
+        if (!dq.empty() &amp;&amp; dq.front() &lt; i - k + 1)
+            dq.pop_front();        // 过期淘汰
+        while (!dq.empty() &amp;&amp; nums[i] &gt;= nums[dq.back()])
+            dq.pop_back();         // 尾部清洗
+        dq.push_back(i);
+        if (i &gt;= k - 1)
+            res.push_back(nums[dq.front()]);
+    }
+    return res;
+    // ⚠️ C++ 注意：signed/unsigned 比较——i 和 k 都用 int 避免隐式转换
+}
+</code></pre>
+        </details>
+        <details>
+            <summary>Rust 版本</summary>
+<pre><code class="language-rust">use std::collections::VecDeque;
+
+/// A. 单调栈 — Next Greater Element
+fn next_greater(nums: &amp;[i32]) -&gt; Vec&lt;i32&gt; {
+    let n = nums.len();
+    let mut res = vec![-1i32; n];
+    let mut stack: Vec&lt;usize&gt; = Vec::new(); // 存索引
+    for i in 0..n {
+        while let Some(&amp;top) = stack.last() {
+            if nums[i] &gt; nums[top] {
+                let idx = stack.pop().unwrap(); // 安全：刚检查过非空
+                res[idx] = nums[i];
+            } else {
+                break;
+            }
+        }
+        stack.push(i);
+    }
+    res
+}
+
+/// B. 单调队列 — 滑动窗口最大值
+fn max_sliding_window(nums: &amp;[i32], k: usize) -&gt; Vec&lt;i32&gt; {
+    let mut res = Vec::new();
+    let mut dq: VecDeque&lt;usize&gt; = VecDeque::new();
+    for i in 0..nums.len() {
+        // ⚠️ Rust 注意：usize 下溢——i - k + 1 当 i &lt; k-1 时会 panic
+        //    用 i + 1 &gt; k 代替 i &gt;= k 来避免减法下溢
+        if let Some(&amp;front) = dq.front() {
+            if i + 1 &gt; k &amp;&amp; front &lt; i + 1 - k {
+                dq.pop_front();
+            }
+        }
+        while let Some(&amp;back) = dq.back() {
+            if nums[i] &gt;= nums[back] { dq.pop_back(); }
+            else { break; }
+        }
+        dq.push_back(i);
+        if i + 1 &gt;= k {
+            res.push(nums[*dq.front().unwrap()]);
+        }
+    }
+    res
+}
+</code></pre>
+        </details>
+    </div>
+
+    <!-- ═══ 层 5: 复杂度分析表 ═══ -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度分析</h3>
         <table>
-            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>找单一侧的极大/极小（如雨水问题）</td><td>O(N)</td><td>O(N)</td><td>单调栈。利用 O(N) 的历史存储记录单侧遮挡。</td></tr>
-            <tr><td>滑动窗口内极值</td><td>O(N)</td><td>O(K)</td><td>双端队列。除了被踢出去的，最大维持 K 个候补。</td></tr>
+            <tr><th>技巧</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>单调栈 (NGE)</td><td>O(N)</td><td>O(N)</td><td>O(N)</td><td>每个元素至多 push 1 次 + pop 1 次 = 总操作 ≤ 2N</td></tr>
+            <tr><td>单调队列 (滑窗最大)</td><td>O(N)</td><td>O(N)</td><td>O(K)</td><td>同理，每个元素最多入队出队各一次；队列最多 K 个元素</td></tr>
+            <tr><td>最小/最大栈</td><td>O(1) 查询</td><td>O(1) 查询</td><td>O(N)</td><td>辅助栈与主栈等高，空间翻倍</td></tr>
+            <tr><td>表达式求值</td><td>O(N)</td><td>O(N)</td><td>O(N)</td><td>每个 token 至多进出运算符栈各一次</td></tr>
+        </table>
+        <p style="margin-top:0.8rem; font-size:0.9rem; color:#94a3b8;">
+            <strong>均摊分析直觉</strong>：想象 N 个人排队进出一扇门。每人最多进门一次、出门一次。不管中间怎么折腾，总进出次数 ≤ 2N，摊到每个人身上就是常数。
+        </p>
+    </div>
+
+    <!-- ═══ 层 6: 核心性质与定理 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📐 核心性质与定理</h3>
+
+        <p><strong>性质 1：单调栈不变量</strong></p>
+        <p>在处理 Next Greater 的递减单调栈中，任意时刻栈中元素满足：<code>nums[stack[0]] ≥ nums[stack[1]] ≥ ... ≥ nums[stack[top]]</code>。</p>
+        <p style="color:#94a3b8; font-size:0.9rem;"><em>直觉</em>：如果栈中存在一对 a（下方）&lt; b（上方），则 b 入栈时已经把 a 弹出了——矛盾。</p>
+
+        <p><strong>性质 2：均摊 O(N) 正确性</strong></p>
+        <p>设势函数 Φ = 栈中元素数量。每次 push 使 Φ+1（摊还代价 2），每次 pop 使 Φ-1（摊还代价 0）。由于 Φ ≥ 0 且初末均为 0，总代价 ≤ 2N。</p>
+
+        <p><strong>性质 3：单调队列队头即为窗口极值</strong></p>
+        <p>队列中元素按下标递增、按值递减排列。队头元素下标最老、值最大，因此是当前窗口的最大值。</p>
+
+        <p><strong>定理：比较排序下界与栈的关系</strong></p>
+        <p>栈排序（利用一个辅助栈将主栈排序）时间复杂度 Ω(N log N)，与比较排序下界一致。证明思路：每次 push/pop 可视为一次比较决策。（仅提及，不展开）</p>
+    </div>
+
+    <!-- ═══ 层 7: 典型例题 ═══ -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题</h3>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.3);">基础</span> LC 496 / 503 — Next Greater Element I / II</summary>
+            <p><strong>题意</strong>：给定数组，对每个元素找右侧第一个比它大的值。503 变体为循环数组。</p>
+            <p><strong>思路</strong>：标准单调递减栈。循环数组的处理方式是遍历 2N 次，下标取模 <code>i % n</code>。</p>
+<pre><code class="language-python">def next_greater_circular(nums: list[int]) -> list[int]:
+    n = len(nums)
+    res = [-1] * n
+    stack: list[int] = []
+    for i in range(2 * n):         # [why] 循环数组：遍历两圈
+        while stack and nums[i % n] > nums[stack[-1]]:
+            res[stack.pop()] = nums[i % n]
+        if i < n:                  # [why] 第二圈不再入栈，只消化剩余
+            stack.append(i)
+    return res
+</code></pre>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15); color:#fbbf24; border-color:rgba(251,191,36,.3);">中级</span> LC 84 — 柱状图中最大矩形</summary>
+            <p><strong>题意</strong>：给定柱状图高度数组，求能勾画出的最大矩形面积。</p>
+            <p><strong>思路</strong>：维护单调递增栈（栈顶最高）。当遇到比栈顶矮的柱子时，弹出栈顶 h，以 h 为高度的矩形宽度 = 当前位置 - 新栈顶 - 1。</p>
+<pre><code class="language-python">def largest_rectangle(heights: list[int]) -> int:
+    stack: list[int] = [-1]        # [why] 哨兵简化边界计算
+    max_area = 0
+    for i, h in enumerate(heights):
+        while stack[-1] != -1 and h < heights[stack[-1]]:
+            height = heights[stack.pop()]
+            width = i - stack[-1] - 1
+            max_area = max(max_area, height * width)
+        stack.append(i)
+    while stack[-1] != -1:         # [why] 处理残留在栈中的柱子
+        height = heights[stack.pop()]
+        width = len(heights) - stack[-1] - 1
+        max_area = max(max_area, height * width)
+    return max_area
+</code></pre>
+            <p><strong>变种对比</strong>：LC 85（最大矩形）在二维矩阵中按行叠加高度，对每行调用一次本算法。</p>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15); color:#f87171; border-color:rgba(248,113,113,.3);">高级</span> LC 42 — 接雨水</summary>
+            <p><strong>题意</strong>：给定 N 个非负整数表示柱子高度，计算能接住多少雨水。</p>
+            <p><strong>方法一（单调递减栈）</strong>：遇到比栈顶高的柱子时，弹出水坑底，按层计算积水。</p>
+            <p><strong>方法二（双指针）</strong>：从两端同时向中间收缩，取 min(left_max, right_max) - height[i]。</p>
+            <p><strong>变种对比</strong>：LC 407（三维接雨水）使用 BFS + 最小堆，从边界向内蔓延。</p>
+        </details>
+    </div>
+
+    <!-- ═══ 层 8: 技术对比表 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔄 技术对比</h3>
+        <table>
+            <tr><th>技术</th><th>适用场景</th><th>优势</th><th>局限</th><th>典型题目</th></tr>
+            <tr><td>单调递减栈</td><td>Next Greater / 最大矩形</td><td>O(N) 均摊，代码简洁</td><td>只能找单侧信息</td><td>LC 496, 84, 42</td></tr>
+            <tr><td>单调递增栈</td><td>Next Smaller / 左侧第一个更小</td><td>同上</td><td>同上</td><td>LC 402, 316</td></tr>
+            <tr><td>单调队列 (Deque)</td><td>定长滑动窗口极值</td><td>O(N)，支持过期淘汰</td><td>实现稍复杂</td><td>LC 239</td></tr>
+            <tr><td>最小/最大栈</td><td>O(1) 查询当前极值</td><td>极简实现</td><td>不支持滑窗</td><td>LC 155</td></tr>
+            <tr><td>优先队列 (Heap)</td><td>动态集合极值</td><td>支持任意插入</td><td>O(log N) 不如单调栈的 O(1)</td><td>LC 295</td></tr>
         </table>
     </div>
 
+    <!-- ═══ 层 9: 易错点 ═══ -->
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
+        <h3>🔴 易错点与陷阱</h3>
+
+        <h4>陷阱 1：单调栈存值而非索引</h4>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 栈内存存错东西</p>
-<pre><code class="language-python"># 将数值存入栈中
-stack.append(nums[i])
-# ... 等你弹出来的时候，你根本不知道这个弹出来的小数字
-# 它的本尊在原数组什么位置，你怎么把结果写进答案数组 `res` 里？
+                <p>❌ 存值——无法回写答案</p>
+<pre><code class="language-python">stack.append(nums[i])
+# 弹出时只知道值，不知道原始位置
+# 无法执行 res[???] = nums[i]
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 单调栈绝大多数情况必须存索引</p>
-<pre><code class="language-python"># 存入索引。
-stack.append(i)
-# 到时候根据索引拿值 `nums[popped_idx]`，并且能写进 `res[popped_idx]`。
+                <p>✅ 存索引——值和位置都能查</p>
+<pre><code class="language-python">stack.append(i)
+# 弹出时 idx = stack.pop()
+# nums[idx] 取值，res[idx] 写答案
+</code></pre>
+            </div>
+        </div>
+
+        <h4>陷阱 2 (Python)：用 list 当队列左端 pop O(N)</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ list.pop(0) 是 O(N)！</p>
+<pre><code class="language-python">q = []
+q.pop(0)  # 每次都要挪动全部元素
+# 滑窗 O(NK) 灾难！
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ deque.popleft() 是 O(1)</p>
+<pre><code class="language-python">from collections import deque
+q = deque()
+q.popleft()  # 双端队列底层是双向链表
+</code></pre>
+            </div>
+        </div>
+
+        <h4>陷阱 3 (C++)：stack 无法遍历</h4>
+        <p style="color:#94a3b8; font-size:0.9rem;">C++ 的 <code>std::stack</code> 不提供迭代器。如果需要查看栈内所有元素（比如调试），改用 <code>vector</code> 模拟栈。</p>
+
+        <h4>陷阱 4 (Rust)：usize 减法下溢 panic</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ i - k + 1 当 i=0, k=3 时 panic</p>
+<pre><code class="language-rust">if dq[0] < i - k + 1 { // 💥 0usize - 3 = panic!
+    dq.pop_front();
+}
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 变换不等式避免减法</p>
+<pre><code class="language-rust">if dq[0] + k < i + 1 { // 安全：纯加法
+    dq.pop_front();
+}
 </code></pre>
             </div>
         </div>
     </div>
 
+    <!-- ═══ 层 10: 互动演示 ═══ -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：单调栈挤压动画 (寻找右侧更大元素)</h3>
-        <div class="demo-container" id="sqDemo"></div>
+        <h3>🔗 互动演示：单调栈处理 Next Greater Element</h3>
+        <p style="font-size:0.9rem; color:#94a3b8;">点击 <strong>Next</strong> 逐步观察单调栈如何处理数组 [4, 2, 6, 1, 3]。栈中存索引，弹出时结算 Next Greater。</p>
+        <div class="demo-container" id="sqDemo">
+            <div id="sq-viz" style="min-height:180px;"></div>
+            <div class="demo-controls" style="display:flex; gap:0.5rem; margin:0.8rem 0;">
+                <button id="sq-prev">⏮ Prev</button>
+                <button id="sq-next">⏭ Next</button>
+                <button id="sq-reset">🔄 Reset</button>
+            </div>
+            <div class="demo-log" id="sq-log">准备就绪。点击 Next 开始。</div>
+        </div>
     </div>
 
+    <!-- ═══ 层 11: 竞赛拓展 ═══ -->
     <div class="knowledge-card kc-cyan">
         <h3>🔷 竞赛拓展</h3>
-        <p><strong>单调队列优化 DP：</strong> 滑动窗口不仅仅是求最大值。如果在动态规划中，状态转移方程长成 `dp[i] = max(dp[j]) (i-k <= j < i)`，那么我们如果用 $O(K)$ 循环直接查找必死无疑。只要使用单调队列维护这个“长度有保质期”的 DP 窗口最大值，立刻可以将 O(NK) 算法降维打击到 O(N)！这是极为恐怖的性能跨越。</p>
+
+        <p><strong>1. 单调队列优化 DP</strong></p>
+        <p>当 DP 转移方程形如 <code>dp[i] = max{dp[j]} + cost(i)</code>，其中 <code>i-k ≤ j &lt; i</code>，朴素做法 O(NK)。使用单调队列维护 dp 值的滑动窗口最大值，立刻降为 <strong>O(N)</strong>。经典例题：LC 1425（带约束子序列和）、POJ 多重背包优化。</p>
+
+        <details>
+            <summary>2. 笛卡尔树 (Cartesian Tree)</summary>
+            <p>笛卡尔树是一种同时满足 BST 性质（按下标）和堆性质（按值）的二叉树。它可以用单调栈在 O(N) 内构建。应用：区间最值查询 (RMQ) 的 ⟨O(N), O(1)⟩ 方案（Sparse Table + 笛卡尔树编号）。</p>
+        </details>
+
+        <details>
+            <summary>3. 贡献法 + 单调栈</summary>
+            <p>对「所有子数组的最小值之和」(LC 907) 这类题，利用单调栈找到每个元素作为最小值的左右边界，计算其贡献 = <code>nums[i] × left_count × right_count</code>。</p>
+        </details>
     </div>
-</section>
+
+    <!-- ═══ 层 12: 工业实战 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业实战</h3>
+
+        <h4>1. 函数调用栈与栈帧 (x86-64)</h4>
+        <p>CPU 执行函数调用时，硬件栈存放返回地址、旧帧指针、局部变量。每次 <code>call</code> 指令 push 栈帧，<code>ret</code> 指令 pop。递归深度受限于操作系统分配的栈空间（Linux 默认 8MB，约支持 ~50,000 层简单递归）。</p>
+
+        <h4>2. 编译器的 Shunting-Yard 算法</h4>
+        <p>GCC、Clang 等编译器在解析表达式时，使用运算符优先级 + 栈来将中缀表达式转换为后缀（逆波兰表示法）或直接求值。这就是 Dijkstra 1961 年发明的 <strong>Shunting-Yard 算法</strong>——本质是用栈来管理运算符的优先级对决。</p>
+
+        <h4>3. Nginx 事件循环中的任务队列</h4>
+        <p>Nginx 使用事件驱动架构：每个 worker 进程维护一个 <strong>事件队列</strong>（FIFO），epoll/kqueue 返回就绪事件后依次出队处理。队列保证了请求按到达顺序公平处理，同时 <strong>定时器最小堆</strong> 管理超时事件。</p>
+
+        <h4>4. Kafka 消息队列的分区 FIFO 保证</h4>
+        <p>Apache Kafka 的每个 <strong>Partition</strong> 本质是一个只追加的 FIFO 队列（append-only log）。生产者写入的消息按 offset 严格有序，消费者按 offset 顺序读取。跨分区无全局序，但单分区内 FIFO 语义是 Kafka 的核心承诺。</p>
+    </div>
+        </section>
 
 <section class="card" data-quiz data-module="stack-queue">
 <h2>练习题（Practice）</h2>
@@ -284,102 +726,119 @@ stack.append(i)
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("sqDemo");
-    if(!container) return;
-    
-    container.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-            <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:flex-end;">
-                <!-- 数组来源区 -->
-                <div style="flex:1; background:#1e293b; padding:1rem; border-radius:4px">
-                    <div style="color:#94a3b8; font-size:12px; margin-bottom:10px">待处理的数组 Nums</div>
-                    <div id="sqArr" style="display:flex; gap:5px; height:80px"></div>
-                </div>
-                <!-- 单调栈区 -->
-                <div style="width:120px; background:#0f172a; border-left:2px solid #334155; border-right:2px solid #334155; border-bottom:2px solid #334155; height:180px; display:flex; flex-direction:column-reverse; align-items:center; padding-bottom:5px" id="sqStack">
-                    <div style="position:absolute; bottom:-25px; color:#cbd5e1; font-size:12px">递减单调栈</div>
-                </div>
-            </div>
-            <div style="display:flex; gap:0.5rem">
-                <button id="sqBtnStep" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">下一步模拟</button>
-            </div>
-            <div id="sqDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:4em;">目标：求每个数右边离它最近的且比它大的元素。</div>
-        </div>
-    `;
+    if (!container) return;
 
-    const descr = document.getElementById("sqDescr");
-    let nums = [6, 3, 2, 7, 5];
-    let res = [-1, -1, -1, -1, -1];
-    let stack = [];
-    let curI = 0;
-    let phase = 'scan'; // scan, pop, finish
+    // ─── 单调栈 Next Greater Element 演示 ───
+    const NUMS = [4, 2, 6, 1, 3];
+    const N = NUMS.length;
 
-    function renderArray() {
-        let html = '';
-        nums.forEach((v, i) => {
-            let h = v * 10;
-            let bg = "#64748b", txt = "?";
-            if (i === curI && phase !== 'finish') bg = "#f59e0b"; // active scanning
-            if (res[i] !== -1) { txt = res[i]; bg = "#10b981"; }
-            
-            html += `<div style="display:flex; flex-direction:column; align-items:center; width:30px; gap:4px">
-                <span style="font-size:10px; color:#a855f7">${txt}</span>
-                <div style="width:100%; height:${h}px; background:${bg}; transition:all 0.3s"></div>
-                <span style="font-size:12px; color:#fff">${v}</span>
+    // 预计算所有步骤
+    function computeSteps() {
+        const steps = [];
+        const stack = [];
+        const res = Array(N).fill(-1);
+        // 初始状态
+        steps.push({
+            stack: [...stack],
+            res: [...res],
+            scanning: -1,
+            popping: -1,
+            msg: "初始状态：栈为空，结果数组全 -1。点击 Next 开始扫描。"
+        });
+
+        for (let i = 0; i < N; i++) {
+            // "开始扫描 nums[i]"
+            steps.push({
+                stack: [...stack],
+                res: [...res],
+                scanning: i,
+                popping: -1,
+                msg: `扫描 nums[${i}] = ${NUMS[i]}。检查是否需要弹出栈顶……`
+            });
+
+            while (stack.length > 0 && NUMS[i] > NUMS[stack[stack.length - 1]]) {
+                const idx = stack.pop();
+                res[idx] = NUMS[i];
+                steps.push({
+                    stack: [...stack],
+                    res: [...res],
+                    scanning: i,
+                    popping: idx,
+                    msg: `${NUMS[i]} > 栈顶 nums[${idx}]=${NUMS[idx]}，弹出！res[${idx}] = ${NUMS[i]}。`
+                });
+            }
+
+            stack.push(i);
+            steps.push({
+                stack: [...stack],
+                res: [...res],
+                scanning: i,
+                popping: -1,
+                msg: `将 idx=${i}(值${NUMS[i]}) 压入栈。当前栈: [${stack.map(s => NUMS[s]).join(", ")}]`
+            });
+        }
+
+        steps.push({
+            stack: [...stack],
+            res: [...res],
+            scanning: -1,
+            popping: -1,
+            msg: `遍历结束！栈中剩余 [${stack.map(s => `${NUMS[s]}`).join(", ")}] 没有 Next Greater，保持 -1。最终结果: [${res.join(", ")}]`
+        });
+
+        return steps;
+    }
+
+    const steps = computeSteps();
+    let cur = 0;
+
+    function render() {
+        const s = steps[cur];
+        const viz = document.getElementById("sq-viz");
+        const log = document.getElementById("sq-log");
+
+        // 渲染数组
+        let arrHtml = '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">';
+        for (let i = 0; i < N; i++) {
+            let bg = "#1e293b", border = "#334155", color = "#94a3b8";
+            if (i === s.scanning) { bg = "rgba(245,158,11,.2)"; border = "#f59e0b"; color = "#fcd34d"; }
+            if (i === s.popping) { bg = "rgba(244,63,94,.2)"; border = "#f43f5e"; color = "#fda4af"; }
+            if (s.res[i] !== -1) { bg = "rgba(16,185,129,.15)"; border = "#10b981"; color = "#6ee7b7"; }
+            const label = s.res[i] === -1 ? "?" : s.res[i];
+            arrHtml += `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <span style="font-size:10px;color:#a855f7;">${label}</span>
+                <div style="width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:2px solid ${border};background:${bg};color:${color};font-weight:700;font-family:monospace;">${NUMS[i]}</div>
+                <span style="font-size:10px;color:#64748b;">i=${i}</span>
             </div>`;
-        });
-        document.getElementById("sqArr").innerHTML = html;
-    }
-    
-    function renderStack() {
-        let html = '';
-        [...stack].reverse().forEach((sItem) => {
-            html += `<div style="width:80%; height:25px; line-height:25px; background:#1e293b; color:#38bdf8; text-align:center; margin-top:2px; font-size:12px; border:1px solid #475569">Idx:${sItem.i} | 值:${sItem.val}</div>`;
-        });
-        document.getElementById("sqStack").innerHTML = html + '<div style="margin-top:20px; color:#cbd5e1; font-size:12px">单调栈 (底)</div>';
+        }
+        arrHtml += '</div>';
+
+        // 渲染栈
+        let stackHtml = '<div style="display:flex;gap:4px;align-items:flex-end;min-height:40px;">';
+        stackHtml += '<span style="font-size:11px;color:#64748b;margin-right:4px;">栈底→</span>';
+        for (const idx of s.stack) {
+            stackHtml += `<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:4px;border:2px solid #6366f1;background:rgba(99,102,241,.2);color:#c7d2fe;font-weight:700;font-size:13px;">${NUMS[idx]}</div>`;
+        }
+        stackHtml += '<span style="font-size:11px;color:#64748b;margin-left:4px;">←栈顶</span>';
+        stackHtml += '</div>';
+
+        viz.innerHTML = `
+            <div style="color:#cbd5e1;font-size:12px;margin-bottom:6px;">数组 nums（上方为 Next Greater 结果）</div>
+            ${arrHtml}
+            <div style="color:#cbd5e1;font-size:12px;margin:8px 0 6px;">单调递减栈</div>
+            ${stackHtml}
+        `;
+        log.innerHTML = `<span style="color:#94a3b8;">[${cur}/${steps.length - 1}]</span> ${s.msg}`;
+
+        document.getElementById("sq-prev").disabled = (cur === 0);
+        document.getElementById("sq-next").disabled = (cur === steps.length - 1);
     }
 
-    document.getElementById("sqBtnStep").onclick = () => {
-        if (phase === 'finish') {
-            descr.innerHTML = "全部找完了！绿色为确定的答案。栈里剩下的没有更大的元素，保持了 -1。";
-            return;
-        }
+    document.getElementById("sq-next").onclick = () => { if (cur < steps.length - 1) { cur++; render(); } };
+    document.getElementById("sq-prev").onclick = () => { if (cur > 0) { cur--; render(); } };
+    document.getElementById("sq-reset").onclick = () => { cur = 0; render(); };
 
-        if (phase === 'scan') {
-            if (curI >= nums.length) { phase = 'finish'; return; }
-            let curVal = nums[curI];
-            if (stack.length > 0 && currVal > stack[stack.length-1].val) { // Should say curVal
-                // Wait there's a typo in currVal
-            }
-            if (stack.length > 0 && curVal > stack[stack.length-1].val) {
-                descr.innerHTML = `扫描到 ${curVal}。它比栈顶存放的弱者 ${stack[stack.length-1].val} 要大！打破了单调递减规则。准备开始把栈里的小弟踢出去结算答案！`;
-                phase = 'pop';
-            } else {
-                descr.innerHTML = `扫描到 ${curVal}。栈空或者它没有打破单调递减规则，老老实实进栈排队。`;
-                stack.push({i: curI, val: curVal});
-                curI++;
-            }
-        } else if (phase === 'pop') {
-            let curVal = nums[curI];
-            if (stack.length > 0 && curVal > stack[stack.length-1].val) {
-                let popped = stack.pop();
-                res[popped.i] = curVal;
-                descr.innerHTML = `元素 ${popped.val} 会被踢出去了！在它死前，它终于知道把淘汰它的人就是它右侧的第一个大哥 <b>${curVal}</b>！答案被永久记录在上方。`;
-                if (!stack.length || curVal <= stack[stack.length-1].val) {
-                    phase = 'scan'; 
-                    setTimeout(()=>{
-                        descr.innerHTML = `没有比 ${curVal} 小的弱者了，${curVal} 自己老老实实进栈排队。`;
-                        stack.push({i: curI, val: curVal}); 
-                        curI++;
-                        renderArray(); renderStack();
-                    }, 2000);
-                }
-            }
-        }
-        
-        renderArray(); renderStack();
-    };
-    
-    renderArray(); renderStack();
+    render();
 });
 </script>
 </body>

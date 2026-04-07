@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>图与搜索模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,21 +33,28 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
-    
-        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
-        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
-        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
-        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
-        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
-        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
-        .derive-body { flex:1; }
-        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
-        .intuition-box strong { color:#10b981; }
-        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
-        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
-        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
-        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
-        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+        .naive-vs-smart { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.8rem 0; }
+        .naive-vs-smart .naive { border-left: 3px solid #f43f5e; padding-left: 0.8rem; }
+        .naive-vs-smart .smart { border-left: 3px solid #10b981; padding-left: 0.8rem; }
+        .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
+        @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
+
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
     </style>
 </head>
 <body data-theme="day">
@@ -62,158 +74,577 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+
+    <!-- ═══ 层 0: 引子问题 ═══ -->
+    <div class="knowledge-card kc-gray">
+        <h3>🎯 引子问题</h3>
+        <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+            "一个城市的地铁网络，怎么找两站之间的最快换乘方案？"
+        </p>
+        <p>地铁站是节点，线路是带权边，换乘 = 找最短路径。图论算法就是解决这类"网状关系"问题的核心工具。</p>
+    </div>
+
+    <!-- ═══ 层 1: 前置知识 ═══ -->
     <div class="knowledge-card kc-gray">
         <h3>⚙️ 前置知识</h3>
         <span class="prereq-tag">树的遍历</span>
-        <span class="prereq-tag">邻接表表示法</span>
-        <p>图是从树经过松弛泛化而来的更复杂的非线性结构。掌握图的关键是将“网状结构”转化为一颗可以通过特定规则生长的<strong>搜索树</strong>。</p>
+        <span class="prereq-tag">邻接表 / 邻接矩阵</span>
+        <span class="prereq-tag">队列 (BFS)</span>
+        <span class="prereq-tag">优先队列 / 堆</span>
+        <p><strong>图的表示</strong>：邻接表 <code>{u: [(v, w), ...]}</code> 适合稀疏图 O(V+E) 空间；邻接矩阵 O(V²) 适合稠密图。</p>
+        <p><strong>树 vs 图</strong>：树是无环连通图的特例。图可以有环、可以不连通、边可以有方向和权重——复杂度远高于树。</p>
+        <p>需要堆的基础知识可参考 <a href="heap.html">堆模块</a>。</p>
     </div>
 
+    <!-- ═══ 层 2: 研究动机与问题建模 ═══ -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：核心图算法直觉</h3>
-        
+        <h3>🔬 研究动机——网状关系建模</h3>
+        <div class="naive-vs-smart">
+            <div class="naive">
+                <h4 class="label">暴力枚举路径</h4>
+                <p>从起点到终点的所有路径有指数级多条。枚举每条路径的长度再取最短？在 $V$ 个节点的图中，路径数可达 $O(V!)$——即使 20 个节点也无法暴力求解。</p>
+            </div>
+            <div class="smart">
+                <h4 class="label">系统化的图搜索</h4>
+                <p>BFS 保证无权图最短路 O(V+E)。Dijkstra 在非负权图中 O(E log V) 找到单源最短路。利用图的结构性质（无环 → 拓扑排序、非负权 → 贪心），将指数级问题降为多项式级。</p>
+            </div>
+        </div>
+
+        <p><strong>形式化定义：</strong>给定图 $G = (V, E)$（$V$ 个顶点，$E$ 条边），边权函数 $w: E \to \mathbb{R}$，求从源点 $s$ 到每个点 $v$ 的最短路径 $\delta(s, v)$。</p>
+    </div>
+
+    <!-- ═══ 层 3: 推导卡片 ═══ -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：BFS · DFS · Dijkstra · 拓扑排序 · Bellman-Ford</h3>
+
         <h4>1. BFS vs DFS 的本质</h4>
         <div class="intuition-box">
-            <strong>核心思想：</strong> BFS 像水波纹一样逐层向外扩散，因此它总是优先到达最近的节点。DFS 像走迷宫，不撞南墙不回头。
+            <strong>核心洞察：</strong>BFS 像水波纹逐层向外扩散——层数 = 跳数，所以第一次到达的一定是最短路（无权图）。<br>
+            DFS 像走迷宫——不撞南墙不回头，适合探索/判环/拓扑排序，但不保证最短路。
         </div>
+
+<pre class="ascii-art">
+BFS 层级扩展 (从 A 出发):
+
+  层 0:    [A]
+            │
+  层 1:  [B] [C]
+          │   │
+  层 2: [D] [E]     第一次触碰 = 跳数最少
+
+DFS 深度探索 (从 A 出发):
+
+  [A] → [B] → [D] → (回溯) → [C] → [E]
+  可能绕远路先到 D 再到 E
+</pre>
+
         <div class="think-block">
-            <div class="q">Q: 为什么无权图中 DFS 找到的不是最短路径，而 BFS 是？</div>
+            <div class="q">Q: 为什么无权图中 BFS 找到的路径一定最短，而 DFS 不是？</div>
             <details>
                 <summary>查看答疑</summary>
-                DFS 沿着一条路一直深挖，可能绕了一个大圈才第一次到达目标点。而 BFS 严格按照“经过边数”从小到大层的顺序进行搜索，所以第一个触碰到目标点的波纹，就是跳数最少的路径。
+                BFS 使用队列，严格按"经过的边数"从小到大搜索。第 k 层的所有节点都是距源点恰好 k 步的节点。所以第一次触碰到目标时，走的一定是最少步数。DFS 用栈，沿着一条路深入到底才回头，可能绕了一大圈才第一次到达目标。
             </details>
         </div>
 
-        <h4>2. Dijkstra 最短路贪心推演</h4>
+        <h4>2. Dijkstra 最短路——贪心正确性</h4>
         <div class="derive-step">
             <div class="derive-num">1</div>
-            <div class="derive-body">
-                <strong>贪心选择：</strong> 为什么每次从优先队列弹出的距离最小的点，它的距离就已经确定，无需再修改了？
-            </div>
+            <div class="derive-body"><strong>贪心选择：</strong>每次从优先队列弹出距离最小的未确认节点 $u$，将其距离"固定"。为什么 $u$ 的距离此时已经是最终最优值？</div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
-            <div class="derive-body">
-                <strong>反证法证明：</strong> 假设存在一条更短的路径前往这个最小点 `u`，那这条路径必然要经过其他尚未确认的中间点 `v`。但是在非负边图里，去 `v` 的代价目前已经 >= 去 `u` 的代价。再从 `v` 绕路去 `u` 只会增加距离，不可能变得更短！
-            </div>
+            <div class="derive-body"><strong>反证法：</strong>假设存在更短的路径 $s \to \ldots \to v \to \ldots \to u$。但 $v$ 是尚未确认的点，$d[v] \geq d[u]$。在非负权图中，$v$ 到 $u$ 的额外路径长度 $\geq 0$，所以总距离 $d[v] + w(\ldots) \geq d[u]$。矛盾！</div>
         </div>
+
+<pre class="ascii-art">
+Dijkstra 松弛过程 (从 A 出发):
+
+      ②       ⑤
+  A ────→ B ────→ D
+  │       │       ↑
+  │④      │①     │②
+  ↓       ↓       │
+  C ────→ E ──────┘
+      ⑩       ②
+
+  步骤: pop A(0) → 松弛 B=2,C=4
+        pop B(2) → 松弛 E=3,D=7
+        pop E(3) → 松弛 D=5
+        pop C(4) → 松弛 E≥3 不更新
+        pop D(5) → 结束
+
+  最终: A=0, B=2, E=3, C=4, D=5
+</pre>
+
         <div class="think-block">
-            <div class="q">Q: 为什么 Dijkstra 在有负权边时会失效？</div>
+            <div class="q">Q: 为什么 Dijkstra 遇到负权边就失效？</div>
             <details>
                 <summary>查看答疑</summary>
-                上面的反证法建立在“边权 >= 0，越走越长”的前提下。如果存在负权边，绕路去更远的 `v`，可能会通过一条负数代价的边让最终距离变小，这就打破了“弹出即最终极值”的贪心法则。（注：需使用 Bellman-Ford 解决）
+                "弹出即最终值"的前提是"越走越远"。如果有负权边，从 $v$ 再走可能让距离变小，打破了"$d[v] + w \geq d[u]$"的前提。需要用 Bellman-Ford 替代——它允许多轮松弛来修正距离。
             </details>
         </div>
 
-        <h4>3. 拓扑排序 (Topological Sort)</h4>
+        <h4>3. 拓扑排序——"剥洋葱"</h4>
         <div class="intuition-box">
-            从“剥洋葱”的直觉理解：如果 A 依赖 B，那 B 必须先做。谁不依赖任何人？入度 (in-degree) 为 0 的节点！所以算法就是：不断移除入度为 0 的点并输出，同时把它发出的边剪断（即被指向的节点入度 -1）。
+            <strong>直觉：</strong>DAG（有向无环图）中，如果 A→B 表示"A 必须在 B 之前"，那么谁都不依赖的节点（入度=0）可以先输出。输出后删除它的所有出边，新的入度=0 节点继续输出。不断"剥洋葱"直到所有节点输出——这就是 Kahn 算法。
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><strong>检测环：</strong>如果最终输出的节点数 &lt; V，说明剩余节点形成了环（入度永远 &gt; 0），图不满足 DAG 条件。</div>
         </div>
 
-        <h4>4. 并查集 (Union-Find) 从朴素到高效</h4>
-        <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">朴素链表结构</h4><p>Find 是 O(n)，退化成一跳一跳的单链表。合并只改根的指针。</p></div>
-            <div class="smart"><h4 class="label">路径压缩与按秩合并</h4><p>搜索根的同时把沿途所有节点直接指向根。合并时总是把浅树接到深树下。Find 趋近 O(1)。</p></div>
+        <h4>4. Bellman-Ford——处理负权边</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><strong>思路：</strong>对所有边松弛 $V-1$ 轮。因为最短路最多经过 $V-1$ 条边（无负环时），每轮至少让一条边的距离收敛到最优。</div>
         </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>负权环检测：</strong>第 $V$ 轮再松弛一次，如果仍有距离被更新，说明存在负权环——距离可以无限减小。</div>
+        </div>
+
+<pre class="ascii-art">
+负权环反例 —— Dijkstra 失效:
+
+  A ──(1)──→ B ──(-3)──→ C ──(1)──→ A
+                                      ↓
+  从 A 出发，走 A→B→C→A→B→C→... 距离不断减小
+  没有"最短路径"概念！Bellman-Ford 第 V 轮可检出。
+</pre>
     </div>
 
+    <!-- ═══ 层 4: 模板代码 ═══ -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：Dijkstra 与并查集</h3>
-<pre><code class="language-python"># 1. Dijkstra 堆优化 (O(E log V))
+        <h3>💻 模板代码</h3>
+        <h4>Python</h4>
+<pre><code class="language-python">from collections import deque, defaultdict
 import heapq
-def dijkstra(n, graph, start):
-    # graph: {u: [(v, weight), ...]}
-    dist = {i: float('inf') for i in range(n)}
+
+# ─── 1. BFS（无权图最短路）───
+def bfs(graph: dict[int, list[int]], start: int, n: int) -> list[int]:
+    dist = [-1] * n
     dist[start] = 0
-    pq = [(0, start)]  # (distance, node)
-    
-    while pq:
-        d, u = heapq.heappop(pq)
-        if d > dist[u]: continue # 若非最新则剪枝
-        
-        for v, weight in graph[u]:
-            new_v_dist = d + weight
-            if new_v_dist < dist[v]:
-                dist[v] = new_v_dist
-                heapq.heappush(pq, (new_v_dist, v))
+    queue = deque([start])
+    while queue:
+        u = queue.popleft()
+        for v in graph[u]:
+            if dist[v] == -1:           # [why] 未访问才入队，保证第一次到达即最短
+                dist[v] = dist[u] + 1
+                queue.append(v)
     return dist
 
-# 2. 并查集 (路径压缩 + 按秩合并)
-class UnionFind:
-    def __init__(self, n):
-        self.parent = list(range(n))
-        self.rank = [1] * n
+# ─── 2. DFS（递归版，判连通/搜索）───
+def dfs(graph: dict[int, list[int]], u: int, visited: set[int]) -> None:
+    visited.add(u)
+    for v in graph[u]:
+        if v not in visited:
+            dfs(graph, v, visited)
+    # 注意：深度超过 1000 时需 sys.setrecursionlimit 或改迭代栈
 
-    def find(self, i):
-        if self.parent[i] == i:
-            return i
-        # 路径压缩：直接挂到根节点
-        self.parent[i] = self.find(self.parent[i])
-        return self.parent[i]
+# ─── 3. Dijkstra（堆优化，非负权图单源最短路）───
+def dijkstra(n: int, graph: dict[int, list[tuple[int, int]]],
+             start: int) -> list[float]:
+    dist: list[float] = [float('inf')] * n
+    dist[start] = 0
+    pq: list[tuple[float, int]] = [(0, start)]  # (距离, 节点)
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]:
+            continue  # [why] 僵尸节点剪枝——此条目已过时
+        for v, w in graph[u]:
+            nd = d + w
+            if nd < dist[v]:
+                dist[v] = nd
+                heapq.heappush(pq, (nd, v))
+    return dist
 
-    def union(self, i, j):
-        root_i = self.find(i)
-        root_j = self.find(j)
-        if root_i != root_j:
-            # 按秩合并：小树挂到大树
-            if self.rank[root_i] < self.rank[root_j]:
-                self.parent[root_i] = root_j
-            elif self.rank[root_i] > self.rank[root_j]:
-                self.parent[root_j] = root_i
-            else:
-                self.parent[root_j] = root_i
-                self.rank[root_i] += 1
+# ─── 4. 拓扑排序（Kahn 算法，BFS 剥洋葱）───
+def topo_sort(n: int, graph: dict[int, list[int]]) -> list[int] | None:
+    in_deg = [0] * n
+    for u in graph:
+        for v in graph[u]:
+            in_deg[v] += 1
+    queue = deque(v for v in range(n) if in_deg[v] == 0)
+    order: list[int] = []
+    while queue:
+        u = queue.popleft()
+        order.append(u)
+        for v in graph[u]:
+            in_deg[v] -= 1
+            if in_deg[v] == 0:      # [why] 所有前驱已处理，可以输出
+                queue.append(v)
+    return order if len(order) == n else None  # [why] 不足 V 个说明有环
+
+# ─── 5. Bellman-Ford（可处理负权边 + 检测负环）───
+def bellman_ford(n: int, edges: list[tuple[int, int, float]],
+                 start: int) -> tuple[list[float], bool]:
+    dist: list[float] = [float('inf')] * n
+    dist[start] = 0
+    # V-1 轮松弛
+    for _ in range(n - 1):
+        for u, v, w in edges:
+            if dist[u] + w < dist[v]:  # [why] 每轮至少让一条最短路边收敛
+                dist[v] = dist[u] + w
+    # 第 V 轮检测负权环
+    has_neg_cycle = False
+    for u, v, w in edges:
+        if dist[u] + w < dist[v]:
+            has_neg_cycle = True       # [why] 仍可松弛 → 存在负环
+            break
+    return dist, has_neg_cycle
 </code></pre>
-        <table>
-            <tr><th>算法</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>Dijkstra(PQ)</td><td>O(E log V)</td><td>O(V + E)</td><td>每条边尝试松弛一次，优先队列操作最多 E 次。</td></tr>
-            <tr><td>拓扑排序(BFS)</td><td>O(V + E)</td><td>O(V + E)</td><td>遍历每个点与每条边一次。</td></tr>
-            <tr><td>并查集</td><td>O(α(N))≈O(1)</td><td>O(N)</td><td>阿克曼函数的反函数极小，平摊视为常数。</td></tr>
-        </table>
-    </div>
 
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题变种比对</h3>
         <details>
-            <summary>变种：如果我们要找所有权值只有 0 和 1 的最短路？</summary>
-            <p><strong>常规思路：</strong> 使用 Dijkstra (O(E log V))。<br> 
-            <strong>变种优化：</strong> 由于只有 0 和 1 的边权，优先队列里的距离差不会超过 1，可以直接使用 <strong>0-1 BFS (双端队列 Deque)</strong>！遇到 0 边权的节点插入队头，遇到 1 边权的节点插入队尾。时间复杂度降维打击为 O(V+E)！</p>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;functional&gt;
+#include &lt;climits&gt;
+using namespace std;
+
+// Dijkstra 堆优化
+vector&lt;long long&gt; dijkstra(int n,
+        const vector&lt;vector&lt;pair&lt;int,int&gt;&gt;&gt;&amp; g, int s) {
+    vector&lt;long long&gt; dist(n, LLONG_MAX);
+    dist[s] = 0;
+    // ⚠️ 用 greater 建小顶堆
+    priority_queue&lt;pair&lt;long long,int&gt;,
+                   vector&lt;pair&lt;long long,int&gt;&gt;,
+                   greater&lt;&gt;&gt; pq;
+    pq.push({0, s});
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d &gt; dist[u]) continue; // 僵尸剪枝
+        for (auto [v, w] : g[u]) {
+            long long nd = d + w; // ⚠️ long long 防溢出
+            if (nd &lt; dist[v]) {
+                dist[v] = nd;
+                pq.push({nd, v});
+            }
+        }
+    }
+    return dist;
+}
+
+// 拓扑排序 (Kahn)
+vector&lt;int&gt; topoSort(int n, const vector&lt;vector&lt;int&gt;&gt;&amp; g) {
+    vector&lt;int&gt; in_deg(n, 0);
+    for (int u = 0; u &lt; n; ++u)
+        for (int v : g[u]) ++in_deg[v];
+    queue&lt;int&gt; q;
+    for (int i = 0; i &lt; n; ++i)
+        if (in_deg[i] == 0) q.push(i);
+    vector&lt;int&gt; order;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        order.push_back(u);
+        for (int v : g[u])
+            if (--in_deg[v] == 0) q.push(v);
+    }
+    return order; // size() &lt; n 说明有环
+}
+
+// Bellman-Ford
+pair&lt;vector&lt;long long&gt;, bool&gt; bellmanFord(
+        int n, const vector&lt;tuple&lt;int,int,int&gt;&gt;&amp; edges, int s) {
+    vector&lt;long long&gt; dist(n, LLONG_MAX);
+    dist[s] = 0;
+    for (int i = 0; i &lt; n - 1; ++i)
+        for (auto&amp; [u, v, w] : edges)
+            if (dist[u] != LLONG_MAX &amp;&amp; dist[u] + w &lt; dist[v])
+                dist[v] = dist[u] + w;
+    bool neg = false;
+    for (auto&amp; [u, v, w] : edges)
+        if (dist[u] != LLONG_MAX &amp;&amp; dist[u] + w &lt; dist[v])
+            { neg = true; break; }
+    return {dist, neg};
+}
+</code></pre>
+        </details>
+
+        <details>
+            <summary>Rust 版本</summary>
+<pre><code class="language-rust">use std::cmp::Reverse;
+use std::collections::{BinaryHeap, VecDeque};
+
+/// Dijkstra —— 非负权图单源最短路
+pub fn dijkstra(n: usize, graph: &amp;[Vec&lt;(usize, i64)&gt;], start: usize) -&gt; Vec&lt;i64&gt; {
+    let mut dist = vec![i64::MAX; n];
+    dist[start] = 0;
+    let mut pq = BinaryHeap::new();
+    pq.push(Reverse((0i64, start)));
+    while let Some(Reverse((d, u))) = pq.pop() {
+        if d &gt; dist[u] { continue; } // [why] 僵尸剪枝
+        for &amp;(v, w) in &amp;graph[u] {
+            let nd = d + w;
+            if nd &lt; dist[v] {
+                dist[v] = nd;
+                pq.push(Reverse((nd, v)));
+            }
+        }
+    }
+    dist
+}
+
+/// 拓扑排序 (Kahn)
+pub fn topo_sort(n: usize, graph: &amp;[Vec&lt;usize&gt;]) -&gt; Option&lt;Vec&lt;usize&gt;&gt; {
+    let mut in_deg = vec![0usize; n];
+    for adj in graph { for &amp;v in adj { in_deg[v] += 1; } }
+    let mut q = VecDeque::new();
+    for i in 0..n { if in_deg[i] == 0 { q.push_back(i); } }
+    let mut order = Vec::with_capacity(n);
+    while let Some(u) = q.pop_front() {
+        order.push(u);
+        for &amp;v in &amp;graph[u] {
+            in_deg[v] -= 1; // [why] usize 下溢 panic 如果入度计算有误
+            if in_deg[v] == 0 { q.push_back(v); }
+        }
+    }
+    if order.len() == n { Some(order) } else { None } // [why] 有环
+}
+
+/// Bellman-Ford
+pub fn bellman_ford(n: usize, edges: &amp;[(usize, usize, i64)], start: usize)
+    -&gt; (Vec&lt;i64&gt;, bool) {
+    let mut dist = vec![i64::MAX; n];
+    dist[start] = 0;
+    for _ in 0..n - 1 {
+        for &amp;(u, v, w) in edges {
+            if dist[u] != i64::MAX &amp;&amp; dist[u] + w &lt; dist[v] {
+                dist[v] = dist[u] + w;
+            }
+        }
+    }
+    let neg = edges.iter().any(|&amp;(u, v, w)|
+        dist[u] != i64::MAX &amp;&amp; dist[u] + w &lt; dist[v]
+    );
+    (dist, neg)
+}
+</code></pre>
         </details>
     </div>
 
+    <!-- ═══ 层 5: 复杂度分析 ═══ -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度分析</h3>
+        <table>
+            <tr><th>算法</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>BFS</td><td>O(V+E)</td><td>O(V+E)</td><td>O(V)</td><td>每个节点和边恰好处理一次；队列最多存 V 个节点</td></tr>
+            <tr><td>DFS</td><td>O(V+E)</td><td>O(V+E)</td><td>O(V)</td><td>每个节点和边恰好处理一次；递归栈/显式栈最深 V</td></tr>
+            <tr><td>Dijkstra (二叉堆)</td><td>O(E log V)</td><td>O(E log V)</td><td>O(V+E)</td><td>每条边尝试松弛一次，堆操作 O(log V)；最多 E 次 push</td></tr>
+            <tr><td>Dijkstra (Fib 堆)</td><td>O(E + V log V)</td><td>O(E + V log V)</td><td>O(V+E)</td><td>decrease-key 摊还 O(1)，实际很少使用</td></tr>
+            <tr><td>拓扑排序 (Kahn)</td><td>O(V+E)</td><td>O(V+E)</td><td>O(V+E)</td><td>遍历每个点与每条边各一次</td></tr>
+            <tr><td>Bellman-Ford</td><td>O(V·E)</td><td>O(V·E)</td><td>O(V)</td><td>V-1 轮 × E 条边松弛；能处理负权边</td></tr>
+        </table>
+    </div>
+
+    <!-- ═══ 层 6: 核心性质与定理 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📐 核心性质与定理</h3>
+
+        <p><strong>1. BFS 最短路性质（无权图）</strong><br>
+        BFS 中，每个节点第一次被访问时，其距离 $d[v]$ 就是从源点到 $v$ 的最短跳数。<br>
+        <em>直觉：</em>BFS 严格按层扩展，层数 = 跳数，先到达的一定最近。</p>
+
+        <p><strong>2. Dijkstra 贪心正确性（非负权图）</strong><br>
+        定理：若所有边权 $w \geq 0$，Dijkstra 每次弹出的节点 $u$，其 $d[u] = \delta(s, u)$（最短路）。<br>
+        <em>证明要点：</em>反证法——若更短路存在，必经过某未确认节点 $v$，但 $d[v] \geq d[u]$ 且 $w \geq 0$，矛盾。</p>
+
+        <p><strong>3. 拓扑序与 DAG</strong><br>
+        图存在拓扑排序 $\Leftrightarrow$ 图是 DAG（有向无环图）。<br>
+        <em>推论：</em>Kahn 算法若输出节点数 &lt; V，则图中存在环。</p>
+
+        <p><strong>4. Bellman-Ford 收敛定理</strong><br>
+        无负环时，$V-1$ 轮松弛后所有最短路确定——因为最短路最多经过 $V-1$ 条边。<br>
+        <em>推论：</em>第 $V$ 轮若仍有松弛发生，必存在负权环。</p>
+
+        <p><strong>5. 最短路三角不等式</strong><br>
+        对任意边 $(u,v)$，最终最短路满足 $\delta(s,v) \leq \delta(s,u) + w(u,v)$。<br>
+        <em>直觉：</em>最短路不可能比"先到 $u$ 再走一步"更长。</p>
+    </div>
+
+    <!-- ═══ 层 7: 典型例题 ═══ -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题</h3>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.3);">基础</span> 课程表 (LC 207 / 210) —— 拓扑排序</summary>
+            <p><strong>题意：</strong>n 门课，prerequisites[i] = [a, b] 表示修 a 前必须先修 b。能否修完所有课？（207）按什么顺序修？（210）</p>
+            <p><strong>思路：</strong>建图 b→a，Kahn 拓扑排序。若输出节点数 &lt; n 则有环（无法完成）。</p>
+<pre><code class="language-python">def canFinish(numCourses: int, prerequisites: list[list[int]]) -> bool:
+    graph = defaultdict(list)
+    in_deg = [0] * numCourses
+    for a, b in prerequisites:
+        graph[b].append(a)
+        in_deg[a] += 1
+    q = deque(i for i in range(numCourses) if in_deg[i] == 0)
+    count = 0
+    while q:
+        u = q.popleft()
+        count += 1
+        for v in graph[u]:
+            in_deg[v] -= 1
+            if in_deg[v] == 0: q.append(v)
+    return count == numCourses  # [why] 不足说明有环
+</code></pre>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15);color:#fbbf24;border-color:rgba(251,191,36,.3);">中级</span> 网络延迟时间 (LC 743) —— Dijkstra</summary>
+            <p><strong>题意：</strong>n 个节点的有向加权图，从节点 k 发信号，所有节点都收到信号的最短时间？</p>
+            <p><strong>思路：</strong>Dijkstra 求 k 到所有点的最短距离，答案 = max(dist)。若有点不可达则返回 -1。</p>
+<pre><code class="language-python">def networkDelayTime(times: list[list[int]], n: int, k: int) -> int:
+    graph = defaultdict(list)
+    for u, v, w in times:
+        graph[u].append((v, w))
+    dist = dijkstra(n + 1, graph, k)  # 节点编号 1~n
+    ans = max(dist[1:n+1])
+    return ans if ans < float('inf') else -1
+</code></pre>
+            <p><strong>变种：</strong>如果边权只有 0 和 1，用 0-1 BFS（双端队列）可降为 O(V+E)——0 权边加入队头，1 权边加入队尾。</p>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15);color:#f87171;border-color:rgba(248,113,113,.3);">高级</span> 最便宜的航班 (LC 787) —— 带约束的最短路</summary>
+            <p><strong>题意：</strong>n 个城市、航班 [from, to, price]，从 src 到 dst 最多经过 k 次中转的最低价格。</p>
+            <p><strong>思路：</strong>Bellman-Ford 变体：只松弛 k+1 轮。第 i 轮代表"最多经过 i 条边"。注意每轮要用上一轮的 dist 的副本，防止同一轮内连锁松弛。</p>
+<pre><code class="language-python">def findCheapestPrice(n: int, flights: list[list[int]],
+                      src: int, dst: int, k: int) -> int:
+    dist = [float('inf')] * n
+    dist[src] = 0
+    for _ in range(k + 1):
+        prev = dist[:]  # [why] 副本防止同轮连锁
+        for u, v, w in flights:
+            if prev[u] + w < dist[v]:
+                dist[v] = prev[u] + w
+    return dist[dst] if dist[dst] < float('inf') else -1
+</code></pre>
+        </details>
+    </div>
+
+    <!-- ═══ 层 8: 变种 / 技术对比表 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📋 最短路算法对比</h3>
+        <table>
+            <tr><th>算法</th><th>边权要求</th><th>时间</th><th>适用场景</th><th>特殊能力</th></tr>
+            <tr><td>BFS</td><td>无权 / 等权</td><td>O(V+E)</td><td>迷宫、社交跳数</td><td>逐层扩展</td></tr>
+            <tr><td>0-1 BFS</td><td>0 或 1</td><td>O(V+E)</td><td>网格权值为 0/1</td><td>双端队列替代堆</td></tr>
+            <tr><td>Dijkstra</td><td>非负</td><td>O(E log V)</td><td>路网、地铁</td><td>贪心 + 堆</td></tr>
+            <tr><td>Bellman-Ford</td><td>任意（可负）</td><td>O(V·E)</td><td>汇率兑换、负权</td><td>可检测负权环</td></tr>
+            <tr><td>Floyd-Warshall</td><td>任意（无负环）</td><td>O(V³)</td><td>全源最短路、小图</td><td>DP 三重循环</td></tr>
+            <tr><td>SPFA</td><td>任意（可负）</td><td>摊还快，最坏 O(V·E)</td><td>竞赛常用</td><td>队列优化的 BF</td></tr>
+        </table>
+    </div>
+
+    <!-- ═══ 层 9: 易错点 ═══ -->
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
+        <h3>⚠️ 易错点与陷阱</h3>
+
+        <h4>1. Dijkstra 遗漏僵尸节点剪枝 → TLE</h4>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 漏掉 Dijkstra 中的僵尸节点剪枝</p>
+                <p>❌ 不剪枝，重复处理过时节点</p>
 <pre><code class="language-python">d, u = heapq.heappop(pq)
-# 直接拓展邻居，导致重复处理过时的坏数据
+# 直接松弛邻居，不检查 d 是否仍是最新
 for v, w in graph[u]:
     ...
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 必须加入剪枝</p>
+                <p>✅ 弹出时检查是否过时</p>
 <pre><code class="language-python">d, u = heapq.heappop(pq)
 if d > dist[u]:
-    continue  # 这个数据是旧的，忽略
+    continue  # [why] 此条目是旧的，早已有更短路径
 for v, w in graph[u]:
     ...
 </code></pre>
             </div>
         </div>
+
+        <h4>2. 有向图判环用 visited 而非 in_stack → WA</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 仅用 visited（不同 DFS 路径共享）</p>
+<pre><code class="language-python"># 节点 C 被路径 A→B→C 访问过，
+# 后从 D→C 再次碰到，visited=True
+# 但这不是环！只是另一条汇聚路径
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 用 in_stack 标记当前 DFS 路径</p>
+<pre><code class="language-python"># 只有在当前递归栈中再次遇到才是环
+# DFS 进入时 in_stack[u] = True
+# DFS 离开时 in_stack[u] = False
+</code></pre>
+            </div>
+        </div>
+
+        <h4>3. Bellman-Ford 同轮连锁松弛</h4>
+        <p>在限制步数的场景（如 LC 787），每轮松弛必须使用<strong>上一轮的 dist 副本</strong>，否则同一轮内 A→B→C 会被连锁松弛，导致多走了一步的距离被错误使用。</p>
+
+        <h4>4. C++ 整数溢出</h4>
+        <p>Dijkstra 中 <code>d + w</code> 可能溢出 <code>int</code>（当 dist 初始化为 <code>INT_MAX</code>）。解决：用 <code>long long</code> 或初始化为 <code>1e18</code>。Rust 中类似：<code>i64::MAX</code> 加正数会 panic（debug 模式）或 wrap（release 模式）。</p>
     </div>
 
+    <!-- ═══ 层 10: 互动演示 ═══ -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：Dijkstra 最短路过程 (5节点)</h3>
+        <h3>🎮 互动演示：Dijkstra 最短路 step-by-step (5 节点)</h3>
+        <p>点击"执行下一步"观察 Dijkstra 的贪心松弛过程。<span style="color:#10b981">■</span> 已固定 <span style="color:#6366f1">■</span> 正在处理 <span style="color:#f59e0b">■</span> 松弛中的边。</p>
         <div class="demo-container" id="graphDemo"></div>
     </div>
 
+    <!-- ═══ 层 11: 竞赛拓展 ═══ -->
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>SPFA算法：</strong>基于队列的 Bellman-Ford 优化算法，可处理负权边。但在极端构造图下会退化成 `O(V * E)`。</p>
-        <p><strong>Floyd-Warshall：</strong> 多源最短路径。巧妙利用状态转移方程 <code>dp[k][i][j]</code> —— 使得允许途经节点不超过 k 的松弛操作，O(N^3) 解决全图距离问题且极其简短。</p>
+        <h3>🏆 竞赛拓展</h3>
+        <p><em>以下内容超出常规面试范围，适合竞赛选手或进阶学习。</em></p>
+
+        <details>
+            <summary>SPFA (Shortest Path Faster Algorithm)</summary>
+            <p>基于队列的 Bellman-Ford 优化：只将距离被更新的节点加入队列。平均情况远快于 O(V·E)，但在特殊构造图上退化到 O(V·E)。因此大型竞赛中慎用，优先 Dijkstra。</p>
+        </details>
+
+        <details>
+            <summary>Floyd-Warshall —— 全源最短路 O(V³)</summary>
+            <p>DP 公式：<code>dp[k][i][j] = min(dp[k-1][i][j], dp[k-1][i][k] + dp[k-1][k][j])</code>。允许中转节点集合逐步扩大到 {1,...,k}。空间可优化为 O(V²)——因为第 k 轮只依赖第 k-1 轮。代码仅需三重循环，极其简洁。</p>
+<pre><code class="language-python">def floyd(n: int, dist: list[list[float]]) -> None:
+    """dist[i][j] = w(i,j) 或 inf；原地修改为最短路。"""
+    for k in range(n):       # [why] 枚举中转节点
+        for i in range(n):
+            for j in range(n):
+                if dist[i][k] + dist[k][j] < dist[i][j]:
+                    dist[i][j] = dist[i][k] + dist[k][j]
+</code></pre>
+        </details>
+
+        <details>
+            <summary>A* 搜索 —— 启发式最短路</summary>
+            <p>$f(n) = g(n) + h(n)$，其中 $g(n)$ 是已走距离，$h(n)$ 是启发式估计（如曼哈顿距离）。当 $h$ 是<strong>可采纳的</strong>（从不高估真实距离）时，A* 保证找到最优路径。广泛用于游戏 AI 的路径规划。</p>
+        </details>
+
+        <details>
+            <summary>Tarjan / Kosaraju —— 强连通分量 (SCC)</summary>
+            <p>Kosaraju：两次 DFS（正图后序 + 反图按后序逆序），O(V+E)。Tarjan：一次 DFS + low-link 值，O(V+E)。SCC 的缩点后图是 DAG，可做拓扑排序。</p>
+        </details>
     </div>
+
+    <!-- ═══ 层 12: 工业实战 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业实战</h3>
+
+        <h4>Google PageRank —— 图上随机游走</h4>
+        <p>将互联网建模为有向图（网页 = 节点，超链接 = 边），PageRank 算法通过随机游走的稳态概率对网页重要性排序。核心公式 $PR(v) = (1-d)/N + d \cdot \sum_{u \to v} PR(u)/\text{out}(u)$，迭代直至收敛。这是 Google 搜索引擎的立命基石。</p>
+
+        <h4>社交网络 —— 好友推荐 (BFS 共同好友)</h4>
+        <p>Facebook/微信的"你可能认识"功能：从用户出发 BFS 2 层，收集二度好友中的高频共同好友节点。LinkedIn 的 "People You May Know" 也是类似的 BFS + 特征排序。</p>
+
+        <h4>编译器依赖分析 —— 拓扑排序</h4>
+        <p>C++ 编译中，头文件依赖关系形成 DAG。<code>make</code>/<code>CMake</code> 通过拓扑排序决定编译顺序：only compile a file after all its dependencies are up-to-date。包管理器（npm, pip, cargo）也用拓扑排序解决依赖安装顺序。</p>
+
+        <h4>Kubernetes Pod 拓扑调度</h4>
+        <p>K8s 的 <code>topologySpreadConstraints</code> 将集群节点按拓扑域（zone, rack, node）组织为图结构，调度器通过图搜索确保 Pod 均匀分布在不同故障域中，提高服务高可用性。底层使用的 kube-scheduler 的 Filter/Score 插件本质上是图上的约束传播。</p>
+    </div>
+
+
 </section>
 
 <section class="card" data-quiz data-module="graphs">

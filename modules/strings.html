@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>字符串与哈希模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,21 +33,39 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
-    
-        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
-        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
-        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
-        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
-        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
-        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
-        .derive-body { flex:1; }
-        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
-        .intuition-box strong { color:#10b981; }
-        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
-        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
-        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
-        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
-        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+        .highlight-inline { background: rgba(99,102,241,.15); color: #a5b4fc; padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+        .naive-vs-smart { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.8rem 0; }
+        .naive-vs-smart .naive { border-left: 3px solid #f43f5e; padding-left: 0.8rem; }
+        .naive-vs-smart .smart { border-left: 3px solid #10b981; padding-left: 0.8rem; }
+        .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
+        @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
+
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-array { display: flex; gap: 4px; flex-wrap: wrap; margin: 0.8rem 0; }
+        .demo-cell { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-family: monospace; font-size: 1.1rem; font-weight: 700; transition: all .2s; border: 2px solid #334155; background: #1e293b; color: #94a3b8; position: relative; }
+        .demo-cell.in-window { background: rgba(99,102,241,.2); border-color: #6366f1; color: #c7d2fe; }
+        .demo-cell.left-ptr { border-color: #f59e0b; background: rgba(245,158,11,.2); color: #fcd34d; }
+        .demo-cell.right-ptr { border-color: #10b981; background: rgba(16,185,129,.2); color: #6ee7b7; }
+        .demo-cell.both-ptr { border-color: #8b5cf6; background: rgba(139,92,246,.2); color: #c4b5fd; }
+        .demo-ptr-label { font-size: 0.65rem; position: absolute; bottom: -18px; font-weight: 800; white-space: nowrap; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-info { margin: 1rem 0 0; font-size: 0.85rem; color: #94a3b8; font-family: monospace; line-height: 1.6; }
+        .demo-info .highlight { color: #a5b4fc; font-weight: 700; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
+        .demo-log .log-new { color: #6ee7b7; }
     </style>
 </head>
 <body data-theme="day">
@@ -62,140 +85,480 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-    <div class="knowledge-card kc-gray">
-        <h3>⚙️ 前置知识</h3>
-        <span class="prereq-tag">ASCII 与字符编码</span>
-        <span class="prereq-tag">数组的双指针扫描</span>
-        <p>字符串本质上就是不可变（Immutable）的字符数组。高级的字符串匹配算法，核心目的都在于：<strong>当匹配失败发生时，绝不能从头再来，必须从长相相似的“前缀”中榨取剩余价值！</strong></p>
-    </div>
-
-    <div class="knowledge-card kc-amber">
-        <h3>💡 推导：KMP 算法的 LPS 数组真相</h3>
-
-        <h4>1. 暴力匹配 (Brute-Force) 蠢在哪里？</h4>
-        <div class="intuition-box">
-            设主串 <code>A B A B A B C</code>，模式串 <code>A B A B C</code>。<br>
-            前 4 个字母双指针齐头并进，直到第 5 个字母 <code>A</code> 和 <code>C</code> 发生冲突。<br>
-            暴力解法会将主串的指针彻底回退到下标 1 的 <code>B</code>，模式串回到 0。这相当于让之前成功匹配过的信息全部灰飞烟灭！长达 $O(M 	imes N)$ 的复杂度。
-        </div>
-
-        <h4>2. LPS (Longest Prefix which is also Suffix) 最长公共前后缀</h4>
-        <div class="derive-step">
-            <div class="derive-num">1</div>
-            <div class="derive-body">
-                <strong>概念提取：</strong> 发生冲突前，我们已经成功匹配了 <code>[A, B, A, B]</code>。这个小短串有一个惊天地泣鬼神的性质：它的前两个字母 <code>A B</code> 和后两个字母 <code>A B</code> 是一模一样的！这就是 LPS = 2。
+            <!-- ═══ 层 0：引子问题 ═══ -->
+            <div class="knowledge-card kc-gray">
+                <h3>🎯 引子问题</h3>
+                <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+                    "在一本 100 万字的书中搜索某个关键词，怎么做到秒级响应？"
+                </p>
+                <p>带着这个问题，我们来看字符串匹配的三大利器：<strong>KMP · Rabin-Karp · Z-function</strong>，以及字符串哈希的通用威力。</p>
             </div>
-        </div>
-        <div class="derive-step">
-            <div class="derive-num">2</div>
-            <div class="derive-body">
-                <strong>时间跃迁：</strong> 既然主串的尾部 <code>A B</code> 就等同于模式串的头部 <code>A B</code>。主串的指针<strong>根本不需要回退哪怕一步</strong>！我们只需要把模式串像拉卷尺一样向右方滑动，让模式串的头 <code>A B</code> 直接对准刚才没死掉的主串尾 <code>A B</code>。此时模式串的指针直接从 2 (就是 LPS[3] 的值) 开始比较下一位即可！
+
+            <!-- ═══ 层 1：前置知识 ═══ -->
+            <div class="knowledge-card kc-gray">
+                <h3>📋 前置知识</h3>
+                <p>开始前你应该熟悉：</p>
+                <span class="prereq-tag">ASCII 与字符编码</span> 每个字符（A=65, a=97）可以看作一个整数，这是字符串哈希的基础。<br>
+                <span class="prereq-tag">数组双指针扫描</span> 字符串本质上是字符数组（<a href="arrays.html">见数组模块</a>），双指针技巧直接适用。<br>
+                <span class="prereq-tag">模运算基础</span> $a \bmod m$ 的性质：$(a+b)\bmod m = ((a\bmod m)+(b\bmod m))\bmod m$。哈希取模需要这个。
+                <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">
+                    <strong>关键认知：</strong>字符串是<strong>不可变的字符数组</strong>。高级匹配算法的核心目的：当匹配失败发生时，<strong>绝不从头再来</strong>，必须从已匹配的部分中榨取剩余价值。
+                </p>
             </div>
-        </div>
 
-        <div class="think-block">
-            <div class="q">Q: 为什么 KMP 算法里，主串的指针永远不会向左倒退？</div>
-            <details>
-                <summary>查看答疑</summary>
-                因为 LPS 数组（Next 数组）已经提早帮你算好了一切“内部重叠”。当遇到不匹配时，主串指针 i 保持不动，模式串指针 j 通过 <code>j = LPS[j-1]</code> 疯狂向左跳跃，就像在看小抄一样。由于 i 在长达 N 的旅途中只增不减，所以总的匹配时间是严格的线性的 O(N)。
-            </details>
-        </div>
+            <!-- ═══ 层 2：研究动机 ═══ -->
+            <div class="knowledge-card kc-amber">
+                <h3>💡 研究动机与问题建模</h3>
+                <p><strong>核心困境：</strong>在长度为 N 的主串 text 中搜索长度为 M 的模式串 pattern，暴力法 O(MN)，如何降到 O(M+N)？</p>
 
-        <h4>3. 字符串哈希 (Rabin-Karp) —— 降维打击式的相等</h4>
-        <div class="intuition-box">
-            把一个极其巨大的字符串，看作是一个 26 进制的大数字！比如 <code>abc</code> 就是 $1 	imes 26^2 + 2 	imes 26^1 + 3 	imes 26^0$。既然它是个数字，我们就可以对它取模（比如 10^9+7）。在这个哈希运算体系下，字符串的比对不再是逐位比较 $O(L)$，而是直接 $O(1)$ 比较两个数字是否相等！通过滑动窗口不断切除掉最高位、乘底数、加上最低位，可以在 O(N) 扫过。非常擅长处理<strong>多模式串/二维字符串匹配</strong>。
-        </div>
-    </div>
+                <div class="naive-vs-smart">
+                    <div class="naive">
+                        <p class="label" style="color:#f87171">❌ 暴力 O(MN)</p>
+<pre><code class="language-python">for i in range(N - M + 1):
+    if text[i:i+M] == pattern:  # [why] 每次切片比较 O(M)
+        return i</code></pre>
+                        <p style="font-size:0.85rem">匹配失败时主串回退到 i+1，模式串回到 0，之前的信息全部丢失。</p>
+                    </div>
+                    <div class="smart">
+                        <p class="label" style="color:#4ade80">✅ KMP O(M+N)</p>
+<pre><code class="language-python">j = 0  # 模式串指针
+for i in range(N):  # i 永不后退！
+    while j &gt; 0 and text[i] != pattern[j]:
+        j = lps[j-1]     # [why] 跳到内部前缀
+    if text[i] == pattern[j]:
+        j += 1
+    if j == M: return i - M + 1</code></pre>
+                    </div>
+                </div>
 
-    <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：KMP 前后缀跳跃流派</h3>
-<pre><code class="language-python"># 构建非常关键的 LPS 数组 (最长公共前后缀长度)
-def compute_lps(pattern):
+                <p><strong>形式化定义：</strong></p>
+                <ul>
+                    <li><strong>输入</strong>：text[0..N-1]，pattern[0..M-1]</li>
+                    <li><strong>输出</strong>：pattern 在 text 中所有出现位置</li>
+                    <li><strong>约束</strong>：O(N+M) 时间，O(M) 空间</li>
+                </ul>
+            </div>
+
+            <!-- ═══ 层 3：推导卡片 ═══ -->
+            <div class="knowledge-card kc-amber">
+                <h3>💡 推导：从暴力到线性</h3>
+
+                <h4>一、KMP 算法 — 永不回退的主串指针</h4>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body"><strong>暴力法的浪费：</strong>匹配了 pattern[0..j-1] 后在 j 处失败，暴力把主串回退到 i-j+1，模式串回到 0，丢弃了"已知 pattern[0..j-1] 与 text 对齐"这个宝贵信息。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body"><strong>LPS 数组（Longest Prefix = Suffix）：</strong>对 pattern[0..j-1]，它的某个前缀 = 后缀。例如 <code>ABAB</code> 中前缀 AB = 后缀 AB，LPS=2。这意味着主串不需要回退，模式串指针直接跳到 LPS 值处继续。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">3</div>
+                    <div class="derive-body"><strong>构建 LPS 的过程：</strong>本身就是"模式串与自己匹配"的 KMP 过程。用两个指针 i（扫描）和 length（已匹配的前缀长度），不断利用已知 LPS 回退。</div>
+                </div>
+                <div class="intuition-box">
+                    <strong>核心洞察：</strong>KMP 的威力在于 <strong>主串指针 i 永远只增不减</strong>。失败时只让模式串指针 j 通过 <code>j = lps[j-1]</code> 左跳——像查小抄一样跳到最长的内部前缀处。i 走 N 步 + j 的总跳跃次数 ≤ N → 总 O(N)。
+                </div>
+<pre class="ascii-art">
+  KMP 匹配过程 (text = "ABABABC", pattern = "ABABC")
+  LPS of "ABABC" = [0, 0, 1, 2, 0]
+
+  Step 1-4: 匹配成功 A B A B
+  text:    A B A B A B C
+           ↑ ↑ ↑ ↑
+  pattern: A B A B C         j=4 时失败 (A≠C)
+
+  Step 5: j = lps[3] = 2，模式串滑到 j=2 继续
+  text:    A B A B A B C
+               ↑ ↑ ↑         i 不回退！
+  pattern:     A B A B C      从 j=2 开始比较
+</pre>
+                <div class="think-block">
+                    <div class="q">🤔 为什么 KMP 主串指针永远不后退？</div>
+                    <details>
+                        <summary>展开答案</summary>
+                        <p>因为 LPS 数组已经编码了模式串内部所有"前缀=后缀"的重叠信息。失败时 j 跳到 lps[j-1]，相当于模式串向右滑动了 j - lps[j-1] 位。主串当前位置 i 处的字符尚未判定，不需要重新看。整个过程中 i 只执行 ++ 操作，最多 N 次。</p>
+                    </details>
+                </div>
+
+                <h4>二、Rabin-Karp — 哈希的降维打击</h4>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body">把字符串看作 base 进制数，<code>"abc" = a×base² + b×base + c</code>，取模映射到固定范围。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body"><strong>滚动哈希：</strong>窗口右移一位时，<code>hash = (hash - s[i]×base^(M-1)) × base + s[i+M]</code>，O(1) 更新。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">3</div>
+                    <div class="derive-body">哈希碰撞时回退到逐字符比较 O(M)，但平均情况下总复杂度 O(N+M)。</div>
+                </div>
+                <div class="intuition-box">
+                    <strong>优势场景：</strong>Rabin-Karp 擅长<strong>多模式串匹配</strong>和<strong>二维匹配</strong>，因为可以同时维护多个哈希值进行比较，而 KMP 一次只能匹配一个模式串。
+                </div>
+
+                <h4>三、Z-function — 优雅的前缀匹配</h4>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body"><code>z[i]</code> = s[i..] 与 s 本身的最长公共前缀长度。<code>z[0]</code> 未定义（整个串）。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body">维护一个 Z-box [L, R]——当前已知的最右匹配区间。新位置 i 若在 Z-box 内，可继承 <code>z[i-L]</code> 的信息。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">3</div>
+                    <div class="derive-body">用于字符串匹配：构造 <code>pattern + "$" + text</code>，在结果 z 数组中找 z[i] == M 的位置。</div>
+                </div>
+            </div>
+
+            <!-- ═══ 层 4：模板代码 ═══ -->
+            <div class="knowledge-card kc-blue">
+                <h3>💻 模板代码</h3>
+                <h4>Python</h4>
+<pre><code class="language-python"># ─── KMP：构建 LPS + 匹配 ───
+def compute_lps(pattern: str) -&gt; list[int]:
     n = len(pattern)
     lps = [0] * n
-    length = 0  # 之前最长前缀后缀的长度
-    i = 1       # lps[0] 永远为 0，因为一个字母没有真前缀
-    
-    while i < n:
+    length = 0                           # [why] 当前最长前缀=后缀长度
+    i = 1                                # [why] lps[0] 恒为 0
+    while i &lt; n:
         if pattern[i] == pattern[length]:
             length += 1
             lps[i] = length
             i += 1
         else:
             if length != 0:
-                # 失配了，像俄罗斯套娃一样回退去寻找更短的合法前缀
-                length = lps[length - 1]
+                length = lps[length - 1] # [why] 回退到内部前缀（不是 -1！）
             else:
                 lps[i] = 0
                 i += 1
     return lps
 
-# KMP 主程序匹配过程
-def kmp_search(text, pattern):
+def kmp_search(text: str, pattern: str) -&gt; list[int]:
     if not pattern: return []
     lps = compute_lps(pattern)
-    res = []
-    i = 0  # text pointer (永远不后退！)
-    j = 0  # pattern pointer
-    
-    while i < len(text):
-        if pattern[j] == text[i]:
-            i += 1
+    res: list[int] = []
+    j = 0                                # [why] 模式串指针
+    for i in range(len(text)):           # [why] i 永不后退
+        while j &gt; 0 and text[i] != pattern[j]:
+            j = lps[j - 1]              # [why] 跳到内部前缀
+        if text[i] == pattern[j]:
             j += 1
-            
         if j == len(pattern):
-            res.append(i - j) # 找到一只匹配的野兽！
-            j = lps[j - 1]    # 为了找下一只，退回到最长的后缀继续
-            
-        elif i < len(text) and pattern[j] != text[i]:
-            if j != 0:
-                # 这一步是魔法：我不退 i，我只把 j 滑到它内部的最长前缀处
-                j = lps[j - 1]
-            else:
-                i += 1 # 连第一位都失配了，没办法只有 i 前进了
+            res.append(i - j + 1)
+            j = lps[j - 1]              # [why] 继续搜索下一个匹配
     return res
-</code></pre>
-        <table>
-            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>暴力匹配 (StrStr)</td><td>O(M*N)</td><td>O(1)</td><td>一旦错开一格，又要把长达 M 的子串重新比较一遍。</td></tr>
-            <tr><td>KMP</td><td>O(M+N)</td><td>O(M)</td><td>主串指针 i 一直只加不减扫描一趟，加上造表 O(M)。</td></tr>
-            <tr><td>Rabin-Karp 哈希</td><td>O(M+N)</td><td>O(1)</td><td>通过极其巧妙的进制滑动公式瞬间移出最老的一位字符影响。</td></tr>
-        </table>
-    </div>
 
-    <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
-        <div class="code-compare">
-            <div class="wrong">
-                <p>❌ 在构建 lps 数组时无脑回退 1</p>
-<pre><code class="language-python"># 当错位时
-if pattern[i] != pattern[length]:
-    if length != 0:
-        # 很多新手以为长度减 1 慢慢搜就行
-        length = length - 1 
-</code></pre>
+# ─── Rabin-Karp 滚动哈希 ───
+def rabin_karp(text: str, pattern: str, base: int = 131, mod: int = 10**18 + 9) -&gt; list[int]:
+    n, m = len(text), len(pattern)
+    if m &gt; n: return []
+    # [why] 预计算 base^(m-1) mod p，用于移除最高位
+    power = pow(base, m - 1, mod)
+    p_hash = t_hash = 0
+    for i in range(m):                   # [why] 计算 pattern 和首窗口的哈希
+        p_hash = (p_hash * base + ord(pattern[i])) % mod
+        t_hash = (t_hash * base + ord(text[i])) % mod
+    res: list[int] = []
+    for i in range(n - m + 1):
+        if t_hash == p_hash and text[i:i+m] == pattern:  # [why] 哈希验证后逐字符确认
+            res.append(i)
+        if i &lt; n - m:                    # [why] 滚动：去最高位，加新最低位
+            t_hash = (t_hash - ord(text[i]) * power) % mod
+            t_hash = (t_hash * base + ord(text[i + m])) % mod
+    return res
+
+# ─── Z-function ───
+def z_function(s: str) -&gt; list[int]:
+    n = len(s)
+    z = [0] * n
+    l = r = 0                            # [why] Z-box 的左右端
+    for i in range(1, n):
+        if i &lt; r:
+            z[i] = min(r - i, z[i - l])  # [why] 继承 Z-box 内的已知信息
+        while i + z[i] &lt; n and s[z[i]] == s[i + z[i]]:
+            z[i] += 1                    # [why] 暴力扩展
+        if i + z[i] &gt; r:
+            l, r = i, i + z[i]           # [why] 更新 Z-box
+    return z</code></pre>
+                <details>
+                    <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;string&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+// ─── KMP ───
+vector&lt;int&gt; computeLPS(const string&amp; p) {
+    int n = p.size();
+    vector&lt;int&gt; lps(n, 0);
+    int len = 0;
+    for (int i = 1; i &lt; n; ) {
+        if (p[i] == p[len]) { lps[i++] = ++len; }
+        else if (len) { len = lps[len - 1]; }   // [why] 回退不是 -1
+        else { lps[i++] = 0; }
+    }
+    return lps;
+}
+vector&lt;int&gt; kmpSearch(const string&amp; text, const string&amp; pat) {
+    auto lps = computeLPS(pat);
+    vector&lt;int&gt; res;
+    int j = 0;
+    for (int i = 0; i &lt; (int)text.size(); ++i) {
+        while (j &gt; 0 &amp;&amp; text[i] != pat[j]) j = lps[j-1];
+        if (text[i] == pat[j]) j++;
+        if (j == (int)pat.size()) {
+            res.push_back(i - j + 1);
+            j = lps[j - 1];
+        }
+    }
+    return res;
+}
+
+// ─── Z-function ───
+vector&lt;int&gt; zFunction(const string&amp; s) {
+    int n = s.size();
+    vector&lt;int&gt; z(n, 0);
+    int l = 0, r = 0;
+    for (int i = 1; i &lt; n; ++i) {
+        if (i &lt; r) z[i] = min(r - i, z[i - l]);
+        while (i + z[i] &lt; n &amp;&amp; s[z[i]] == s[i + z[i]]) z[i]++;
+        if (i + z[i] &gt; r) { l = i; r = i + z[i]; }
+    }
+    return z;
+}</code></pre>
+                </details>
+                <details>
+                    <summary>Rust 版本</summary>
+<pre><code class="language-rust">/// KMP — 构建 LPS
+fn compute_lps(pattern: &amp;[u8]) -&gt; Vec&lt;usize&gt; {
+    let n = pattern.len();
+    let mut lps = vec![0usize; n];
+    let mut len = 0usize;
+    let mut i = 1;
+    while i &lt; n {
+        if pattern[i] == pattern[len] {
+            len += 1; lps[i] = len; i += 1;
+        } else if len &gt; 0 {
+            len = lps[len - 1];           // [why] 回退到内部前缀
+        } else {
+            lps[i] = 0; i += 1;
+        }
+    }
+    lps
+}
+
+/// KMP 搜索
+fn kmp_search(text: &amp;[u8], pattern: &amp;[u8]) -&gt; Vec&lt;usize&gt; {
+    if pattern.is_empty() { return vec![]; }
+    let lps = compute_lps(pattern);
+    let mut res = Vec::new();
+    let mut j = 0usize;
+    for (i, &amp;ch) in text.iter().enumerate() {
+        while j &gt; 0 &amp;&amp; ch != pattern[j] { j = lps[j - 1]; }
+        if ch == pattern[j] { j += 1; }
+        if j == pattern.len() {
+            res.push(i + 1 - j);
+            j = lps[j - 1];
+        }
+    }
+    res
+}
+
+/// Z-function
+fn z_function(s: &amp;[u8]) -&gt; Vec&lt;usize&gt; {
+    let n = s.len();
+    let mut z = vec![0usize; n];
+    let (mut l, mut r) = (0usize, 0usize);
+    for i in 1..n {
+        if i &lt; r { z[i] = z[i - l].min(r - i); }
+        while i + z[i] &lt; n &amp;&amp; s[z[i]] == s[i + z[i]] { z[i] += 1; }
+        if i + z[i] &gt; r { l = i; r = i + z[i]; }
+    }
+    z
+}</code></pre>
+                </details>
             </div>
-            <div class="right">
-                <p>✅ 必须用俄罗斯套娃般的状态机回跳</p>
+
+            <!-- ═══ 层 5：复杂度分析表 ═══ -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度分析表</h3>
+                <table>
+                    <tr><th>技巧</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>为什么</th></tr>
+                    <tr><td>暴力匹配</td><td>O(N)</td><td>O(MN)</td><td>O(1)</td><td>失配时主串回退到 i+1，模式串回到 0，最坏全部重新比较</td></tr>
+                    <tr><td>KMP</td><td>O(N+M)</td><td>O(N+M)</td><td>O(M)</td><td>主串不回退 → N 步；LPS 构建 O(M)；j 的总跳跃 ≤ N</td></tr>
+                    <tr><td>Rabin-Karp</td><td>O(N+M)</td><td>O(NM)</td><td>O(1)</td><td>平均 O(1) 比较但哈希碰撞时退化到逐字符；双哈希可缓解</td></tr>
+                    <tr><td>Z-function</td><td>O(N+M)</td><td>O(N+M)</td><td>O(N+M)</td><td>Z-box 保证每个字符最多被比较两次（进入 box 时 + 扩展时）</td></tr>
+                    <tr><td>字符串哈希</td><td>O(N)</td><td>O(N)</td><td>O(N)</td><td>O(N) 预处理，O(1) 查询任意子串哈希值</td></tr>
+                </table>
+            </div>
+
+            <!-- ═══ 层 6：核心性质 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 核心性质与定理</h3>
+                <p><strong>性质 1 — KMP 主串不回退：</strong>在 KMP 匹配中，主串指针 i 严格单调递增。证明：每次循环 i 至少 +1，while 循环只修改 j 不影响 i。因此主串全程只遍历 1 次，匹配阶段 O(N)。</p>
+                <p><strong>性质 2 — LPS 跳转次数 ≤ N：</strong>每次 j++ 对应 i++，j 最多增长 N 次。j = lps[j-1] 使 j 减少，而 j 的总增长 ≤ N，因此总减少也 ≤ N。</p>
+                <p><strong>性质 3 — 滚动哈希的期望碰撞率：</strong>使用模数 p 的单哈希，一次比较碰撞概率 ≈ 1/p。双哈希（两个不同模数）概率 ≈ 1/(p₁·p₂)，竞赛中取 p₁=10⁹+7, p₂=10⁹+9 近乎无碰撞。</p>
+                <p><strong>性质 4 — Z-function 与 KMP 的等价性：</strong>z 数组和 failure function 可以互相 O(N) 转换。z[i]=k 意味着 s[i..i+k-1] = s[0..k-1]，与前缀函数编码的信息等价。</p>
+            </div>
+
+            <!-- ═══ 层 7：典型例题 ═══ -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题</h3>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.3);">基础</span> 实现 strStr()（LeetCode 28）— KMP</summary>
+                    <p><strong>题意：</strong>返回 needle 在 haystack 中首次出现的位置。</p>
+                    <p><strong>思路：</strong>直接调用 KMP 模板。</p>
+<pre><code class="language-python">def strStr(haystack: str, needle: str) -&gt; int:
+    matches = kmp_search(haystack, needle)
+    return matches[0] if matches else -1</code></pre>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.3);">基础</span> 判断旋转字符串（LeetCode 796）— 拼接 + KMP</summary>
+                    <p><strong>题意：</strong>判断 goal 是否为 s 的旋转。</p>
+                    <p><strong>思路：</strong>旋转等价于 goal 是 (s+s) 的子串。拼接后用 KMP 或 <code>in</code> O(N) 判断。</p>
+<pre><code class="language-python">def rotateString(s: str, goal: str) -&gt; bool:
+    return len(s) == len(goal) and goal in (s + s)</code></pre>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15); color:#fbbf24; border-color:rgba(251,191,36,.3);">中级</span> 重复子串（LeetCode 459）— KMP</summary>
+                    <p><strong>题意：</strong>字符串 s 是否由某个子串重复多次构成。</p>
+                    <p><strong>推导：</strong>若 s 由长度 L 的子串重复 k 次，则 lps[n-1] = n - L。等价条件：<code>n % (n - lps[n-1]) == 0</code> 且 lps[n-1] &gt; 0。</p>
+<pre><code class="language-python">def repeatedSubstringPattern(s: str) -&gt; bool:
+    lps = compute_lps(s)
+    n = len(s)
+    l = n - lps[n - 1]            # [why] 最小周期长度
+    return lps[n - 1] &gt; 0 and n % l == 0</code></pre>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15); color:#f87171; border-color:rgba(248,113,113,.3);">高级</span> 最长回文子串（LeetCode 5）— 中心扩展 / Manacher</summary>
+                    <p><strong>题意：</strong>找字符串中最长的回文子串。</p>
+                    <p><strong>O(n²) 中心扩展法：</strong>枚举每个位置为中心（奇偶两种），向两侧扩展。</p>
+                    <p><strong>O(n) Manacher 算法：</strong>利用对称性继承已知回文半径，摊还 O(n)。超纲内容，仅需了解存在线性解法。</p>
+<pre><code class="language-python">def longestPalindrome(s: str) -&gt; str:
+    def expand(l: int, r: int) -&gt; str:
+        while l &gt;= 0 and r &lt; len(s) and s[l] == s[r]:
+            l -= 1; r += 1
+        return s[l+1:r]
+    res = ""
+    for i in range(len(s)):
+        odd  = expand(i, i)       # [why] 奇数长度回文
+        even = expand(i, i + 1)   # [why] 偶数长度回文
+        res = max(res, odd, even, key=len)
+    return res</code></pre>
+                    <p><strong>变种对比：</strong>中心扩展 O(n²)/O(1) 简单易实现；Manacher O(n)/O(n) 竞赛首选。</p>
+                </details>
+            </div>
+
+            <!-- ═══ 层 8：技术对比表 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 技术对比表</h3>
+                <table>
+                    <tr><th>技术</th><th>适用场景</th><th>优势</th><th>局限</th><th>典型题目</th></tr>
+                    <tr><td>KMP</td><td>单模式串精确匹配</td><td>严格 O(N+M)，无碰撞</td><td>一次只能匹配一个模式串</td><td>strStr、重复子串</td></tr>
+                    <tr><td>Rabin-Karp</td><td>多模式串 / 二维匹配</td><td>可同时检测多个哈希</td><td>有碰撞风险（需验证）</td><td>多模式搜索</td></tr>
+                    <tr><td>Z-function</td><td>前缀问题</td><td>实现简洁，与 KMP 等价</td><td>需 O(N+M) 额外空间</td><td>字符串匹配、周期</td></tr>
+                    <tr><td>字符串哈希</td><td>子串比较</td><td>O(1) 任意子串哈希</td><td>预处理 O(N)，有碰撞</td><td>最长公共子串</td></tr>
+                    <tr><td>Manacher</td><td>回文子串</td><td>严格 O(N)</td><td>仅限回文问题</td><td>最长回文子串</td></tr>
+                </table>
+            </div>
+
+            <!-- ═══ 层 9：易错点 ═══ -->
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点与陷阱</h3>
+                <p><strong>① LPS 构建时用 length-1 而非 lps[length-1]</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 错误 → 无法跳到正确前缀</p>
 <pre><code class="language-python">if pattern[i] != pattern[length]:
     if length != 0:
-        # 必须跳往它内部的内部那个 LPS
-         length = lps[length - 1]
-</code></pre>
+        length = length - 1  # 逐步 -1 效率低且错误</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 正确 → 利用已有 LPS 回退</p>
+<pre><code class="language-python">if pattern[i] != pattern[length]:
+    if length != 0:
+        length = lps[length - 1]  # [why] 递归利用内部结构</code></pre>
+                    </div>
+                </div>
+                <p><strong>② Rabin-Karp 忘记取模导致溢出</strong>（C++ 特有）</p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ C++: base^m 溢出 long long</p>
+<pre><code class="language-cpp">long long h = h * base + s[i];
+// base=131, m=15 → 131^15 远超 long long</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 每步取模</p>
+<pre><code class="language-cpp">long long h = (h * base + s[i]) % mod;</code></pre>
+                    </div>
+                </div>
+                <p><strong>③ Python 字符串不可变导致 O(N²) 拼接</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 循环拼接 O(N²)</p>
+<pre><code class="language-python">result = ""
+for ch in s:
+    result += ch  # 每次创建新字符串 O(N)</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 用列表收集再 join</p>
+<pre><code class="language-python">parts: list[str] = []
+for ch in s:
+    parts.append(ch)
+result = "".join(parts)  # O(N) 一次</code></pre>
+                    </div>
+                </div>
+                <p><strong>④ Rust 的 UTF-8 字符串不支持 O(1) 索引</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ s[i] 编译错误</p>
+<pre><code class="language-rust">let ch = s[i]; // str 不支持 Index&lt;usize&gt;</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 用 as_bytes() 或 chars()</p>
+<pre><code class="language-rust">let bytes = s.as_bytes();
+let ch = bytes[i]; // O(1) 按字节索引</code></pre>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：KMP 遇到不匹配时不回退主串的方法</h3>
-        <div class="demo-container" id="kmpDemo"></div>
-    </div>
+            <!-- ═══ 层 10：互动演示 ═══ -->
+            <div class="knowledge-card kc-purple">
+                <h3>🎮 互动演示：KMP 逐字符匹配可视化</h3>
+                <p style="font-size:0.9rem; color:var(--subtle-text)">主串 <strong>"ABABABC"</strong>、模式串 <strong>"ABABC"</strong>。点击按钮逐步推进，观察 i/j 指针和 LPS 回退。</p>
+                <div class="demo-container" id="kmpDemo">
+                    <div style="display:flex; flex-direction:column; gap:8px; background:#1e293b; padding:1.5rem; justify-content:center; align-items:center; border-radius:4px" id="kmpVis"></div>
+                    <div class="demo-controls" style="margin-top:0.8rem">
+                        <button id="kmpPrev" disabled>⏮ Prev</button>
+                        <button id="kmpNext">⏭ Next</button>
+                        <button id="kmpReset">🔄 Reset</button>
+                        <span style="margin-left:auto; font-size:0.82rem; color:#64748b" id="kmpStepLabel">步骤 0</span>
+                    </div>
+                    <div class="demo-log" id="kmpLog" style="margin-top:0.6rem">点击 Next 开始 KMP 匹配演示…</div>
+                </div>
+            </div>
 
-    <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>Manacher 算法 (马拉车)：</strong> 回文串的神器。如果在中心扩展找最长回文时遇到很多重叠部分怎么办？马拉车利用一个最大覆盖右边界 <code>R</code> 和其中心 <code>C</code>，然后利用对称性 $O(1)$ 继承左侧兄弟已有的回文半径，瞬间使得查找全串回文总耗时落入绝对线性的 O(N)。</p>
-    </div>
-</section>
+            <!-- ═══ 层 11：竞赛拓展 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 竞赛拓展</h3>
+                <p><strong>Manacher（马拉车）算法：</strong>O(N) 求所有位置的最长回文半径。利用已知回文的对称性继承信息，避免重复扩展。竞赛中回文题的首选。</p>
+                <p><strong>后缀数组 + LCP：</strong>O(N log N) 构建（倍增法），解决本质不同子串计数、最长公共子串等问题。DC3/SA-IS 可 O(N) 构建。</p>
+                <p><strong>Aho-Corasick 自动机：</strong>多模式串匹配的终极武器。Trie + failure 指针，O(N+M+出现次数)。</p>
+                <p><strong>后缀自动机（SAM）：</strong>O(N) 构建，支持子串计数、出现次数查询等。状态数 ≤ 2N-1。超纲内容，推荐阅读：<em>Blumer et al. "The smallest automaton recognizing the subwords of a text"</em>。</p>
+            </div>
+
+            <!-- ═══ 层 12：工业实战 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🏭 工业实战</h3>
+                <p><strong>搜索引擎倒排索引：</strong>Google 等搜索引擎对每个文档计算词项（token）的哈希值，构建倒排索引（term → document list）。字符串哈希使 term 查找 O(1)。Rabin-Karp 的多模式匹配思想则用于 n-gram 提取和近似去重（SimHash/MinHash）。</p>
+                <p><strong>DNA 序列比对：</strong>生物信息学中 BLAST 算法使用种子匹配（短串精确匹配） + 扩展策略。KMP/Rabin-Karp 用于种子匹配阶段。人类基因组 3×10⁹ 碱基对，线性算法是唯一可行方案。</p>
+                <p><strong>Git diff（Myers 算法）：</strong>Git 使用 Myers diff 算法，本质是在编辑图上找最短路径。底层依赖 LCS（最长公共子序列），与 KMP 的前缀匹配思想同源。<code>git diff</code> 的行级比对使用哈希加速逐行匹配。</p>
+            </div>
+
+        </section>
+
 
 <section class="card" data-quiz data-module="strings">
 <h2>练习题（Practice）</h2>
@@ -303,93 +666,67 @@ if pattern[i] != pattern[length]:
     <script>hljs.highlightAll();</script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("kmpDemo");
-    if(!container) return;
-    
-    container.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-            <div style="display:flex; flex-direction:column; gap:8px; background:#1e293b; padding:1.5rem; justify-content:center; align-items:center; border-radius:4px" id="kmpVis">
-                <!-- rendered by js -->
-            </div>
-            <div style="display:flex; gap:0.5rem">
-                <button id="kmpBtnStep" style="background:#3b82f6; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">执行下一步匹配</button>
-                <button id="kmpBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置演示</button>
-            </div>
-            <div id="kmpDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:5em;">KMP 匹配状态。</div>
-        </div>
-    `;
-
-    const descr = document.getElementById("kmpDescr");
-    let textStr = "ABABABC";
-    let patStr = "ABABC";
-    let lps = [0, 0, 1, 2, 0]; // LPS for ABABC
-    
-    let i = 0, j = 0;
-    
-    function draw() {
-        let html = '<div style="display:flex; gap:5px; font-weight:bold; font-size:18px">';
-        
-        // Text
-        html += '<div style="display:flex; align-items:center; width:60px; color:#cbd5e1; font-size:14px">主串 T</div>';
-        for(let k=0; k<textStr.length; k++) {
-            let bg = "transparent", col = "#94a3b8"; border = "2px solid #334155";
-            if (k === i) { border = "2px solid #38bdf8"; col = "#fff"; }
-            else if (k < i && k >= i-j) { border = "2px solid #10b981"; col = "#10b981"; }
-            
-            html += `<div style="width:30px; height:30px; line-height:30px; text-align:center; border-radius:4px; border:${border}; background:${bg}; color:${col}; transition:all 0.3s">${textStr[k]}</div>`;
-        }
-        html += '</div>';
-        
-        // Pattern offset
-        html += '<div style="display:flex; gap:5px; font-weight:bold; font-size:18px">';
-        html += '<div style="display:flex; align-items:center; width:60px; color:#cbd5e1; font-size:14px">模串 P</div>';
-        
-        let offset = i - j;
-        for(let ox=0; ox<offset; ox++) html += `<div style="width:30px; height:30px; border:2px solid transparent; background:transparent"></div>`;
-        
-        for(let k=0; k<patStr.length; k++) {
-            let bg = "transparent", col = "#94a3b8"; border = "2px dashed #475569";
-            if (k === j) { border = "2px solid #f43f5e"; col = "#fff"; }
-            else if (k < j) { border = "2px solid #10b981"; col = "#10b981"; }
-            html += `<div style="width:30px; height:30px; line-height:30px; text-align:center; border-radius:4px; border:${border}; background:${bg}; color:${col}; transition:all 0.3s">${patStr[k]}</div>`;
-        }
-        html += '</div>';
-
-        document.getElementById("kmpVis").innerHTML = html;
-    }
-
-    document.getElementById("kmpBtnStep").onclick = () => {
-        if(i >= textStr.length || j === patStr.length) {
-            descr.innerHTML = "匹配任务结束。"; return;
-        }
-        
-        if (textStr[i] === patStr[j]) {
-            descr.innerHTML = `匹配成功！T[${i}](${textStr[i]}) == P[${j}](${patStr[j]})。<br>两个指针同频前进一步。`;
+    const vis = document.getElementById("kmpVis");
+    const logEl = document.getElementById("kmpLog");
+    if(!vis || !logEl) return;
+    const textStr = "ABABABC", patStr = "ABABC";
+    const lps = [0, 0, 1, 2, 0];
+    // Pre-compute all steps
+    const steps = [];
+    let i=0, j=0;
+    steps.push({i:0, j:0, offset:0, msg:"初始：i=0, j=0。开始匹配。", type:"init"});
+    while(i < textStr.length) {
+        if(textStr[i] === patStr[j]) {
+            steps.push({i, j, offset:i-j, msg:`匹配！T[${i}]='${textStr[i]}' == P[${j}]='${patStr[j]}'。i++, j++。`, type:"match"});
             i++; j++;
-            if (j === patStr.length) descr.innerHTML += `<br><b>找到完整的一条模式串！</b>`;
+            if(j === patStr.length) {
+                steps.push({i:i-1, j:patStr.length, offset:i-patStr.length, msg:`🎉 找到完整匹配！位置 ${i-patStr.length}。j 回退到 lps[${j-1}]=${lps[j-1]}。`, type:"found"});
+                j = lps[j-1];
+            }
         } else {
-            if (j !== 0) {
-                let jump = lps[j-1];
-                descr.innerHTML = `<b>失配发生！</b>T[${i}](${textStr[i]}) != P[${j}](${patStr[j]})！<br>
-                暴力解法会让上方的主串 i 回退到 ${(i-j)+1} 处重新比较。<br>
-                但是在 KMP 中，i ${i} 绝不后退！我们查阅 LPS[j-1] = LPS[${j-1}] = ${jump}。<br>
-                将下方的模式串的指针 j 瞬间抽回到了索引 ${jump} 的地方。`;
-                j = jump;
+            if(j !== 0) {
+                let oldj = j;
+                j = lps[j-1];
+                steps.push({i, j, offset:i-j, msg:`失配 T[${i}]='${textStr[i]}' ≠ P[${oldj}]='${patStr[oldj]}'。j = lps[${oldj-1}] = ${j}（模式串右滑，i 不动）。`, type:"fallback"});
             } else {
-                descr.innerHTML = `连第一个位 P[0] 都和 T[${i}] 失配了。<br>没办法，j=0 退无可退，只好让主串 i 向前挪一步了。`;
+                steps.push({i, j:0, offset:i, msg:`失配 T[${i}]='${textStr[i]}' ≠ P[0]='${patStr[0]}'。j=0 退无可退，i++。`, type:"advance"});
                 i++;
             }
         }
-        draw();
-    };
+    }
+    steps.push({i:textStr.length-1, j:0, offset:textStr.length, msg:"匹配结束。", type:"done"});
 
-    document.getElementById("kmpBtnReset").onclick = () => {
-        i = 0; j = 0;
-        descr.innerHTML = "尝试寻找模式串 ABABC。<br>绿色边框代表已匹配，红/蓝为当前双指针交锋处。点击执行匹配。";
-        draw();
-    };
-    
-    document.getElementById("kmpBtnReset").onclick();
+    let cur = 0;
+    function draw() {
+        const st = steps[cur];
+        let html = '<div style="display:flex; gap:5px; font-weight:bold; font-size:18px">';
+        html += '<div style="display:flex; align-items:center; width:60px; color:#cbd5e1; font-size:14px">T</div>';
+        for(let k=0; k<textStr.length; k++) {
+            let border = "2px solid #334155", col = "#94a3b8";
+            if(k===st.i && st.type!=="done") { border="2px solid #38bdf8"; col="#fff"; }
+            else if(k>=st.offset && k<st.offset+st.j) { border="2px solid #10b981"; col="#10b981"; }
+            html += `<div style="width:30px;height:30px;line-height:30px;text-align:center;border-radius:4px;border:${border};color:${col};transition:all .3s">${textStr[k]}</div>`;
+        }
+        html += '</div><div style="display:flex; gap:5px; font-weight:bold; font-size:18px">';
+        html += '<div style="display:flex;align-items:center;width:60px;color:#cbd5e1;font-size:14px">P</div>';
+        for(let ox=0; ox<st.offset; ox++) html += '<div style="width:30px;height:30px;border:2px solid transparent"></div>';
+        for(let k=0; k<patStr.length; k++) {
+            let border="2px dashed #475569", col="#94a3b8";
+            if(k===st.j && st.type!=="done" && st.type!=="found") { border="2px solid #f43f5e"; col="#fff"; }
+            else if(k<st.j) { border="2px solid #10b981"; col="#10b981"; }
+            html += `<div style="width:30px;height:30px;line-height:30px;text-align:center;border-radius:4px;border:${border};color:${col};transition:all .3s">${patStr[k]}</div>`;
+        }
+        html += '</div>';
+        vis.innerHTML = html;
+        logEl.innerHTML = `<span class="log-new">${st.msg}</span>`;
+        document.getElementById("kmpStepLabel").textContent = `步骤 ${cur} / ${steps.length-1}`;
+        document.getElementById("kmpPrev").disabled = cur===0;
+        document.getElementById("kmpNext").disabled = cur===steps.length-1;
+    }
+    document.getElementById("kmpNext").addEventListener("click", ()=>{ if(cur<steps.length-1){ cur++; draw(); } });
+    document.getElementById("kmpPrev").addEventListener("click", ()=>{ if(cur>0){ cur--; draw(); } });
+    document.getElementById("kmpReset").addEventListener("click", ()=>{ cur=0; draw(); });
+    draw();
 });
 </script>
 </body>

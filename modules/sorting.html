@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>排序算法模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
-        .kc-blue { border-left: 3px solid #3b82f6; }
-        .kc-green { border-left: 3px solid #10b981; }
-        .kc-red { border-left: 3px solid #f43f5e; }
-        .kc-cyan { border-left: 3px solid #06b6d4; }
+        .kc-blue   { border-left: 3px solid #3b82f6; }
+        .kc-green  { border-left: 3px solid #10b981; }
+        .kc-red    { border-left: 3px solid #f43f5e; }
+        .kc-cyan   { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber  { border-left: 3px solid #f59e0b; }
+        .kc-gray   { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
-        .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
+        .knowledge-card table th,
+        .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
         .knowledge-card table th { background: #0f172a; }
         details summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
         details[open] summary { margin-bottom: 0.8rem; }
@@ -28,175 +33,577 @@
         pre { margin: 0; }
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
-    
-        .prereq-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600; margin:2px 4px 2px 0; background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
-        .think-block { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:8px; padding:1rem 1.2rem; margin:1rem 0; }
-        .think-block .q { font-weight:700; color:#f59e0b; margin-bottom:0.5rem; }
-        .think-block details summary { color:#94a3b8; font-size:0.9rem; }
-        .derive-step { display:flex; gap:1rem; align-items:flex-start; margin:0.8rem 0; }
-        .derive-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#3b82f6; color:#fff; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-top:2px; }
-        .derive-body { flex:1; }
-        .intuition-box { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.25); border-radius:6px; padding:0.8rem 1rem; margin:0.8rem 0; font-size:0.95rem; }
-        .intuition-box strong { color:#10b981; }
-        .naive-vs-smart { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.8rem 0; }
-        .naive-vs-smart .naive { border-left:3px solid #f43f5e; padding-left:0.8rem; }
-        .naive-vs-smart .smart { border-left:3px solid #10b981; padding-left:0.8rem; }
-        .naive-vs-smart .label { font-size:0.8rem; font-weight:700; margin:0 0 0.4rem; }
-        .demo-container { background:#0f172a; border-radius:8px; padding:1.2rem; margin:1rem 0; }
+
+        .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+        .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
+        .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
+        .think-block details summary { color: #94a3b8; font-size: 0.9rem; }
+        .derive-step { display: flex; gap: 1rem; align-items: flex-start; margin: 0.8rem 0; }
+        .derive-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .derive-body { flex: 1; }
+        .intuition-box { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.25); border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; font-size: 0.95rem; }
+        .intuition-box strong { color: #10b981; }
+        .naive-vs-smart { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.8rem 0; }
+        .naive-vs-smart .naive { border-left: 3px solid #f43f5e; padding-left: 0.8rem; }
+        .naive-vs-smart .smart { border-left: 3px solid #10b981; padding-left: 0.8rem; }
+        .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
+        @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
+
+        .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+        .demo-controls { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .demo-controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all .15s; }
+        .demo-controls button:hover { background: #334155; color: #e2e8f0; }
+        .demo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
     </style>
 </head>
 <body data-theme="day">
     <header>
         <div class="container header-inner">
-            <div><h1>排序算法模块</h1><p><a href="../index.html">返回主页面</a></p></div>
-            <div class="header-actions"><button id="theme-toggle" class="primary">切换模式</button></div>
+            <div>
+                <h1>排序算法模块</h1>
+                <p><a href="../index.html">返回主页面</a></p>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="primary">切换模式</button>
+            </div>
         </div>
     </header>
     <main class="container">
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+
+    <!-- ═══ 层 0: 引子问题 ═══ -->
+    <div class="knowledge-card kc-gray">
+        <h3>🎯 引子问题</h3>
+        <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+            "如果你手上有 1000 张打乱的扑克牌，最快能怎么理顺？"
+        </p>
+        <p>你会一张张挑最小的放前面（选择排序）？还是像打牌一样把每张插到合适位置（插入排序）？又或者先分两半各自理顺再合并（归并排序）？不同策略的效率可以相差<strong>数百万倍</strong>。带着这个问题，我们来看排序算法的世界。</p>
+    </div>
+
+    <!-- ═══ 层 1: 前置知识 ═══ -->
     <div class="knowledge-card kc-gray">
         <h3>⚙️ 前置知识</h3>
         <span class="prereq-tag">分治思想</span>
         <span class="prereq-tag">递归</span>
-        <p>排序是计算机科学中最古老的话题之一。现代编程语言基本都有极其高度优化的内置 <code>sort()</code> 函数，因此我们学习排序，绝对不是为了重复造轮子，而是学习它们背后体现出的惊慌失措时的“分治与归并”的顶级思维。</p>
+        <span class="prereq-tag">数组随机访问 O(1)</span>
+        <span class="prereq-tag">完全二叉树（堆排序）</span>
+        <p><strong>分治 (Divide &amp; Conquer)</strong>：将大问题分成独立子问题，递归解决后合并结果。排序的核心策略——快排和归并都是分治的典型应用。</p>
+        <p><strong>递归树</strong>：用树形表示递归调用层级，每层工作量之和决定总时间复杂度。</p>
+        <p>如果对堆结构不熟悉，堆排序的部分可参考 <a href="heap.html">堆模块</a>。</p>
     </div>
 
+    <!-- ═══ 层 2: 研究动机与问题建模 ═══ -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：快速排序与归并排序背后的博弈</h3>
+        <h3>🔬 研究动机——为什么排序这么重要？</h3>
+        <p>排序是计算机科学中最古老、研究最深入的问题。它不仅本身有用（查找、去重、合并都依赖有序数据），更是理解<strong>分治、递归、下界证明、工程优化</strong>的绝佳切入点。</p>
 
-        <h4>1. 快速排序 (Quick Sort) —— “先苦后甜”的分治</h4>
+        <div class="naive-vs-smart">
+            <div class="naive">
+                <h4 class="label">🐢 暴力级 O(N²) 排序</h4>
+                <p><strong>冒泡/选择/插入</strong>：两层循环比较所有元素对。简单但慢。</p>
+                <p>对 N=10⁶，需要 10¹² 次比较——现代 CPU 约需 <strong>16 分钟</strong>。</p>
+            </div>
+            <div class="smart">
+                <h4 class="label">⚡ 分治级 O(N log N) 排序</h4>
+                <p><strong>快排/归并/堆排</strong>：分而治之，每层做 O(N) 工作，共 log N 层。</p>
+                <p>对 N=10⁶，仅需 ~2×10⁷ 次比较——不到 <strong>0.02 秒</strong>。</p>
+            </div>
+        </div>
+
+        <p><strong>问题形式化</strong>：给定数组 <code>A[0..n-1]</code>，求一个排列使得 <code>A[0] ≤ A[1] ≤ ... ≤ A[n-1]</code>。</p>
+        <p><strong>信息论下界</strong>：n 个元素有 n! 种排列。基于比较的排序每次比较最多排除一半可能性，因此至少需要 $\log_2(n!) \approx n \log n$ 次比较 → <strong>比较排序下界 Ω(N log N)</strong>。</p>
+    </div>
+
+    <!-- ═══ 层 3: 推导卡片 ═══ -->
+    <div class="knowledge-card kc-amber">
+        <h3>💡 推导：核心排序算法的设计思路</h3>
+
+        <h4>1. 快速排序 (Quick Sort) —— "先分后治"</h4>
         <div class="derive-step">
             <div class="derive-num">1</div>
             <div class="derive-body">
-                <strong>痛苦的划分 (Partition)：</strong> 选一个领导(Pivot)，然后把所有小于它的人踢到左边，所有大于它的踢到右边。这是线性时间的操作 O(N)。它非常痛苦且混乱，完全是不稳定的。
+                <strong>选 Pivot</strong>：从数组中选一个基准元素（随机选择防退化）。
             </div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
             <div class="derive-body">
-                <strong>躺赢的合并：</strong> 当左半边和右半边自己递归地整理好之后，因为之前“小的全在左，大的全在右”的苦活已经干完了，整个数组直接相连就已经是完全有序的了！不需要额外的合并代码！
+                <strong>Partition（分区）</strong>：将所有 ≤ pivot 的元素挪到左边，&gt; pivot 的挪到右边。Pivot 归位。这一步是 O(N) 的原地操作。
             </div>
         </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>递归</strong>：对左右两部分分别排序。因为 pivot 已归位，合并不需额外工作（"先苦后甜"）。
+            </div>
+        </div>
+
+        <div class="intuition-box">
+            <strong>💡 核心洞察</strong>：快排的精髓在 Partition——它用 O(N) 的代价把一个无序问题分成两个更小的无序问题。如果每次 pivot 恰好把数组对半分，递归树深度 log N，总工作量 O(N log N)。
+        </div>
+
         <div class="think-block">
-            <div class="q">Q: 为什么快速排序在最坏情况下会退化到 O(N^2)？如何避免？</div>
+            <div class="q">Q: 为什么快排最坏情况 O(N²)？如何避免？</div>
             <details>
-                <summary>查看答疑</summary>
-                如果数组本来就是有序的，而你极其死板地总是选择最后一个元素作为 Pivot。你会发现每次划分，所有人都被分到了左边！根本没有均分，成了一棵深度为 N 的极度偏瘫的树。解决办法出奇地简单：<strong>随机选择 Pivot！</strong>用随机数打破恶意的输入数据构造。
+                <summary>展开解答</summary>
+                <p>如果每次 pivot 都选到最小/最大值，Partition 只切出一个空子数组和一个 N-1 的子数组。递归树退化为链状 N 层，每层 O(N) → 总 O(N²)。</p>
+                <p><strong>解决方案</strong>：① <strong>随机化 Pivot</strong>——期望情况下 O(N log N)。② <strong>三数取中</strong>——取首、中、尾三个元素的中位数作 pivot。③ <strong>Introsort</strong>——递归深度超过 2 log N 时切换堆排序。</p>
             </details>
         </div>
 
-        <h4>2. 归并排序 (Merge Sort) —— “先甜后苦”的分治</h4>
-        <div class="intuition-box">
-            毫不费力地从中间强行一刀劈开成为两半。递归下去直到变成单身汉（1 个元素的数组天然有序）。真正的苦力活在于：把两个已经各自有序的数组，合并成拉链一样完美有序的更长数组。需要开辟额外的 <strong>O(N) 空数组</strong>作为辅助。
+        <h4>2. 归并排序 (Merge Sort) —— "先治后合"</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>均匀分割</strong>：从中间切一刀，分成左右两半。这一步 O(1)，毫不费力。
+            </div>
         </div>
-        
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>递归排序</strong>：左右各自递归排序，直到子数组长度 ≤ 1（天然有序）。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>合并（Merge）</strong>：两个已排序数组像拉链一样交错合并——双指针谁小取谁。需要 O(N) 辅助空间。这一步是重活（"先甜后苦"）。
+            </div>
+        </div>
+
         <div class="think-block">
-            <div class="q">Q: 快速排序和归并排序都是 O(N log N)，为什么绝大部分语言里的 sort 都不用朴素的归并，而是快排居多（或者是它们的结合版 Timsort / Introsort）？</div>
+            <div class="q">Q: 快排和归并都是 O(N log N)，为什么大部分语言默认不用纯归并？</div>
             <details>
-                <summary>查看答疑</summary>
-                这是因为快排在<strong>现代 CPU 缓存命中率</strong>上是无敌的！快排的 Partition 是基于现有数组内存的原地交换（In-place），指针对撞时的空间局部性极好，访问都在 L1 Cache。而归并排序总是开辟又释放大量的新小数组空间，导致内存复制和 Cache Miss 极高。尽管快排最坏时间 O(N^2)，但是只要加入随机化，工程上快排的常数小得多！
+                <summary>展开解答</summary>
+                <p>快排的 Partition 是<strong>原地操作</strong>，指针在连续内存上对撞，<strong>CPU 缓存命中率</strong>极高（L1 Cache）。归并排序需要频繁分配/释放辅助数组，导致大量 Cache Miss 和内存拷贝。虽然快排最坏 O(N²)，但随机化后期望 O(N log N)，且常数因子小得多。</p>
+                <p>工业实践中两者都用：<strong>Timsort</strong>（Python/Java）= 归并 + 插入排序；<strong>Introsort</strong>（C++ std::sort）= 快排 + 堆排 + 插入排序。</p>
             </details>
+        </div>
+
+        <h4>3. 递归树分析：T(n) = 2T(n/2) + O(n)</h4>
+<pre class="ascii-art">
+           问题规模 n            ← 这层工作量: O(n)
+          ╱          ╲
+       n/2            n/2        ← 这层工作量: O(n/2) + O(n/2) = O(n)
+      ╱   ╲         ╱   ╲
+    n/4   n/4     n/4   n/4     ← 这层工作量: 4 × O(n/4) = O(n)
+    ...   ...     ...   ...
+      1  1  1  1  1  1  1  1    ← 叶子层，n 个，每个 O(1)
+
+共 log₂n 层，每层工作量 O(n) → 总计 O(n log n)
+</pre>
+
+        <h4>4. Partition 双指针对撞过程</h4>
+<pre class="ascii-art">
+初始: [6, 2, 7, 3, 1, 9, | 5 ]    pivot = 5 (最后一个)
+       i=-1  j→                     i 管「≤pivot 区」右边界
+
+j=0: 6&gt;5, skip.             [6, 2, 7, 3, 1, 9, | 5]
+j=1: 2≤5, i++, swap(0,1).   [2, 6, 7, 3, 1, 9, | 5]
+                              ↑i
+j=2: 7&gt;5, skip.
+j=3: 3≤5, i++, swap(2,3).   [2, 3, 7, 6, 1, 9, | 5]
+                                 ↑i
+j=4: 1≤5, i++, swap(3,4).   [2, 3, 1, 6, 7, 9, | 5]
+                                    ↑i
+j=5: 9&gt;5, skip.
+最后: swap(i+1, pivot).      [2, 3, 1, | 5 | 7, 9, 6]
+                                         ↑ pivot 归位！
+左半全 ≤ 5，右半全 &gt; 5。分治递归两边。
+</pre>
+
+        <h4>5. 非比较排序：计数排序与基数排序</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>计数排序</strong>：当值域 k 很小时（如年龄 0–150），开一个大小 k 的计数数组，扫一遍统计频率，再按频率依次输出。时间 O(N+k)，突破比较下界！
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>基数排序</strong>：对 d 位数字，从最低位到最高位做 d 轮稳定排序（通常用计数排序作为子程序）。时间 O(d(N+k))，d 和 k 往往是常数。
+            </div>
         </div>
     </div>
 
+    <!-- ═══ 层 4: 模板代码 ═══ -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：快排分区与归并合并拉链</h3>
+        <h3>💻 模板代码</h3>
+
+        <h4>A. 快速排序（随机化 Pivot）</h4>
 <pre><code class="language-python">import random
 
-# 1. 快速排序 (带有随机 Pivot 的版本)
-def quick_sort(arr, low, high):
-    if low < high:
-        # 随机化防止 O(n^2) 退化
-        rand_idx = random.randint(low, high)
-        arr[rand_idx], arr[high] = arr[high], arr[rand_idx] 
-        
-        # Partition 分区过程
-        pivot = arr[high]
-        i = low - 1  # i 指向小于等于 pivot 区域的边界
-        for j in range(low, high):
-            if arr[j] <= pivot:
-                i += 1
-                arr[i], arr[j] = arr[j], arr[i] # 发现小的，就扔进 i 的势力范围
-        arr[i + 1], arr[high] = arr[high], arr[i + 1] # 最后把 pivot 放中间
-        p = i + 1
-        
-        # 递归两侧
-        quick_sort(arr, low, p - 1)
-        quick_sort(arr, p + 1, high)
+def quick_sort(arr: list[int], lo: int, hi: int) -> None:
+    """原地快排 arr[lo..hi]"""
+    if lo >= hi:
+        return
+    # ─── Phase 1: 随机化 pivot ───
+    rand_idx = random.randint(lo, hi)
+    arr[rand_idx], arr[hi] = arr[hi], arr[rand_idx]  # [why] 防止有序输入导致 O(N²)
+    pivot = arr[hi]
 
-# 2. 归并排序合并过程与求逆序对思路
-def merge_and_count(left, right):
-    res = []
-    i, j, inversions = 0, 0, 0
-    # 左边右边比大小，谁小就出列进 res
-    while i < len(left) and j < len(right):
-        if left[i] <= right[j]:
-            res.append(left[i])
+    # ─── Phase 2: Partition ───
+    i = lo - 1                     # [why] i 是「≤pivot 区」的右边界
+    for j in range(lo, hi):
+        if arr[j] <= pivot:
             i += 1
+            arr[i], arr[j] = arr[j], arr[i]  # [why] 把小的交换到 i 区
+    arr[i + 1], arr[hi] = arr[hi], arr[i + 1]  # [why] pivot 归位
+    p = i + 1
+
+    # ─── Phase 3: 递归两侧 ───
+    quick_sort(arr, lo, p - 1)
+    quick_sort(arr, p + 1, hi)
+</code></pre>
+
+        <h4>B. 归并排序（含逆序对计数）</h4>
+<pre><code class="language-python">def merge_sort(arr: list[int]) -> tuple[list[int], int]:
+    """返回排序后数组和逆序对数量"""
+    if len(arr) <= 1:
+        return arr, 0
+    mid = len(arr) // 2
+    left, inv_l = merge_sort(arr[:mid])
+    right, inv_r = merge_sort(arr[mid:])
+    merged, inv_m = _merge(left, right)
+    return merged, inv_l + inv_r + inv_m
+
+def _merge(left: list[int], right: list[int]) -> tuple[list[int], int]:
+    res: list[int] = []
+    inversions = 0
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:    # [why] <= 保证稳定性
+            res.append(left[i]); i += 1
         else:
-            res.append(right[j])
-            j += 1
-            # 当右边的小于左边时，它比左边剩下的所有元素都小！(逆序对核心)
-            inversions += len(left) - i
+            res.append(right[j]); j += 1
+            inversions += len(left) - i  # [why] left[i:] 全部与 right[j] 构成逆序对
     res.extend(left[i:])
     res.extend(right[j:])
     return res, inversions
 </code></pre>
-        <table>
-            <tr><th>算法</th><th>时间</th><th>空间</th><th>稳定性</th><th>为什么</th></tr>
-            <tr><td>归并排序</td><td>O(N log N)</td><td>O(N)</td><td>稳定</td><td>合并时遇到相等的，优先抄写左边的，不乱序。新开数组所以O(N)空间。</td></tr>
-            <tr><td>快速排序</td><td>O(N log N)均摊</td><td>O(log N)递归栈</td><td>不稳定</td><td>远距离交换数据会破坏原有相同数字的前后顺序关系。</td></tr>
-            <tr><td>堆排序</td><td>O(N log N)</td><td>O(1)</td><td>不稳定</td><td>堆化过程 Sift-Down 是跳跃式跨层级的挪动。</td></tr>
-        </table>
-    </div>
 
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题变种比对</h3>
+        <h4>C. 堆排序</h4>
+<pre><code class="language-python">def heap_sort(arr: list[int]) -> None:
+    """原地堆排序"""
+    n = len(arr)
+
+    def sift_down(i: int, size: int) -> None:
+        while True:
+            largest = i
+            l, r = 2 * i + 1, 2 * i + 2
+            if l < size and arr[l] > arr[largest]: largest = l
+            if r < size and arr[r] > arr[largest]: largest = r
+            if largest == i: break
+            arr[i], arr[largest] = arr[largest], arr[i]
+            i = largest            # [why] 继续向下检查被交换的子树
+
+    # ─── Phase 1: 建大顶堆 O(N) ───
+    for i in range(n // 2 - 1, -1, -1):  # [why] 从最后一个非叶节点开始
+        sift_down(i, n)
+
+    # ─── Phase 2: 逐个取最大值放末尾 ───
+    for i in range(n - 1, 0, -1):
+        arr[0], arr[i] = arr[i], arr[0]  # [why] 堆顶（最大）与末尾交换
+        sift_down(0, i)                   # [why] 缩小堆范围，修复堆顶
+</code></pre>
+
+        <h4>D. 计数排序</h4>
+<pre><code class="language-python">def counting_sort(arr: list[int]) -> list[int]:
+    """适用于非负整数，值域不太大的场景"""
+    if not arr: return []
+    max_val = max(arr)
+    count = [0] * (max_val + 1)
+    for x in arr:
+        count[x] += 1              # [why] 统计每个值的出现频率
+    result: list[int] = []
+    for val, freq in enumerate(count):
+        result.extend([val] * freq)  # [why] 按值从小到大依次输出
+    return result
+</code></pre>
+
         <details>
-            <summary>变种：求数组中的逆序对数量，或者力扣 315：计算右侧小于当前元素的个数</summary>
-            <p><strong>常规思路：</strong> $O(N^2)$ 两层循环暴力对撞。 <br>
-            <strong>降维打击：</strong> 在归并排序的合并阶段，由于左右两部分内部已经各自有序了。如果发现右边的拉链头（元素 b）比左边的拉链头（元素 a）还要小，因为左边拉链是从小到大排列的，那这意味着 b 不仅比 a 小，它比 a 后面那些未出局的所有大哥们它全小！那么瞬间可以结算 <code>mid - i + 1</code> 个逆序对并累加！一边排序，一边就在极速 O(N log N) 的归并流程中顺手算完了这个计数难题。</p>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdlib&gt;
+using namespace std;
+
+// 快速排序（随机化 pivot）
+int partition(vector&lt;int&gt;&amp; arr, int lo, int hi) {
+    int rand_idx = lo + rand() % (hi - lo + 1);
+    swap(arr[rand_idx], arr[hi]);
+    int pivot = arr[hi], i = lo - 1;
+    for (int j = lo; j &lt; hi; ++j) {
+        if (arr[j] &lt;= pivot) {
+            ++i;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[hi]);
+    return i + 1;
+}
+
+void quickSort(vector&lt;int&gt;&amp; arr, int lo, int hi) {
+    if (lo &gt;= hi) return;
+    int p = partition(arr, lo, hi);
+    quickSort(arr, lo, p - 1);
+    quickSort(arr, p + 1, hi);
+    // ⚠️ C++ 注意：递归深度过深可能栈溢出，工程中用 Introsort
+}
+
+// 归并排序
+void mergeSort(vector&lt;int&gt;&amp; arr, int lo, int hi, vector&lt;int&gt;&amp; tmp) {
+    if (lo &gt;= hi) return;
+    int mid = lo + (hi - lo) / 2;  // ⚠️ 避免 (lo+hi)/2 的整数溢出
+    mergeSort(arr, lo, mid, tmp);
+    mergeSort(arr, mid + 1, hi, tmp);
+    // 合并 arr[lo..mid] 和 arr[mid+1..hi]
+    for (int k = lo; k &lt;= hi; ++k) tmp[k] = arr[k];
+    int i = lo, j = mid + 1;
+    for (int k = lo; k &lt;= hi; ++k) {
+        if (i &gt; mid)             arr[k] = tmp[j++];
+        else if (j &gt; hi)         arr[k] = tmp[i++];
+        else if (tmp[i] &lt;= tmp[j]) arr[k] = tmp[i++];
+        else                      arr[k] = tmp[j++];
+    }
+}
+</code></pre>
+        </details>
+        <details>
+            <summary>Rust 版本</summary>
+<pre><code class="language-rust">use rand::Rng;
+
+/// 快速排序（原地，随机化 pivot）
+fn quick_sort(arr: &amp;mut [i32]) {
+    let n = arr.len();
+    if n &lt;= 1 { return; }
+    let pivot_idx = rand::thread_rng().gen_range(0..n);
+    arr.swap(pivot_idx, n - 1);
+    let pivot = arr[n - 1];
+    let mut i = 0usize;
+    for j in 0..n - 1 {
+        if arr[j] &lt;= pivot {
+            arr.swap(i, j);
+            i += 1;
+        }
+    }
+    arr.swap(i, n - 1);
+    // ⚠️ Rust 注意：切片分割避免了借用冲突
+    let (left, right) = arr.split_at_mut(i);
+    quick_sort(left);
+    quick_sort(&amp;mut right[1..]); // 跳过 pivot
+}
+
+/// 归并排序（返回新 Vec）
+fn merge_sort(arr: &amp;[i32]) -&gt; Vec&lt;i32&gt; {
+    if arr.len() &lt;= 1 { return arr.to_vec(); }
+    let mid = arr.len() / 2;
+    let left = merge_sort(&amp;arr[..mid]);
+    let right = merge_sort(&amp;arr[mid..]);
+    let mut res = Vec::with_capacity(arr.len());
+    let (mut i, mut j) = (0, 0);
+    while i &lt; left.len() &amp;&amp; j &lt; right.len() {
+        if left[i] &lt;= right[j] {
+            res.push(left[i]); i += 1;
+        } else {
+            res.push(right[j]); j += 1;
+        }
+    }
+    res.extend_from_slice(&amp;left[i..]);
+    res.extend_from_slice(&amp;right[j..]);
+    res
+    // ⚠️ 分配了 O(n) 额外空间，Rust 的 .sort() 内部用 Timsort 更优
+}
+</code></pre>
         </details>
     </div>
 
+    <!-- ═══ 层 5: 复杂度分析表 ═══ -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度分析</h3>
+        <table>
+            <tr><th>算法</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>稳定</th><th>为什么</th></tr>
+            <tr><td>快速排序</td><td>O(N log N)</td><td>O(N²)</td><td>O(log N)</td><td>否</td><td>递归树每层 O(N)，共 log N 层；最坏时 pivot 极端偏，退化为 N 层</td></tr>
+            <tr><td>归并排序</td><td>O(N log N)</td><td>O(N log N)</td><td>O(N)</td><td>是</td><td>不管输入如何，都均匀二分；合并需辅助数组</td></tr>
+            <tr><td>堆排序</td><td>O(N log N)</td><td>O(N log N)</td><td>O(1)</td><td>否</td><td>建堆 O(N) + N 次弹顶各 O(log N)；sift-down 跨层交换破坏稳定性</td></tr>
+            <tr><td>计数排序</td><td>O(N+k)</td><td>O(N+k)</td><td>O(k)</td><td>是</td><td>非比较排序，k 是值域大小。k 远大于 N 时空间爆炸</td></tr>
+            <tr><td>基数排序</td><td>O(d(N+k))</td><td>O(d(N+k))</td><td>O(N+k)</td><td>是</td><td>d 轮计数排序，d=位数，k=每位的基数（通常 10 或 256）</td></tr>
+        </table>
+    </div>
+
+    <!-- ═══ 层 6: 核心性质与定理 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📐 核心性质与定理</h3>
+
+        <p><strong>定理 1：比较排序下界 Ω(N log N)</strong></p>
+        <p><em>陈述</em>：任何基于元素间两两比较的排序算法，最坏情况下至少需要 ⌈log₂(n!)⌉ 次比较。</p>
+        <p><em>直觉</em>：n 个元素有 n! 种可能的排列。每次比较将可能性最多减半。区分 n! 种情况的二叉决策树高度 ≥ log₂(n!) ≈ n log n（Stirling 近似）。</p>
+
+        <p><strong>性质 2：稳定性</strong></p>
+        <p>稳定排序保持相等元素的原始相对顺序。归并排序在合并时「左边优先」即可维持稳定；快排的远距离交换天然不稳定。</p>
+
+        <p><strong>性质 3：快排的随机化期望分析</strong></p>
+        <p>随机选择 pivot 后，每次 Partition 的期望切分比例接近均匀。数学分析：期望比较次数 ≤ 2n ln n ≈ 1.39 n log₂ n。（仅提及结论，详细证明见 CLRS 第 7 章）</p>
+
+        <p><strong>性质 4：非比较排序突破下界的前提</strong></p>
+        <p>计数/基数/桶排序之所以能达到 O(N)，是因为它们不依赖元素间比较，而是利用了<strong>值域信息</strong>（元素的数值范围有限）。代价是限制了适用场景。</p>
+    </div>
+
+    <!-- ═══ 层 7: 典型例题 ═══ -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 典型例题</h3>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.3);">基础</span> LC 912 — 排序数组</summary>
+            <p><strong>题意</strong>：对数组进行升序排序。</p>
+            <p><strong>思路</strong>：最佳练习——手写快排或归并排序。注意快排必须加随机化，否则 LeetCode 的特殊测试用例会导致 TLE。</p>
+            <p><strong>关键点</strong>：Python 的递归深度限制 (默认 1000)，对极大数组需 <code>sys.setrecursionlimit</code> 或改用迭代。</p>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15); color:#fbbf24; border-color:rgba(251,191,36,.3);">中级</span> LC 315 — 计算右侧小于当前元素的个数</summary>
+            <p><strong>题意</strong>：对每个 nums[i]，求满足 j &gt; i 且 nums[j] &lt; nums[i] 的 j 的个数。</p>
+            <p><strong>思路</strong>：归并排序的合并阶段，当右半部分的元素 <code>right[j]</code> 先被取出时，它比左半部分 <code>left[i:]</code> 所有未取出的元素都小 → 累加 <code>len(left) - i</code> 个逆序对。</p>
+            <p><strong>变种对比</strong>：LC 493（翻转对）条件从 <code>&lt;</code> 变为 <code>&gt; 2×</code>，需在合并前预处理计数，再做标准合并。</p>
+        </details>
+
+        <details>
+            <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15); color:#f87171; border-color:rgba(248,113,113,.3);">高级</span> LC 215 — 数组中第 K 大的元素（Quick Select）</summary>
+            <p><strong>题意</strong>：找数组中第 K 大的元素，不要求完全排序。</p>
+            <p><strong>思路</strong>：Quick Select = 快排的单边递归版。Partition 后检查 pivot 位置：如果恰好是第 K 大的位置就直接返回；否则只递归包含目标的那一半。</p>
+            <p><strong>复杂度</strong>：期望 O(N)，最坏 O(N²)。加随机化后期望 T(n) = T(n/2) + O(n) = O(n)。</p>
+<pre><code class="language-python">def quick_select(nums: list[int], k: int) -> int:
+    """返回第 k 大的元素 (k 从 1 开始)"""
+    target = len(nums) - k  # [why] 转换为第 target 小
+    lo, hi = 0, len(nums) - 1
+    while lo < hi:
+        rand_idx = random.randint(lo, hi)
+        nums[rand_idx], nums[hi] = nums[hi], nums[rand_idx]
+        pivot, i = nums[hi], lo - 1
+        for j in range(lo, hi):
+            if nums[j] <= pivot:
+                i += 1; nums[i], nums[j] = nums[j], nums[i]
+        nums[i + 1], nums[hi] = nums[hi], nums[i + 1]
+        p = i + 1
+        if p == target: return nums[p]
+        elif p < target: lo = p + 1  # [why] 目标在右半
+        else: hi = p - 1              # [why] 目标在左半
+    return nums[lo]
+</code></pre>
+        </details>
+    </div>
+
+    <!-- ═══ 层 8: 技术对比表 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔄 排序算法对比</h3>
+        <table>
+            <tr><th>算法</th><th>适用场景</th><th>优势</th><th>局限</th><th>典型题目</th></tr>
+            <tr><td>快速排序</td><td>通用排序（随机数据）</td><td>原地、缓存友好、常数小</td><td>最坏 O(N²)、不稳定</td><td>LC 912, 215</td></tr>
+            <tr><td>归并排序</td><td>需稳定性 / 链表排序 / 逆序对</td><td>稳定、最坏 O(N log N)</td><td>O(N) 额外空间</td><td>LC 148, 315</td></tr>
+            <tr><td>堆排序</td><td>空间受限 / 保证最坏 O(N log N)</td><td>O(1) 空间、最坏 O(N log N)</td><td>不稳定、缓存不友好</td><td>LC 215 辅助</td></tr>
+            <tr><td>计数排序</td><td>值域小的非负整数</td><td>O(N+k)、稳定</td><td>值域大时空间爆炸</td><td>LC 274</td></tr>
+            <tr><td>基数排序</td><td>定长数字/字符串</td><td>O(dN)、稳定</td><td>需要值域和位数信息</td><td>LC 164</td></tr>
+        </table>
+    </div>
+
+    <!-- ═══ 层 9: 易错点 ═══ -->
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
+        <h3>🔴 易错点与陷阱</h3>
+
+        <h4>陷阱 1：快排递归边界不隔离 Pivot</h4>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 快速排序死循环死法一</p>
-<pre><code class="language-python">mid = (low + high) // 2
-pivot = arr[mid]
-...
-quick_sort(arr, low, mid)
-quick_sort(arr, mid, high)
-# 危险：如果不把 pivot 真正隔离在界线之外
-# 遇到两个相同元素时会无限循环地互相交换调用！
+                <p>❌ Pivot 参与两边递归 → 死循环</p>
+<pre><code class="language-python">mid = partition(arr, lo, hi)
+quick_sort(arr, lo, mid)      # pivot 在左边又参与
+quick_sort(arr, mid, hi)      # pivot 在右边也参与
+# 两个相同元素时永远无法缩小范围！
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 明确划分出不重叠的三块地盘</p>
-<pre><code class="language-python"># 返回那个精准安放在正确位置的 p
-p = partition(arr, low, high)
-# [low, p-1] | p | [p+1, high]  p不再参与递归！
-quick_sort(arr, low, p - 1)
-quick_sort(arr, p + 1, high)
+                <p>✅ Pivot 归位后不再参与递归</p>
+<pre><code class="language-python">p = partition(arr, lo, hi)
+quick_sort(arr, lo, p - 1)    # [lo, p-1]
+quick_sort(arr, p + 1, hi)    # [p+1, hi]
+# p 已在正确位置，不需要再动
 </code></pre>
             </div>
         </div>
+
+        <h4>陷阱 2 (C++)：整数溢出</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ mid = (lo + hi) / 2 可能溢出</p>
+<pre><code class="language-cpp">int mid = (lo + hi) / 2;
+// 当 lo=1e9, hi=2e9 时 lo+hi 溢出 INT_MAX！
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 防溢出写法</p>
+<pre><code class="language-cpp">int mid = lo + (hi - lo) / 2;
+// ✅ hi-lo 不会溢出（hi >= lo）
+</code></pre>
+            </div>
+        </div>
+
+        <h4>陷阱 3 (Python)：归并排序浅拷贝</h4>
+        <p style="color:#94a3b8; font-size:0.9rem;"><code>arr[:mid]</code> 对基本类型是安全的值拷贝。但如果排序的是对象列表，切片产生的是<strong>浅拷贝</strong>——修改元素属性会影响原数组。排序比较函数应只读取，不修改元素内容。</p>
+
+        <h4>陷阱 4 (Rust)：sort_unstable vs sort</h4>
+        <p style="color:#94a3b8; font-size:0.9rem;">Rust 的 <code>.sort()</code> 是稳定排序（Timsort），<code>.sort_unstable()</code> 是不稳定但更快（pdqsort）。竞赛中优先用 <code>sort_unstable</code>，需要稳定性时才用 <code>sort</code>。</p>
     </div>
 
+    <!-- ═══ 层 10: 互动演示 ═══ -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：快排 Partition 双指针交互动画</h3>
-        <div class="demo-container" id="sortDemo"></div>
+        <h3>🔗 互动演示：快排 Partition 过程</h3>
+        <p style="font-size:0.9rem; color:#94a3b8;">点击 <strong>Next</strong> 逐步观察 Partition 如何将数组按 pivot 分成两半。绿色 = ≤pivot 区，红色 = &gt;pivot 区，橙色 = pivot。</p>
+        <div class="demo-container" id="sortDemo">
+            <div id="sort-viz" style="min-height:150px;"></div>
+            <div class="demo-controls" style="display:flex; gap:0.5rem; margin:0.8rem 0;">
+                <button id="sort-prev">⏮ Prev</button>
+                <button id="sort-next">⏭ Next</button>
+                <button id="sort-reset">🔄 Reset</button>
+            </div>
+            <div class="demo-log" id="sort-log">准备就绪。点击 Next 开始 Partition。</div>
+        </div>
     </div>
 
+    <!-- ═══ 层 11: 竞赛拓展 ═══ -->
     <div class="knowledge-card kc-cyan">
         <h3>🔷 竞赛拓展</h3>
-        <p><strong>桶排序与基数排序：</strong> 当数据在极小的范围内有无穷多个重复时，比如对全国 14 亿人的年龄排序。快排由于数据规模 N 过大会很慢（$10^9$ 日量级），但是人的年龄只有这 100 多岁（常数 K）！用一个大小 150 的数组当桶（计数排序），扫描一遍 14 亿数据，时间立刻从 $N \log N$ 退回到极速 $O(N)$！</p>
+
+        <p><strong>1. 三路快排（荷兰国旗问题）</strong></p>
+        <p>将数组分成 &lt;pivot、=pivot、&gt;pivot 三段。当有大量重复元素时，=pivot 段直接跳过不再递归，性能可从 O(N²) 恢复到 O(N)。这是 C++ pdqsort 的核心优化之一。</p>
+
+        <details>
+            <summary>2. 逆序对与 CDQ 分治</summary>
+            <p>对于更复杂的问题如「三维偏序」(a[i]&lt;a[j], b[i]&lt;b[j], c[i]&lt;c[j])，一维排序 + 二维 CDQ 分治 + 三维树状数组，层层降维。归并排序是 CDQ 分治的基础子程序。</p>
+        </details>
+
+        <details>
+            <summary>3. 外部排序与多路归并</summary>
+            <p>当数据量超过内存时（如 100GB 文件），将数据切成内存大小的块，各自排序写回磁盘（生成有序 run），再用 K 路归并（最小堆辅助）合并所有 run。这是数据库 ORDER BY 和 Hadoop MapReduce Shuffle 的核心算法。</p>
+        </details>
     </div>
-</section>
+
+    <!-- ═══ 层 12: 工业实战 ═══ -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业实战</h3>
+
+        <h4>1. Timsort——Python/Java 的内置排序</h4>
+        <p>Timsort 是一种混合稳定排序：先用<strong>插入排序</strong>将数据切成小段有序 run（利用现实数据常常"近乎有序"的特点），再用<strong>归并排序</strong>合并 run。对已有序数据，Timsort 的最优时间可达 O(N)。它是 Python <code>list.sort()</code>、Java <code>Arrays.sort(Object[])</code> 的默认实现。</p>
+
+        <h4>2. External Merge Sort——数据库 ORDER BY</h4>
+        <p>MySQL、PostgreSQL 等数据库在处理大结果集的 ORDER BY 时，如果数据超出 <code>sort_buffer_size</code>，会退化为<strong>外部排序</strong>：先排序内存中的块写入临时文件，再多路归并。理解归并排序的 I/O 模式对数据库调优至关重要。</p>
+
+        <h4>3. pdqsort / Introsort——C++ std::sort</h4>
+        <p>C++ 的 <code>std::sort</code> 使用 Introsort：以快排为主，递归深度超过 2 log N 时切换堆排序（保证最坏 O(N log N)），子数组小于 16 时切换插入排序（缓存友好）。Rust 的 <code>.sort_unstable()</code> 使用 pdqsort，加入了模式检测和块分区优化，实测比传统 Introsort 快 20-50%。</p>
+    </div>
+        </section>
 
 <section class="card" data-quiz data-module="sorting">
 <h2>练习题（Practice）</h2>
@@ -304,108 +711,107 @@ quick_sort(arr, p + 1, high)
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("sortDemo");
-    if(!container) return;
-    
-    container.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-            <div style="display:flex; flex-direction:column; gap:12px; background:#1e293b; padding:1.5rem; justify-content:center; align-items:center; border-radius:4px" id="st_bars">
-            </div>
-            <div style="display:flex; gap:0.5rem">
-                <button id="stBtnStep" style="background:#3b82f6; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">执行下一步</button>
-                <button id="stBtnReset" style="background:#475569; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">重置分区数列</button>
-            </div>
-            <div id="stDescr" style="background:#020617; color:#f59e0b; padding:0.5rem; font-family:monospace; font-size:0.85rem; min-height:4em;">目标：选取最后一名当 Pivot，把比它小的甩去左边，比它大的留右边。</div>
-        </div>
-    `;
+    if (!container) return;
 
-    const descr = document.getElementById("stDescr");
-    let arr = [6, 2, 7, 3, 1, 9, 5];
-    let pivotIdx = 6, i = -1, j = 0;
-    let state = 'compare'; // compare, swap, final
-    
-    function draw() {
-        let html = '<div style="display:flex; gap:8px; align-items:flex-end; height:120px; border-bottom:2px solid #334155; padding-bottom:5px">';
-        
-        arr.forEach((v, idx) => {
-            let h = v * 12;
-            let bg = "#64748b"; // default
-            
-            if (idx === pivotIdx) bg = "#f59e0b"; // pivot
-            else if (idx <= i) bg = "#10b981"; // less region
-            else if (idx > i && idx < j) bg = "#ef4444"; // greater region
-            
-            if (idx === j && state !== 'final') bg = "#3b82f6"; // current scanning
-            
-            html += `
-                <div style="display:flex; flex-direction:column; align-items:center; gap:5px; width:30px">
-                    ${idx === i ? '<div style="color:#10b981; font-weight:bold; font-size:10px; margin-bottom:-5px">i区</div>' : ''}
-                    ${idx === j && state !== 'final' ? '<div style="color:#3b82f6; font-weight:bold; font-size:10px; margin-bottom:-5px">j探</div>' : ''}
-                    <div style="height:${h}px; width:100%; background:${bg}; border-radius:2px; transition:all 0.3s"></div>
-                    <span style="color:#fff; font-size:12px">${v}</span>
-                </div>
-            `;
+    // ─── 快排 Partition 演示 ───
+    const INIT_ARR = [6, 2, 7, 3, 1, 9, 5];
+
+    function computeSteps(arr) {
+        const steps = [];
+        const a = [...arr];
+        const pivotIdx = a.length - 1;
+        const pivotVal = a[pivotIdx];
+        let i = -1;
+
+        steps.push({
+            arr: [...a], i: i, j: -1, pivotIdx: pivotIdx, phase: "init",
+            msg: `Pivot = ${pivotVal}（最后一个元素）。i=-1（≤pivot 区为空），j 从 0 开始扫描。`
         });
-        html += '</div>';
-        
-        // Legends
-        html += '<div style="display:flex; gap:15px; font-size:11px; color:#cbd5e1; margin-top:5px">';
-        html += '<div><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;margin-right:5px"></span>Pivot(标杆)</div>';
-        html += '<div><span style="display:inline-block;width:10px;height:10px;background:#10b981;margin-right:5px"></span>&lt;= Pivot 势力范围(i)</div>';
-        html += '<div><span style="display:inline-block;width:10px;height:10px;background:#ef4444;margin-right:5px"></span>&gt; Pivot 的元素</div>';
-        html += '</div>';
 
-        document.getElementById("st_bars").innerHTML = html;
-    }
-
-    document.getElementById("stBtnStep").onclick = () => {
-        if(state === 'final') {
-            descr.innerHTML = "分区已经完美完成！此时 Pivot(5) 将整个数组切成了完全互不干涉的两半。可以分治递归两头了。";
-            return;
-        }
-        
-        let pivotVal = arr[pivotIdx];
-        
-        if (state === 'compare') {
-            if (j >= pivotIdx) {
-                // Done scanning array, do final swap
-                state = 'final_swap';
-                descr.innerHTML = `遍历结束！当前 i 统领了所有比 ${pivotVal} 小的元素。需要把最后位置的 Pivot 插入到 i 的势力范围旁！也就是交换 ${arr[i+1]} 和 ${pivotVal}。`;
-                draw();
+        for (let j = 0; j < pivotIdx; j++) {
+            // 比较阶段
+            if (a[j] <= pivotVal) {
+                steps.push({
+                    arr: [...a], i: i, j: j, pivotIdx: pivotIdx, phase: "compare-le",
+                    msg: `j=${j}: a[${j}]=${a[j]} ≤ pivot(${pivotVal})。i++ 后交换 a[${i+1}] 和 a[${j}]。`
+                });
+                i++;
+                [a[i], a[j]] = [a[j], a[i]];
+                steps.push({
+                    arr: [...a], i: i, j: j, pivotIdx: pivotIdx, phase: "after-swap",
+                    msg: `交换完成。≤pivot 区: a[0..${i}] = [${a.slice(0, i+1).join(",")}]`
+                });
             } else {
-                let currVal = arr[j];
-                if (currVal <= pivotVal) {
-                    descr.innerHTML = `指针 j 扫描到元素 <b>${currVal}</b>，它 <= Pivot(${pivotVal})！<br>它有资格进入绿色阵营。所以前方 i 阵亡将线先扩大一格 (i++)，然后再将 ${currVal} 扔进去！准备交换。`;
-                    state = 'swap';
-                } else {
-                    descr.innerHTML = `指针 j 扫描到元素 <b>${currVal}</b>，它 > Pivot(${pivotVal})！<br>它不配进入绿色的 i 势力范围，留在被红区占领的阵地里。j 继续巡逻下一个。`;
-                    j++;
-                }
-                draw();
+                steps.push({
+                    arr: [...a], i: i, j: j, pivotIdx: pivotIdx, phase: "compare-gt",
+                    msg: `j=${j}: a[${j}]=${a[j]} > pivot(${pivotVal})。跳过，留在 >pivot 区。`
+                });
             }
-        } else if (state === 'swap') {
-            i++;
-            let temp = arr[i]; arr[i] = arr[j]; arr[j] = temp;
-            descr.innerHTML = `交换成功拉拢进绿色阵营！现在的序列状态发生位移，红色大于者被推到了后面。`;
-            j++;
-            state = 'compare';
-            draw();
-        } else if (state === 'final_swap') {
-            let temp = arr[i+1]; arr[i+1] = arr[pivotIdx]; arr[pivotIdx] = temp;
-            pivotIdx = i + 1; // Pivot enters middle!
-            state = 'final';
-            descr.innerHTML = `最终交换完毕！Pivot 完美降落在了正中间。它的左边全 <= 它，它的右边全 > 它。这是最快的分区操作。`;
-            draw();
         }
-    };
-    
-    document.getElementById("stBtnReset").onclick = () => {
-        arr = [6, 2, 7, 3, 1, 9, 5];
-        pivotIdx = 6; i = -1; j = 0; state = 'compare';
-        descr.innerHTML = "目标：选取最后一名当 Pivot，把比它小的甩去左边，比它大的留右边。走起！";
-        draw();
+
+        // 最终交换 pivot 归位
+        steps.push({
+            arr: [...a], i: i, j: pivotIdx, pivotIdx: pivotIdx, phase: "final-pre",
+            msg: `扫描完毕。将 pivot(${pivotVal}) 交换到 i+1=${i+1} 的位置，归位！`
+        });
+        [a[i + 1], a[pivotIdx]] = [a[pivotIdx], a[i + 1]];
+        const finalPivot = i + 1;
+        steps.push({
+            arr: [...a], i: i, j: -1, pivotIdx: finalPivot, phase: "done",
+            msg: `Partition 完成！pivot(${pivotVal}) 在位置 ${finalPivot}。左: [${a.slice(0, finalPivot).join(",")}]，右: [${a.slice(finalPivot+1).join(",")}]`
+        });
+
+        return steps;
     }
-    
-    draw();
+
+    let steps = computeSteps(INIT_ARR);
+    let cur = 0;
+
+    function render() {
+        const s = steps[cur];
+        const viz = document.getElementById("sort-viz");
+        const log = document.getElementById("sort-log");
+
+        let html = '<div style="display:flex; gap:6px; align-items:flex-end; height:130px; margin-bottom:8px;">';
+        for (let idx = 0; idx < s.arr.length; idx++) {
+            const v = s.arr[idx];
+            const h = v * 13;
+            let bg = "#1e293b", border = "#334155", color = "#94a3b8";
+
+            if (idx === s.pivotIdx) { bg = "rgba(245,158,11,.25)"; border = "#f59e0b"; color = "#fcd34d"; }
+            else if (idx <= s.i) { bg = "rgba(16,185,129,.2)"; border = "#10b981"; color = "#6ee7b7"; }
+            else if (idx > s.i && idx < (s.j >= 0 ? s.j : s.arr.length)) { bg = "rgba(244,63,94,.15)"; border = "#f43f5e"; color = "#fda4af"; }
+
+            if (idx === s.j && s.phase.startsWith("compare")) { bg = "rgba(99,102,241,.25)"; border = "#6366f1"; color = "#c7d2fe"; }
+
+            let label = "";
+            if (idx === s.i && s.i >= 0) label = "i";
+            if (idx === s.j && s.j >= 0 && s.phase !== "done") label += (label ? "," : "") + "j";
+
+            html += `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:38px;">
+                <span style="font-size:9px;color:#a5b4fc;min-height:14px;">${label}</span>
+                <div style="width:100%;height:${h}px;background:${bg};border:2px solid ${border};border-radius:3px;transition:all .2s;"></div>
+                <span style="font-size:12px;color:${color};font-weight:700;">${v}</span>
+            </div>`;
+        }
+        html += '</div>';
+
+        html += '<div style="display:flex;gap:12px;font-size:11px;color:#64748b;">';
+        html += '<span>🟠 Pivot</span><span>🟢 ≤Pivot</span><span>🔴 >Pivot</span><span>🔵 扫描中</span>';
+        html += '</div>';
+
+        viz.innerHTML = html;
+        log.innerHTML = `<span style="color:#94a3b8;">[${cur}/${steps.length - 1}]</span> ${s.msg}`;
+
+        document.getElementById("sort-prev").disabled = (cur === 0);
+        document.getElementById("sort-next").disabled = (cur === steps.length - 1);
+    }
+
+    document.getElementById("sort-next").onclick = () => { if (cur < steps.length - 1) { cur++; render(); } };
+    document.getElementById("sort-prev").onclick = () => { if (cur > 0) { cur--; render(); } };
+    document.getElementById("sort-reset").onclick = () => { steps = computeSteps(INIT_ARR); cur = 0; render(); };
+
+    render();
 });
 </script>
 </body>

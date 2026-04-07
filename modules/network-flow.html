@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -7,9 +7,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>网络流模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
+        .kc-gray { border-left: 3px solid #64748b; }
+        .kc-amber { border-left: 3px solid #f59e0b; }
         .kc-blue { border-left: 3px solid #3b82f6; }
         .kc-green { border-left: 3px solid #10b981; }
         .kc-red { border-left: 3px solid #f43f5e; }
@@ -51,131 +55,364 @@
 <section class="card">
     <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+    <!-- 层0: 引子 -->
     <div class="knowledge-card kc-gray">
-        <h3>⚙️ 前置知识</h3>
-        <span class="prereq-tag">BFS / DFS 搜索</span>
-        <span class="prereq-tag">图论基础与邻接表</span>
-        <p>网络流（Network Flow）是一类特殊的图论问题，将图想象成水管网络：每条边是一个有容量限制的水管（Capacity），源点（Source）不断涌水，汇点（Sink）收集水。如何在不撑爆任何一条水管的前提下，让汇点收到的水流量最大？</p>
+        <h3>🌊 引子：城市水管网最多能同时输送多少水？</h3>
+        <p>想象一座城市的自来水管网络：水厂（源头）通过粗细不一的管道向各区域输水，最终汇入蓄水池（汇点）。每根管道有最大承载能力（容量），不可超载。</p>
+        <p><strong>核心问题：如何安排水流方向和流量，使蓄水池收到的水量最大，同时不撑爆任何管道？</strong></p>
+        <p>这就是 <strong>网络最大流（Maximum Flow）</strong> 问题——图论中最优美、应用最广的模型之一。</p>
     </div>
 
+    <!-- 层1: 前置知识 -->
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 前置知识</h3>
+        <span class="prereq-tag">图的邻接表</span>
+        <span class="prereq-tag">BFS 广度优先搜索</span>
+        <span class="prereq-tag">DFS 深度优先搜索</span>
+        <p>学习网络流前，请确保你已掌握图的存储（邻接表）与遍历（BFS/DFS）。它们是所有网络流算法的基础工具。</p>
+    </div>
+
+    <!-- 层2: 动机 -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：残量网络与最大流算法推演</h3>
-
-        <h4>1. 为什么“找到路径就注水”不够？</h4>
-        <div class="intuition-box">
-            <strong>核心思想：</strong>如果我们只是随便用 DFS 找一条能通水的路径（从源点到汇点），并填满瓶颈水量，很容易走错——占用了某条关键管道，导致真正大容量的水流无法通过！这就好比你做了一个贪心选择，但是贪心是错的。
+        <h3>💡 动机：为什么需要系统化的最大流算法？</h3>
+        <div class="naive-vs-smart">
+            <div class="naive">
+                <div class="label">❌ 朴素贪心：每次找一条路灌满</div>
+                <p>用 DFS 随意找一条从源到汇的路径，沿瓶颈灌满。看似合理，但可能"堵死"其他更优路径，导致总流量远低于最优。</p>
+                <p>例：贪心先走 s→a→b→t 占满 a→b，使得本可分别走 s→a→t 和 s→b→t 的大量流量被阻断。</p>
+            </div>
+            <div class="smart">
+                <div class="label">✅ 最大流算法：增广 + 反悔</div>
+                <p>引入<strong>残差图（Residual Graph）</strong>和<strong>反向边</strong>，让算法能"撤销"之前的错误决策。不断找增广路直至无法增广，保证得到全局最优解。</p>
+            </div>
         </div>
+    </div>
 
-        <h4>2. 反向边与残量网络 (Residual Network)</h4>
+    <!-- 层3: 推导 -->
+    <div class="knowledge-card kc-amber">
+        <h3>🔍 推导：从基本概念到 Edmonds-Karp</h3>
+
         <div class="derive-step">
             <div class="derive-num">1</div>
             <div class="derive-body">
-                <strong>反悔机制：</strong>为了解决“走错”问题，我们引入<strong>反悔边</strong>。当向正向边注水流 $f$ 时，我们自动构建一条容量同样为 $f$ 的反向边。
+                <strong>流网络基本概念</strong><br>
+                <strong>源点 s</strong>（只出不进）、<strong>汇点 t</strong>（只进不出）；每条有向边 (u,v) 有<strong>容量</strong> c(u,v) ≥ 0；<strong>流量</strong> f(u,v) 满足 0 ≤ f(u,v) ≤ c(u,v)（容量约束），且中间节点流入 = 流出（流量守恒）。
             </div>
         </div>
+
         <div class="derive-step">
             <div class="derive-num">2</div>
             <div class="derive-body">
-                <strong>物理直觉：</strong>如果未来的水流流过了这条反向边，相当于“抵消”了原来正向的水流，也就是把原来误占的水管让给别人！这就把贪心失败的可能性变成了一种自由的动态平衡。
+                <strong>Ford-Fulkerson 方法（增广路思想）</strong><br>
+                反复在<strong>残差图</strong>中寻找 s→t 的路径（增广路），沿路径推送流量。残差图中正向边剩余容量 = c(u,v) − f(u,v)，同时建一条容量为 f(u,v) 的<strong>反向边</strong>（允许"退流"）。
             </div>
         </div>
 
-        <h4>3. 最大流最小割定理 (Max-Flow Min-Cut Theorem)</h4>
-        <div class="intuition-box">
-            <strong>宏观定理：</strong>图中的最大流量，严格等于将其切分为两个部分（源和汇必须隔开）的“最小割”容量。为什么？因为水流受限于图中那组最细的瓶颈管道组合。当你找出这组瓶颈，并将它们切断，图就被一分为二，流量就是这些瓶颈的总和！
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>残差图 + 反向边示意（4 节点：s→a→t, s→b→t, a→b）</strong>
+                <div class="ascii-art">
+初始图（容量标注）：             增广① s→a→b→t 推 10：
+
+  s ──20──▶ a                 s ──10──▶ a       (20−10=10)
+  │          │ 10              │    ◀──10──┘      (反向边!)
+  │          ▼                 │          ▼ 0     (10−10=0)
+  │          b                 │          b
+  │          │ 20              │          │ 10    (20−10=10)
+  └──10──▶   ▼                 └──10──▶   ▼
+             t                            t
+
+增广② s→b→(反向a←b)→a→t 推 5：    最终最大流 = 10 + 5 = 15
+
+  反向边让我们"退回"a→b 的 5 单位流量，
+  改为 a 直接送往 t，b 从 s 直接获取补给。
+                </div>
+            </div>
         </div>
 
-        <h4>4. Ford-Fulkerson vs Edmonds-Karp</h4>
-        <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">Ford-Fulkerson (DFS路径)</h4><p>因为用 DFS 找增广路，可能在一个大容量图里每次只增广 1 个单位的水量，导致时间复杂度受到最大容量 $F$ 影响，变成 O(E·F)！</p></div>
-            <div class="smart"><h4 class="label">Edmonds-Karp (BFS路径)</h4><p>改用 BFS 找跳数最短的增广路。严格数学证明表明，这种做法最多只会进行 $V 	imes E$ 次增广，复杂度只受点边规模限制，达到了稳定的 O($V \cdot E^2$)。</p></div>
+        <div class="derive-step">
+            <div class="derive-num">4</div>
+            <div class="derive-body">
+                <strong>Edmonds-Karp 算法（BFS 找最短增广路）</strong><br>
+                Ford-Fulkerson 用 DFS 找增广路可能导致 O(E·F) 的坏情况（F = 最大流值）。Edmonds-Karp 改用 <strong>BFS</strong> 每次找<strong>跳数最短</strong>的增广路，最多增广 O(V·E) 次，总复杂度 O(V·E²)，与流量值无关。
+            </div>
+        </div>
+
+        <div class="think-block">
+            <div class="q">🤔 最大流最小割定理 (Max-Flow Min-Cut Theorem)</div>
+            <p>将图切一刀，把 s 和 t 分到两侧——被切断的边容量之和称为"割"。<strong>最大流 = 最小割</strong>。</p>
+            <details>
+                <summary>直觉理解（不展开严格证明）</summary>
+                <p>水流总受限于网络中"最窄的瓶颈组合"。当算法结束后，残差图中 s 无法到达 t，说明存在一组饱和边恰好将图一分为二——这就是最小割。所以最大流恰好"填满"了这个最小瓶颈。严格证明可利用 LP 对偶性，此处仅做直觉展望。</p>
+            </details>
         </div>
     </div>
 
+    <!-- 层4: 代码 -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：Edmonds-Karp 与残量图</h3>
+        <h3>💻 模板代码：Edmonds-Karp（BFS 增广）</h3>
 <pre><code class="language-python">from collections import deque
 
-def max_flow_ek(n, capacity, adj, source, sink):
-    # capacity: 2D array, adj: adjacency list (包含反向边的占位)
-    flow = 0
-    parent = [-1] * n  # 记录 BFS 路径
-    
-    # Edmonds-Karp: BFS 找寻最短增广路
-    def bfs():
-        for i in range(n): parent[i] = -1
-        parent[source] = source
-        queue = deque([(source, float('inf'))])
-        
-        while queue:
-            u, bottle_neck = queue.popleft()
-            for v in adj[u]:
-                # 如果仍有残量，且之前未访问过
-                if parent[v] == -1 and capacity[u][v] > 0:
-                    parent[v] = u
-                    new_flow = min(bottle_neck, capacity[u][v])
-                    if v == sink:
-                        return new_flow
-                    queue.append((v, new_flow))
-        return 0
+def max_flow_ek(n, source, sink):
+    """Edmonds-Karp: O(V * E^2)
+    adj[u] = [[v, cap, rev_index], ...]  邻接表 + 反向边索引
+    """
+    adj = [[] for _ in range(n)]
 
+    def add_edge(u, v, cap):
+        adj[u].append([v, cap, len(adj[v])])    # 正向边
+        adj[v].append([u, 0,   len(adj[u])-1])  # 反向边(容量0)
+
+    # -------- 建图: 调用 add_edge(u, v, cap) --------
+
+    flow = 0
     while True:
-        pushed = bfs()
-        if pushed == 0:
+        # BFS 找增广路
+        parent = [None] * n
+        parent[source] = (source, -1)
+        queue = deque([source])
+        while queue:
+            u = queue.popleft()
+            for i, (v, cap, _) in enumerate(adj[u]):
+                if cap > 0 and parent[v] is None:
+                    parent[v] = (u, i)
+                    if v == sink:
+                        break
+                    queue.append(v)
+            else:
+                continue
             break
-        flow += pushed
-        # 回溯更新残量图
-        curr = sink
-        while curr != source:
-            prev = parent[curr]
-            capacity[prev][curr] -= pushed # 正向管道变窄
-            capacity[curr][prev] += pushed # 反悔余量增加
-            curr = prev
-            
+        if parent[sink] is None:
+            break
+        # 回溯求瓶颈
+        bottleneck, v = float('inf'), sink
+        while v != source:
+            u, i = parent[v]
+            bottleneck = min(bottleneck, adj[u][i][1])
+            v = u
+        # 更新残差图
+        v = sink
+        while v != source:
+            u, i = parent[v]
+            adj[u][i][1] -= bottleneck           # 正向减
+            adj[v][adj[u][i][2]][1] += bottleneck # 反向加
+            v = u
+        flow += bottleneck
     return flow
 </code></pre>
+        <details>
+            <summary>C++ 实现（点击展开）</summary>
+<pre><code class="language-cpp">// Edmonds-Karp  O(V * E^2)
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+struct Edge { int to, cap, rev; };
+vector&lt;Edge&gt; graph[5005];
+int par_node[5005], par_edge[5005];
+
+void add_edge(int u, int v, int cap) {
+    graph[u].push_back({v, cap, (int)graph[v].size()});
+    graph[v].push_back({u, 0,   (int)graph[u].size()-1});
+}
+
+int bfs(int s, int t, int n) {
+    memset(par_node, -1, sizeof(int)*n);
+    par_node[s] = s;
+    queue&lt;pair&lt;int,int&gt;&gt; q;
+    q.push({s, INT_MAX});
+    while (!q.empty()) {
+        auto [u, f] = q.front(); q.pop();
+        for (int i = 0; i &lt; (int)graph[u].size(); i++) {
+            auto &amp;e = graph[u][i];
+            if (par_node[e.to] == -1 &amp;&amp; e.cap &gt; 0) {
+                par_node[e.to] = u;
+                par_edge[e.to] = i;
+                int nf = min(f, e.cap);
+                if (e.to == t) return nf;
+                q.push({e.to, nf});
+            }
+        }
+    }
+    return 0;
+}
+
+int max_flow(int s, int t, int n) {
+    int flow = 0, pushed;
+    while ((pushed = bfs(s, t, n)) &gt; 0) {
+        flow += pushed;
+        int cur = t;
+        while (cur != s) {
+            int prev = par_node[cur];
+            int idx  = par_edge[cur];
+            graph[prev][idx].cap -= pushed;
+            graph[cur][graph[prev][idx].rev].cap += pushed;
+            cur = prev;
+        }
+    }
+    return flow;
+}
+</code></pre>
+        </details>
+        <details>
+            <summary>Rust 实现（点击展开）</summary>
+<pre><code class="language-rust">use std::collections::VecDeque;
+
+struct MaxFlow {
+    graph: Vec&lt;Vec&lt;(usize, i64, usize)&gt;&gt;, // (to, cap, rev_idx)
+}
+impl MaxFlow {
+    fn new(n: usize) -&gt; Self { Self { graph: vec![vec![]; n] } }
+    fn add_edge(&amp;mut self, u: usize, v: usize, cap: i64) {
+        let ru = self.graph[v].len();
+        let rv = self.graph[u].len();
+        self.graph[u].push((v, cap, ru));
+        self.graph[v].push((u, 0, rv));
+    }
+    fn max_flow(&amp;mut self, s: usize, t: usize) -&gt; i64 {
+        let n = self.graph.len();
+        let mut flow = 0i64;
+        loop {
+            let mut parent: Vec&lt;(usize, usize)&gt; = vec![(!0, !0); n];
+            parent[s] = (s, 0);
+            let mut queue = VecDeque::new();
+            queue.push_back((s, i64::MAX));
+            let mut pushed = 0i64;
+            while let Some((u, f)) = queue.pop_front() {
+                for i in 0..self.graph[u].len() {
+                    let (v, cap, _) = self.graph[u][i];
+                    if cap &gt; 0 &amp;&amp; parent[v].0 == !0 {
+                        parent[v] = (u, i);
+                        let nf = f.min(cap);
+                        if v == t { pushed = nf; break; }
+                        queue.push_back((v, nf));
+                    }
+                }
+                if pushed &gt; 0 { break; }
+            }
+            if pushed == 0 { break; }
+            flow += pushed;
+            let mut v = t;
+            while v != s {
+                let (u, i) = parent[v];
+                self.graph[u][i].1 -= pushed;
+                let ri = self.graph[u][i].2;
+                self.graph[v][ri].1 += pushed;
+                v = u;
+            }
+        }
+        flow
+    }
+}
+</code></pre>
+        </details>
+    </div>
+
+    <!-- 层5: 复杂度表 -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度对比</h3>
         <table>
-            <tr><th>算法</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>Ford-Fulkerson</td><td>O(F * E)</td><td>O(N^2)</td><td>使用DFS找路径，可能陷入来回微小增容的惨状。</td></tr>
-            <tr><td>Edmonds-Karp</td><td>O(V * E^2)</td><td>O(N^2)</td><td>强制 BFS，确保距离只增不减，增广次数 bounded。</td></tr>
-            <tr><td>Dinic 算法</td><td>O(V^2 * E)</td><td>O(N^2)</td><td>分层图 + 多路增广，最常考、最工业级的实现方案！二分图中更是 O(E * sqrt(V))。</td></tr>
+            <tr><th>算法</th><th>时间复杂度</th><th>空间</th><th>说明</th></tr>
+            <tr><td>Ford-Fulkerson (DFS)</td><td>O(E · F)</td><td>O(V + E)</td><td>F = 最大流值；容量为无理数时可能不终止</td></tr>
+            <tr><td>Edmonds-Karp (BFS)</td><td>O(V · E²)</td><td>O(V + E)</td><td>BFS 保证最短增广路，最多 O(VE) 次增广</td></tr>
+            <tr><td>Dinic</td><td>O(V² · E)</td><td>O(V + E)</td><td>分层图 + 多路增广；单位容量图 O(E√V)</td></tr>
         </table>
     </div>
 
+    <!-- 层6: 性质 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>📐 核心性质</h3>
+        <ul>
+            <li><strong>最大流 = 最小割：</strong>网络最大流量等于将 s 和 t 分离的最小割容量。</li>
+            <li><strong>流量守恒：</strong>对任意非源非汇节点，流入量 = 流出量。</li>
+            <li><strong>容量约束：</strong>任意边上 0 ≤ f(u,v) ≤ c(u,v)。</li>
+            <li><strong>增广路定理：</strong>当且仅当残差图中不存在 s→t 路径时，当前流为最大流。</li>
+        </ul>
+    </div>
+
+    <!-- 层7: 例题 -->
+    <div class="knowledge-card kc-green">
+        <h3>📝 经典例题</h3>
+        <details>
+            <summary><strong>例 1：网络最大流模板题</strong></summary>
+            <p><strong>题意：</strong>给定 n 个节点 m 条有向边的网络，每条边有容量，求源点 1 到汇点 n 的最大流。</p>
+            <p><strong>思路：</strong>直接套 Edmonds-Karp（或 Dinic）模板。注意建图时同时添加反向边（初始容量 0）。若有重边，容量应累加而非覆盖。</p>
+        </details>
+        <details>
+            <summary><strong>例 2：二部图最大匹配 → 最大流</strong></summary>
+            <p><strong>题意：</strong>左部 n 个节点，右部 m 个节点，给定匹配边集，求最大匹配数。</p>
+            <p><strong>转化：</strong>建超级源 s 连所有左节点（容量 1），所有右节点连超级汇 t（容量 1），中间匹配边容量 1。最大流值即为最大匹配数。</p>
+            <p><strong>复杂度：</strong>Dinic 在单位容量二分图上为 O(E√V)，等价于 Hopcroft-Karp。</p>
+        </details>
+    </div>
+
+    <!-- 层8: 对比 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>⚖️ 算法对比：Edmonds-Karp vs Dinic vs Push-Relabel</h3>
+        <table>
+            <tr><th>特性</th><th>Edmonds-Karp</th><th>Dinic</th><th>Push-Relabel</th></tr>
+            <tr><td>核心策略</td><td>BFS 最短增广路</td><td>分层图 + DFS 多路增广</td><td>预流推进 + 标号提升</td></tr>
+            <tr><td>时间复杂度</td><td>O(V·E²)</td><td>O(V²·E)</td><td>O(V²·E) 或 O(V³)</td></tr>
+            <tr><td>二分图特化</td><td>—</td><td>O(E√V)</td><td>—</td></tr>
+            <tr><td>实现难度</td><td>★★☆</td><td>★★★</td><td>★★★★</td></tr>
+            <tr><td>竞赛常用度</td><td>入门级</td><td>最常用</td><td>少见（代码长）</td></tr>
+        </table>
+    </div>
+
+    <!-- 层9: 易错 -->
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
+        <h3>🔴 易错点</h3>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 忘记建反向边或者忘了在原图里初始化容量为 0</p>
-<pre><code class="language-python"># 仅添加单向边是不够的
-# capacity[v][u] 的默认值如果不是 0 就会出大问题
+                <p>❌ 忘加反向边</p>
+<pre><code class="language-python"># 只加了正向边，没有反向边
 adj[u].append(v)
-capacity[u][v] = c
+cap[u][v] = c
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 正规的加边函数必须是双向的</p>
-<pre><code class="language-python">def add_edge(u, v, c):
-    adj[u].append(v)
-    adj[v].append(u)
-    capacity[u][v] += c  # 考虑重边要用 +=
-    capacity[v][u] += 0  # 初始反向容量为 0
+                <p>✅ 正向 + 反向必须成对添加</p>
+<pre><code class="language-python">adj[u].append([v, c, len(adj[v])])
+adj[v].append([u, 0, len(adj[u])-1])
 </code></pre>
             </div>
         </div>
+        <ul>
+            <li><strong>BFS visited 未重置：</strong>每轮增广必须重新初始化 parent/visited 数组，否则会漏掉增广路或死循环。</li>
+            <li><strong>容量为 0 的边：</strong>残差图中容量 = 0 的边不可通行，BFS 时必须判断 <code>cap &gt; 0</code>。</li>
+            <li><strong>重边覆盖：</strong>两点间有多条边时，容量应累加（adj 中存多条），不可用邻接矩阵覆盖。</li>
+        </ul>
     </div>
 
+    <!-- 层10: 演示容器 -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：增广路寻找与反向边回退 (纯逻辑演示)</h3>
+        <h3>🔗 互动演示：增广路寻找与反向边回退</h3>
         <div class="demo-container" id="flowDemo"></div>
     </div>
 
+    <!-- 层11: 竞赛拓展 -->
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展与模型转换</h3>
-        <p><strong>二分图最大匹配：</strong> 将二分图左侧集合全部接到一个超级源点（容量为1），右侧接到超级汇点（容量为1），中间连接也是无穷（或1）。直接跑最大流即可得最大匹配数！这是网络流最伟大的应用。</p>
-        <p><strong>最小割求互斥问题 (如图像分割)：</strong> 将属于前景的约束连向源点、属于背景的连向汇点，相邻像素冲突当作瓶颈边，最小割就是最小冲突代价。</p>
+        <h3>🏆 竞赛拓展</h3>
+        <ul>
+            <li><strong>Dinic 算法：</strong>BFS 建分层图，DFS 多路增广 + 当前弧优化。一般图 O(V²E)，单位容量图 O(E√V)。竞赛中最大流的首选实现。</li>
+            <li><strong>最小费用最大流 (MCMF)：</strong>每条边除容量外还有单位费用。用 SPFA/Bellman-Ford 代替 BFS 找最短费用增广路，在最大流前提下最小化总费用。</li>
+            <li><strong>Hopcroft-Karp：</strong>专用于二分图最大匹配，本质等价于 Dinic 在单位容量二分图上的特化，O(E√V)。</li>
+        </ul>
     </div>
+
+    <!-- 层12: 工业应用 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业应用</h3>
+        <ul>
+            <li><strong>航空调度：</strong>航班-机组-机型分配问题可建模为网络流，最大化航班覆盖率与资源利用率。</li>
+            <li><strong>网络带宽优化：</strong>互联网路由中，链路容量即带宽，最大流确定端到端最大吞吐量。</li>
+            <li><strong>供应链物流：</strong>工厂→仓库→门店的运输网络，容量为运力上限，最大流优化配送效率、降低库存成本。</li>
+        </ul>
+    </div>
+
 </section>
+
+
 
 <section class="card" data-quiz data-module="network-flow">
 <h2>练习题（Practice）</h2>

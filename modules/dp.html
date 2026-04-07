@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>动态规划模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
@@ -15,6 +17,8 @@
         .kc-red { border-left: 3px solid #f43f5e; }
         .kc-cyan { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber { border-left: 3px solid #f59e0b; }
+        .kc-gray { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
         .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
@@ -56,117 +60,515 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+    <!-- 层0 引子 -->
+    <div class="knowledge-card kc-gray">
+        <h3>🎯 引子</h3>
+        <p>爬楼梯每次可以跨 1 或 2 阶，到第 100 阶有多少种走法？</p>
+        <p>如果暴力枚举每一步的选择，递归树将以指数级膨胀——<strong>仅 50 阶就需要超过 10<sup>10</sup> 次调用</strong>。但你很快会发现：到达第 <code>n</code> 阶的走法 = 到达第 <code>n-1</code> 阶 + 到达第 <code>n-2</code> 阶，而这两个子问题大量重叠。将计算过的结果存下来，整个问题就只需 <strong>O(n)</strong> 时间。这就是动态规划最朴素的动机。</p>
+    </div>
+
+    <!-- 层1 前置知识 -->
     <div class="knowledge-card kc-gray">
         <h3>⚙️ 前置知识</h3>
         <span class="prereq-tag">递归与记忆化</span>
-        <span class="prereq-tag">大问题拆解</span>
-        <p>动态规划本质上是带备忘录的最优搜索。核心思维模型是：<strong>寻找重复子问题，并将其缓存。</strong></p>
+        <span class="prereq-tag">数组</span>
+        <span class="prereq-tag">哈希表</span>
+        <p><strong>递归</strong>是自顶向下将大问题分解为小问题；<strong>记忆化</strong>是在递归基础上，用数组或哈希表缓存已计算的子问题结果，避免重复计算。DP 可以看作"记忆化 + 最优子结构"的系统化方法论。</p>
     </div>
 
+    <!-- 层2 研究动机 -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：动态规划四大核心模式</h3>
-        
+        <h3>💡 研究动机：为什么需要 DP？</h3>
         <div class="naive-vs-smart">
-            <div class="naive"><h4 class="label">暴力搜索 (Naive)</h4><p>画出完整的递归树，包含大量重复计算，指数级时间复杂度。</p></div>
-            <div class="smart"><h4 class="label">动态规划 (Smart)</h4><p>将重复树化为有向无环图 (DAG)，多项式时间求解。</p></div>
+            <div class="naive">
+                <h4 class="label">暴力递归 (Naive)</h4>
+                <p>画出完整递归树，每个节点分裂出多个分支，含大量重复计算。</p>
+                <p>时间复杂度：<strong>O(2<sup>n</sup>)</strong> — 指数爆炸</p>
+            </div>
+            <div class="smart">
+                <h4 class="label">动态规划 (Smart)</h4>
+                <p>将重复递归树"压缩"为有向无环图 (DAG)，每个子问题只算一次。</p>
+                <p>时间复杂度：<strong>O(n)</strong> — 多项式级</p>
+            </div>
         </div>
-
-        <h4>1. 线性 DP（最长递增子序列 LIS, Kadane）</h4>
         <div class="intuition-box">
-            <strong>核心思想：</strong>从“最后一个元素”的视角看待整个问题。假设我们已经有了前面的所有状态，如何推导加入当前元素后的状态？
+            <strong>形式化判据：</strong>给定问题若同时具备 <em>最优子结构</em>（全局最优可由子问题最优组合）与 <em>重叠子问题</em>（子问题被多次求解），则 DP 可行。
         </div>
+    </div>
+
+    <!-- 层3 推导：四大模式 -->
+    <div class="knowledge-card kc-amber">
+        <h3>📐 推导：四大 DP 模式</h3>
+
+        <!-- 3-1 线性 DP -->
+        <h4>1. 线性 DP（LIS / Kadane）</h4>
         <div class="derive-step">
             <div class="derive-num">1</div>
             <div class="derive-body">
-                <strong>状态定义：</strong> <code>dp[i]</code> 表示以 <code>nums[i]</code> 为结尾的最长子序列长度。
+                <strong>状态定义：</strong> <code>dp[i]</code> = 以 <code>nums[i]</code> 为结尾的最长递增子序列长度。
             </div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
             <div class="derive-body">
-                <strong>状态转移：</strong> 遍历前面的所有 $j < i$，如果 <code>nums[j] < nums[i]</code>，则 <code>dp[i] = max(dp[i], dp[j] + 1)</code>。
+                <strong>状态转移：</strong> 遍历所有 <code>j &lt; i</code>，若 <code>nums[j] &lt; nums[i]</code>，则 <code>dp[i] = max(dp[i], dp[j] + 1)</code>。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>初始 &amp; 答案：</strong> 每个 <code>dp[i] = 1</code>（自身长度1），最终答案 = <code>max(dp)</code>。
+            </div>
+        </div>
+        <div class="intuition-box">
+            <strong>直觉：</strong>为什么必须定义"以 <code>nums[i]</code> 结尾"而不是"前 i 个元素的 LIS"？——因为转移时需要知道子序列最后一个数字的值，才能判断新元素能否接在后面。这个"右边界信息"是转移的关键。
+        </div>
+
+        <!-- 3-2 背包 DP -->
+        <h4>2. 背包 DP（0/1 vs 完全）</h4>
+        <div class="think-block">
+            <div class="q">Q: 0/1 背包一维优化为什么必须逆序遍历容量？完全背包却正序？</div>
+            <details>
+                <summary>查看答疑</summary>
+                <p>0/1 背包每件物品只选一次。更新 <code>dp[j] = max(dp[j], dp[j-w] + v)</code> 时，<code>dp[j-w]</code> 必须是<strong>上一轮</strong>（未放当前物品）的值。逆序保证小索引尚未被更新。正序则 <code>dp[j-w]</code> 已被本轮覆盖，等于同一物品被多次使用——恰好就是完全背包的语义。</p>
+            </details>
+        </div>
+        <p><strong>DP 表格填充方向（一维化）：</strong></p>
+<div class="ascii-art">0/1 背包: j 从右往左扫（逆序）
+┌───┬───┬───┬───┬───┬───┐
+│ 0 │ 1 │ 2 │ 3 │ 4 │ 5 │  ← 容量
+└───┴───┴───┴───┴───┴───┘
+                ◄──────────  扫描方向
+
+完全背包: j 从左往右扫（正序）
+┌───┬───┬───┬───┬───┬───┐
+│ 0 │ 1 │ 2 │ 3 │ 4 │ 5 │  ← 容量
+└───┴───┴───┴───┴───┴───┘
+  ──────────►              扫描方向</div>
+
+        <!-- 3-3 区间 DP -->
+        <h4>3. 区间 DP（矩阵链乘、石子合并）</h4>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body">
+                <strong>状态：</strong> <code>dp[i][j]</code> = 区间 <code>[i, j]</code> 的最优解。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body">
+                <strong>转移：</strong> 枚举断点 <code>k ∈ [i, j)</code>，<code>dp[i][j] = min/max(dp[i][k] + dp[k+1][j] + cost)</code>。
+            </div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body">
+                <strong>填表顺序：</strong> 按区间长度 <code>len</code> 从小到大枚举（先算短区间，再拼长区间）。
             </div>
         </div>
 
-        <div class="think-block">
-            <div class="q">Q: 为什么不能直接定义 dp[i] = 前 i 个元素的答案？</div>
-            <details>
-                <summary>查看答疑</summary>
-                对于 LIS 来说，如果你只知道“前 i 个元素的区间上的 LIS 长度”，当你面对第 i+1 个元素时，由于你不知道之前最大长度的子序列最后是以哪个数字结尾的，就无法判断第 i+1 个数字能不能接上去。因此我们必须强制定义“以当前元素结尾”来保留这个关键的“右边界状态信息”以保证转移顺畅！
-            </details>
-        </div>
+        <!-- 3-4 状态机 DP -->
+        <h4>4. 状态机 DP（股票买卖问题）</h4>
+        <p>将每天的状态抽象为有限状态机，画出状态转移图：</p>
+<div class="ascii-art">          买入(-price)         卖出(+price)
+  ┌──────────────────┐  ┌──────────────────┐
+  │                  ▼  │                  ▼
+┌─────┐           ┌─────┐           ┌─────────┐
+│空 仓│           │持 仓│           │冷冻期   │
+│(可买)│◄─────────│     │           │(不可操作)│
+└─────┘  不操作   └─────┘           └─────────┘
+  ▲  │                                  │
+  │  └──── 不操作(自环) ────┐            │
+  │                        │            │
+  └──────── 解冻 ──────────┘────────────┘
 
-        <h4>2. 背包 DP（0/1 背包 vs 完全背包）</h4>
-        <div class="think-block">
-            <div class="q">Q: 为什么一维优化的 0/1 背包必须逆序遍历容量 j？而完全背包是正序？</div>
-            <details>
-                <summary>查看答疑</summary>
-                0/1 背包每件物品只能选一次。我们在更新当前物品的 <code>dp[j] = max(dp[j], dp[j-W] + V)</code> 时，需要借用<strong>上一圈（没有放这个物品之前）</strong>的 <code>dp[j-W]</code>。如果正序遍历，小的 <code>dp[j-W]</code> 会先被更新，相当于这个物品被用了两次。完全背包恰恰相反，物品可以无尽用，正序刚好！
-            </details>
-        </div>
-
-        <h4>3. 区间 DP 与 4. 状态机 DP</h4>
-        <div class="intuition-box">
-            <strong>区间DP直觉：</strong>合并石子、矩阵连乘、戳气球。从小区间逐渐拼凑出大区间答案。通常是 O(n^3) 时间。<br>
-            <strong>状态机直觉：</strong>买股票问题。每天有“持仓”、“空仓”、“冷冻期”互相流动，画出图极易得出递推式。
-        </div>
+dp_hold[i]   = max(dp_hold[i-1],   dp_cash[i-1] - price[i])
+dp_cash[i]   = max(dp_cash[i-1],   dp_frozen[i-1])
+dp_frozen[i] = dp_hold[i-1] + price[i]</div>
     </div>
 
+    <!-- 层4 模板代码 -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：从背包与状态机出发</h3>
-<pre><code class="language-python"># 1. 0/1 背包一维优化模板
-def knapsack_01(W, weights, values):
-    dp = [0] * (W + 1)
+        <h3>💻 模板代码</h3>
+<pre><code class="language-python"># ===== 1. 0/1 背包一维优化 =====
+def knapsack_01(W: int, weights: list[int], values: list[int]) -> int:
+    dp: list[int] = [0] * (W + 1)
     for wt, val in zip(weights, values):
-        # 必须逆序，防止正序遍历导致当前物品被多次放入
-        for j in range(W, wt - 1, -1):
+        for j in range(W, wt - 1, -1):          # 逆序！
             dp[j] = max(dp[j], dp[j - wt] + val)
     return dp[W]
 
-# 2. 状态机 DP：买卖股票包含冷冻期
-def maxProfit(prices):
-    if not prices: return 0
-    # 状态0: 持股, 状态1: 空仓(可买), 状态2: 处于冷冻期
-    dp0, dp1, dp2 = -prices[0], 0, 0
-    for i in range(1, len(prices)):
-        new_dp0 = max(dp0, dp1 - prices[i]) 
-        new_dp1 = max(dp1, dp2)             
-        new_dp2 = dp0 + prices[i]           
-        dp0, dp1, dp2 = new_dp0, new_dp1, new_dp2
-    return max(dp1, dp2)
+# ===== 2. 最长递增子序列 (LIS) O(n^2) =====
+def length_of_lis(nums: list[int]) -> int:
+    n = len(nums)
+    dp: list[int] = [1] * n
+    for i in range(1, n):
+        for j in range(i):
+            if nums[j] < nums[i]:
+                dp[i] = max(dp[i], dp[j] + 1)
+    return max(dp) if dp else 0
+
+# ===== 3. Kadane 最大子数组和 =====
+def max_subarray(nums: list[int]) -> int:
+    cur = best = nums[0]
+    for x in nums[1:]:
+        cur = max(x, cur + x)
+        best = max(best, cur)
+    return best
+
+# ===== 4. 区间 DP 模板 (石子合并) =====
+def merge_stones(stones: list[int]) -> int:
+    n = len(stones)
+    prefix = [0] * (n + 1)
+    for i in range(n):
+        prefix[i + 1] = prefix[i] + stones[i]
+    dp = [[0] * n for _ in range(n)]
+    for length in range(2, n + 1):               # 枚举区间长度
+        for i in range(n - length + 1):
+            j = i + length - 1
+            dp[i][j] = float('inf')
+            for k in range(i, j):                 # 枚举断点
+                dp[i][j] = min(dp[i][j],
+                    dp[i][k] + dp[k + 1][j] + prefix[j + 1] - prefix[i])
+    return dp[0][n - 1]
+
+# ===== 5. 状态机 DP：股票含冷冻期 =====
+def max_profit_cooldown(prices: list[int]) -> int:
+    if not prices:
+        return 0
+    hold, cash, frozen = -prices[0], 0, 0
+    for p in prices[1:]:
+        new_hold   = max(hold, cash - p)
+        new_cash   = max(cash, frozen)
+        new_frozen = hold + p
+        hold, cash, frozen = new_hold, new_cash, new_frozen
+    return max(cash, frozen)
 </code></pre>
+
+        <details>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">// 0/1 背包
+int knapsack01(int W, vector&lt;int&gt;&amp; wt, vector&lt;int&gt;&amp; val) {
+    vector&lt;int&gt; dp(W + 1, 0);
+    for (int i = 0; i &lt; (int)wt.size(); ++i)
+        for (int j = W; j &gt;= wt[i]; --j)
+            dp[j] = max(dp[j], dp[j - wt[i]] + val[i]);
+    return dp[W];
+}
+
+// LIS O(n log n) 贪心+二分
+int lengthOfLIS(vector&lt;int&gt;&amp; nums) {
+    vector&lt;int&gt; tails;
+    for (int x : nums) {
+        auto it = lower_bound(tails.begin(), tails.end(), x);
+        if (it == tails.end()) tails.push_back(x);
+        else *it = x;
+    }
+    return tails.size();
+}
+
+// 区间 DP
+int mergeStones(vector&lt;int&gt;&amp; stones) {
+    int n = stones.size();
+    vector&lt;int&gt; pre(n + 1, 0);
+    for (int i = 0; i &lt; n; ++i) pre[i+1] = pre[i] + stones[i];
+    vector&lt;vector&lt;int&gt;&gt; dp(n, vector&lt;int&gt;(n, 0));
+    for (int len = 2; len &lt;= n; ++len)
+        for (int i = 0; i + len - 1 &lt; n; ++i) {
+            int j = i + len - 1;
+            dp[i][j] = INT_MAX;
+            for (int k = i; k &lt; j; ++k)
+                dp[i][j] = min(dp[i][j], dp[i][k] + dp[k+1][j] + pre[j+1] - pre[i]);
+        }
+    return dp[0][n-1];
+}</code></pre>
+        </details>
+
+        <details>
+            <summary>Rust 版本</summary>
+<pre><code class="language-rust">// 0/1 背包
+fn knapsack_01(cap: usize, wt: &amp;[usize], val: &amp;[i64]) -&gt; i64 {
+    let mut dp = vec![0i64; cap + 1];
+    for (&amp;w, &amp;v) in wt.iter().zip(val) {
+        for j in (w..=cap).rev() {
+            dp[j] = dp[j].max(dp[j - w] + v);
+        }
+    }
+    dp[cap]
+}
+
+// LIS O(n log n)
+fn length_of_lis(nums: &amp;[i32]) -&gt; usize {
+    let mut tails: Vec&lt;i32&gt; = Vec::new();
+    for &amp;x in nums {
+        match tails.binary_search(&amp;x) {
+            Ok(_) =&gt; {}
+            Err(pos) =&gt; {
+                if pos == tails.len() { tails.push(x); }
+                else { tails[pos] = x; }
+            }
+        }
+    }
+    tails.len()
+}</code></pre>
+        </details>
+    </div>
+
+    <!-- 层5 复杂度表 -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 复杂度总结</h3>
         <table>
-            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>线性 DP</td><td>O(n^2)</td><td>O(n)</td><td>大部分由于只需要比较前方 N 个状态，故有嵌套。</td></tr>
-            <tr><td>背包优化</td><td>O(n*W)</td><td>O(W)</td><td>采用一维滚动数组覆盖之前结果直接降低一个维度的空间。</td></tr>
-            <tr><td>区间 DP</td><td>O(n^3)</td><td>O(n^2)</td><td>三层循环：长度、左端点、分割点位置。</td></tr>
+            <tr><th>技巧</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>为什么</th></tr>
+            <tr><td>线性 DP（LIS）</td><td>O(n log n)</td><td>O(n²)</td><td>O(n)</td><td>贪心+二分可优化；朴素双层遍历 O(n²)</td></tr>
+            <tr><td>Kadane</td><td>O(n)</td><td>O(n)</td><td>O(1)</td><td>单次扫描，只维护当前最大和</td></tr>
+            <tr><td>0/1 背包</td><td>O(nW)</td><td>O(nW)</td><td>O(W)</td><td>一维滚动数组，伪多项式时间</td></tr>
+            <tr><td>完全背包</td><td>O(nW)</td><td>O(nW)</td><td>O(W)</td><td>与 0/1 同表大小，正序遍历</td></tr>
+            <tr><td>区间 DP</td><td>O(n²)¹</td><td>O(n³)</td><td>O(n²)</td><td>¹四边形不等式可优化决策点</td></tr>
+            <tr><td>状态机 DP</td><td>O(n)</td><td>O(n)</td><td>O(1)</td><td>常数个状态变量，单次遍历</td></tr>
         </table>
     </div>
 
+    <!-- 层6 核心性质 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔑 DP 三大核心性质</h3>
+        <table>
+            <tr><th>性质</th><th>含义</th><th>违反时的后果</th></tr>
+            <tr>
+                <td><strong>最优子结构</strong></td>
+                <td>全局最优解包含子问题的最优解。即 <code>opt(P) = combine(opt(sub₁), opt(sub₂), …)</code></td>
+                <td>无法从子问题组合出全局最优，DP 失效（需回溯/搜索）</td>
+            </tr>
+            <tr>
+                <td><strong>重叠子问题</strong></td>
+                <td>递归过程中同一子问题被多次求解</td>
+                <td>无重叠则 DP 退化为普通分治，无缓存收益</td>
+            </tr>
+            <tr>
+                <td><strong>无后效性</strong></td>
+                <td>当前状态一旦确定，后续转移不受"如何到达当前状态"的路径影响</td>
+                <td>状态定义不够精确，需要增加维度或重新设计状态</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 层7 典型例题 -->
+    <div class="knowledge-card kc-green">
+        <h3>📝 典型例题</h3>
+
+        <details>
+            <summary>LC 70 · 爬楼梯（入门）</summary>
+            <p><strong>思路：</strong> <code>dp[i] = dp[i-1] + dp[i-2]</code>，经典斐波那契。初始 <code>dp[1]=1, dp[2]=2</code>。</p>
+<pre><code class="language-python">def climb_stairs(n: int) -> int:
+    if n <= 2:
+        return n
+    a, b = 1, 2
+    for _ in range(3, n + 1):
+        a, b = b, a + b
+    return b
+</code></pre>
+        </details>
+
+        <details>
+            <summary>LC 300 · 最长递增子序列 LIS</summary>
+            <p><strong>O(n²) 朴素：</strong>双层遍历，<code>dp[i] = max(dp[j]+1)</code> for <code>j &lt; i</code> where <code>nums[j] &lt; nums[i]</code>。</p>
+            <p><strong>O(n log n) 优化：</strong>维护 <code>tails</code> 数组（有序），对每个元素做二分插入，<code>tails</code> 长度即为 LIS 长度。</p>
+<pre><code class="language-python">import bisect
+def length_of_lis_fast(nums: list[int]) -> int:
+    tails: list[int] = []
+    for x in nums:
+        pos = bisect.bisect_left(tails, x)
+        if pos == len(tails):
+            tails.append(x)
+        else:
+            tails[pos] = x
+    return len(tails)
+</code></pre>
+        </details>
+
+        <details>
+            <summary>LC 322 · 零钱兑换</summary>
+            <p><strong>完全背包变体。</strong> <code>dp[j]</code> = 凑出金额 <code>j</code> 所需最少硬币数。对每种面值正序遍历。</p>
+<pre><code class="language-python">def coin_change(coins: list[int], amount: int) -> int:
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0
+    for c in coins:
+        for j in range(c, amount + 1):           # 正序 → 完全背包
+            dp[j] = min(dp[j], dp[j - c] + 1)
+    return dp[amount] if dp[amount] != float('inf') else -1
+</code></pre>
+        </details>
+
+        <details>
+            <summary>LC 516 · 最长回文子序列</summary>
+            <p><strong>区间 DP。</strong> <code>dp[i][j]</code> = <code>s[i..j]</code> 中最长回文子序列长度。按区间长度从小到大填表。</p>
+<pre><code class="language-python">def longest_palindrome_subseq(s: str) -> int:
+    n = len(s)
+    dp = [[0] * n for _ in range(n)]
+    for i in range(n):
+        dp[i][i] = 1
+    for length in range(2, n + 1):
+        for i in range(n - length + 1):
+            j = i + length - 1
+            if s[i] == s[j]:
+                dp[i][j] = dp[i + 1][j - 1] + 2
+            else:
+                dp[i][j] = max(dp[i + 1][j], dp[i][j - 1])
+    return dp[0][n - 1]
+</code></pre>
+        </details>
+    </div>
+
+    <!-- 层8 技术对比表 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>⚖️ 四种 DP 模式对比</h3>
+        <table>
+            <tr><th>模式</th><th>状态维度</th><th>转移方式</th><th>典型问题</th><th>时间</th></tr>
+            <tr>
+                <td><strong>线性 DP</strong></td>
+                <td>1D: <code>dp[i]</code></td>
+                <td>从前驱状态转移</td>
+                <td>LIS、LCS、Kadane</td>
+                <td>O(n) ~ O(n²)</td>
+            </tr>
+            <tr>
+                <td><strong>背包 DP</strong></td>
+                <td>1D/2D: <code>dp[j]</code> 或 <code>dp[i][j]</code></td>
+                <td>逐物品滚动</td>
+                <td>0/1背包、完全背包、多重背包</td>
+                <td>O(nW)</td>
+            </tr>
+            <tr>
+                <td><strong>区间 DP</strong></td>
+                <td>2D: <code>dp[i][j]</code></td>
+                <td>枚举断点合并</td>
+                <td>石子合并、矩阵链乘、戳气球</td>
+                <td>O(n³)</td>
+            </tr>
+            <tr>
+                <td><strong>状态机 DP</strong></td>
+                <td>多变量: <code>hold/cash/frozen</code></td>
+                <td>状态间互相转移</td>
+                <td>股票买卖系列、打家劫舍</td>
+                <td>O(n)</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 层9 易错点 -->
     <div class="knowledge-card kc-red">
         <h3>🔴 易错点分析</h3>
+
+        <h4>1. 背包遍历方向</h4>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 错误的 0/1 背包一维化（正序）</p>
+                <p>❌ 0/1 背包正序（退化为完全背包）</p>
 <pre><code class="language-python">for wt, val in items:
-    for j in range(wt, W + 1):
-        # 它被退化成了完全背包
+    for j in range(wt, W + 1):      # 正序!
         dp[j] = max(dp[j], dp[j - wt] + val)
+        # dp[j-wt] 已被本轮更新 → 物品被重复使用
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 正确的 0/1 背包逆序</p>
+                <p>✅ 0/1 背包逆序（每件只选一次）</p>
 <pre><code class="language-python">for wt, val in items:
-    for j in range(W, wt - 1, -1):
+    for j in range(W, wt - 1, -1):  # 逆序!
         dp[j] = max(dp[j], dp[j - wt] + val)
+        # dp[j-wt] 仍是上一轮的值 ✓
+</code></pre>
+            </div>
+        </div>
+
+        <h4>2. DP 初始化边界</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 零钱兑换初始化为 0</p>
+<pre><code class="language-python">dp = [0] * (amount + 1)
+# 所有金额看起来"0 枚即可凑出" → 结果全错
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 初始化为 inf，仅 dp[0]=0</p>
+<pre><code class="language-python">dp = [float('inf')] * (amount + 1)
+dp[0] = 0  # 只有金额0需要0枚硬币
+</code></pre>
+            </div>
+        </div>
+
+        <h4>3. Python 递归深度限制</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 大数据量直接递归</p>
+<pre><code class="language-python">@cache
+def fib(n):
+    if n <= 1: return n
+    return fib(n-1) + fib(n-2)
+fib(5000)  # RecursionError!
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 改用迭代 DP 或调高限制</p>
+<pre><code class="language-python">import sys
+sys.setrecursionlimit(10000)  # 应急方案
+# 更好：改写为 bottom-up 迭代
+dp = [0] * (n + 1)
+dp[1] = 1
+for i in range(2, n + 1):
+    dp[i] = dp[i-1] + dp[i-2]
 </code></pre>
             </div>
         </div>
     </div>
 
+    <!-- 层10 互动演示 -->
     <div class="knowledge-card kc-purple">
         <h3>🔗 互动演示：二维 0/1 背包填表过程 (W=5)</h3>
         <div class="demo-container" id="dpDemo"></div>
+    </div>
+
+    <!-- 层11 竞赛拓展 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏆 竞赛拓展（概述）</h3>
+        <table>
+            <tr><th>技巧</th><th>核心思想</th><th>适用场景</th></tr>
+            <tr>
+                <td><strong>斜率优化</strong></td>
+                <td>将转移方程改写为 <code>y = kx + b</code> 形式，用凸包 + 单调队列将 O(n) 转移降至 O(1)</td>
+                <td>代价函数含 <code>i·j</code> 交叉项的 1D DP</td>
+            </tr>
+            <tr>
+                <td><strong>四边形不等式</strong></td>
+                <td>证明决策点单调性 → 区间 DP 从 O(n³) 降至 O(n²)</td>
+                <td>石子合并、邮局选址等区间合并类</td>
+            </tr>
+            <tr>
+                <td><strong>数位 DP</strong></td>
+                <td>逐位枚举，维护是否紧贴上界的 <code>tight</code> 标记，O(log n × 状态数)</td>
+                <td>统计 [1, n] 中满足数字约束的整数个数</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 层12 工业实战 -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 工业实战中的 DP</h3>
+        <table>
+            <tr><th>应用</th><th>DP 模型</th><th>说明</th></tr>
+            <tr>
+                <td><strong>Needleman-Wunsch 序列比对</strong></td>
+                <td>编辑距离变体（二维 DP）</td>
+                <td>生物信息学中 DNA/蛋白质全局比对的标准算法，带 gap penalty</td>
+            </tr>
+            <tr>
+                <td><strong>Viterbi 算法（HMM 解码）</strong></td>
+                <td>状态机 DP</td>
+                <td>语音识别、NLP 词性标注中，在隐马尔可夫模型上求最可能隐状态序列</td>
+            </tr>
+            <tr>
+                <td><strong>期权定价二叉树模型</strong></td>
+                <td>逆向归纳（树形 DP）</td>
+                <td>金融工程中 Cox-Ross-Rubinstein 模型，从到期日向前逐时间步回推期权价值</td>
+            </tr>
+        </table>
     </div>
 
         </section>

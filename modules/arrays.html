@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>数组与双指针模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
@@ -32,7 +34,6 @@
         .ascii-art { font-family: monospace; background: #0f172a; padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.4; color: #94a3b8; }
         @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
 
-        /* 新增样式 */
         .prereq-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin: 2px 4px 2px 0; background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
         .think-block { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.25); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; }
         .think-block .q { font-weight: 700; color: #f59e0b; margin-bottom: 0.5rem; }
@@ -49,7 +50,6 @@
         .naive-vs-smart .label { font-size: 0.8rem; font-weight: 700; margin: 0 0 0.4rem; }
         @media (max-width: 640px) { .naive-vs-smart { grid-template-columns: 1fr; } }
 
-        /* 互动演示 */
         .demo-container { background: #0f172a; border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
         .demo-array { display: flex; gap: 4px; flex-wrap: wrap; margin: 0.8rem 0; }
         .demo-cell { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-family: monospace; font-size: 1.1rem; font-weight: 700; transition: all .2s; border: 2px solid #334155; background: #1e293b; color: #94a3b8; position: relative; }
@@ -66,15 +66,6 @@
         .demo-info .highlight { color: #a5b4fc; font-weight: 700; }
         .demo-log { background: #020617; border-radius: 4px; padding: 0.6rem 0.8rem; margin: 0.6rem 0 0; min-height: 3rem; font-size: 0.82rem; color: #64748b; font-family: monospace; }
         .demo-log .log-new { color: #6ee7b7; }
-
-        /* prefix-sum 演示 */
-        .pre-demo { margin: 1rem 0; }
-        .pre-row { display: flex; gap: 4px; flex-wrap: wrap; margin: 0.4rem 0; align-items: center; }
-        .pre-label { font-size: 0.75rem; color: #64748b; width: 52px; flex-shrink: 0; font-family: monospace; }
-        .pre-cell { width: 44px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-family: monospace; font-size: 0.95rem; font-weight: 600; background: #1e293b; border: 2px solid #334155; color: #94a3b8; transition: all .3s; }
-        .pre-cell.query-l { border-color: #f59e0b; background: rgba(245,158,11,.18); color: #fcd34d; }
-        .pre-cell.query-r { border-color: #10b981; background: rgba(16,185,129,.18); color: #6ee7b7; }
-        .pre-cell.query-range { background: rgba(99,102,241,.18); border-color: #6366f1; color: #c7d2fe; }
     </style>
 </head>
 <body data-theme="day">
@@ -94,7 +85,16 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <!-- 0. 前置知识 -->
+            <!-- ═══ 层 0：引子问题 ═══ -->
+            <div class="knowledge-card kc-gray">
+                <h3>🎯 引子问题</h3>
+                <p style="font-size:1.05rem; font-style:italic; color:#94a3b8;">
+                    "给你一串温度数据，怎么找出最长的连续升温天数？"
+                </p>
+                <p>带着这个问题，我们来看数组中最核心的四板斧：<strong>双指针 · 滑动窗口 · 前缀和 · 二分查找</strong>。</p>
+            </div>
+
+            <!-- ═══ 层 1：前置知识 ═══ -->
             <div class="knowledge-card kc-gray">
                 <h3>📋 前置知识</h3>
                 <p>开始前你应该熟悉：</p>
@@ -103,152 +103,487 @@
                 <span class="prereq-tag">循环与条件</span>
                 <span class="prereq-tag">哈希表（dict）</span>
                 <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">
-                    <strong>内存模型提示：</strong>数组元素存储在连续的内存地址上。访问 <code>arr[i]</code> 的地址 = 起始地址 + i × 元素大小，所以是 O(1)。这是数组最核心的性质——也是"随机访问"名称的来源。
+                    <strong>内存模型：</strong>数组元素存储在连续的内存地址上。<code>arr[i]</code> 的地址 = 起始地址 + i × 元素大小，所以是 O(1) 随机访问——这是数组最核心的性质。
+                </p>
+                <p style="font-size:0.9rem; color:var(--subtle-text)">
+                    <strong>Python dict</strong> 基于哈希表，均摊 O(1) 查找/插入/删除。我们经常用它做频率统计或记录"已见过"的值。
                 </p>
             </div>
 
-            <!-- 1. 为什么需要双指针？—— 从暴力到优化 -->
+            <!-- ═══ 层 2：研究动机 ═══ -->
             <div class="knowledge-card kc-amber">
-                <h3>💡 为什么需要双指针？—— 从 O(n²) 到 O(n)</h3>
+                <h3>💡 研究动机与问题建模</h3>
+                <p><strong>核心困境：</strong>对数组子区间/元素对进行搜索或统计时，暴力枚举需要 O(n²)~O(n³)。怎样利用数组的<strong>有序性 / 连续性 / 单调性</strong>来降到 O(n) 或 O(n log n)？</p>
 
-                <p><strong>先看一个具体问题：</strong> 有序数组中找两数之和等于 target。</p>
-
+                <p style="font-weight:600; margin-top:1rem;">具体问题：有序数组中找两数之和 = target</p>
                 <div class="naive-vs-smart">
                     <div class="naive">
-                        <p class="label" style="color:#f87171">❌ 暴力 O(n²)：双重枚举</p>
+                        <p class="label" style="color:#f87171">❌ 暴力 O(n²)</p>
 <pre><code class="language-python">for i in range(n):
     for j in range(i+1, n):
-        if nums[i]+nums[j] == target:
-            return [i, j]
-# 每对(i,j)都试一遍，总共 n*(n-1)/2 次</code></pre>
+        if nums[i] + nums[j] == target:
+            return [i, j]</code></pre>
                     </div>
                     <div class="smart">
-                        <p class="label" style="color:#4ade80">✅ 双指针 O(n)：利用有序性</p>
-<pre><code class="language-python">l, r = 0, n-1
-while l < r:
+                        <p class="label" style="color:#4ade80">✅ 双指针 O(n)</p>
+<pre><code class="language-python">l, r = 0, n - 1
+while l &lt; r:
     s = nums[l] + nums[r]
-    if s == target: return [l, r]
-    elif s < target: l += 1
-    else: r -= 1
-# 每次排除一个元素，最多 n 步</code></pre>
+    if   s == target: return [l, r]
+    elif s &lt; target:  l += 1
+    else:             r -= 1</code></pre>
                     </div>
                 </div>
 
-                <div class="intuition-box">
-                    <strong>核心洞察：</strong> 对撞双指针之所以有效，是因为 <strong>每次移动都必然排除掉一个不可能的元素</strong>。<br>
-                    当 <code>nums[l] + nums[r] &lt; target</code> 时，<code>r</code> 不动而 <code>l</code> 右移——此时 <code>nums[l]</code> 配上所有比 <code>r</code> 更小的下标都不够大，全部排除。<br>
-                    同理，<code>l</code> 不动而 <code>r</code> 左移时排除右侧一个。<strong>每步操作都在真正缩小搜索空间，没有无效移动。</strong>
-                </div>
-
-                <div class="think-block">
-                    <div class="q">🤔 思考：为什么这里 l 不需要回头？</div>
-                    <details>
-                        <summary>展开答案</summary>
-                        <p>假设某一刻 <code>nums[l] + nums[r] &lt; target</code>，我们将 <code>l</code> 右移到 <code>l+1</code>。那么原来的 <code>l</code> 还有机会成为答案吗？不可能——因为 <code>nums[l]</code> 配上 <strong>任何</strong> 比 <code>r</code> 更小的右端点（也就是未来的 <code>r</code>）都只会让和更小，永远凑不到 target。所以 <code>l</code> 的排除是永久的。这是"单调性"：随着 <code>r</code> 减小，<code>l</code> 的下界只需单调增大。</p>
-                    </details>
-                </div>
+                <p><strong>形式化定义：</strong></p>
+                <ul>
+                    <li><strong>输入</strong>：有序数组 nums[0..n-1]，目标值 target</li>
+                    <li><strong>输出</strong>：(i, j) 使得 nums[i] + nums[j] = target，i &lt; j</li>
+                    <li><strong>约束</strong>：O(n) 时间，O(1) 空间</li>
+                </ul>
             </div>
 
-            <!-- 2. 滑动窗口的推导 -->
+            <!-- ═══ 层 3：推导卡片 ═══ -->
             <div class="knowledge-card kc-amber">
-                <h3>💡 滑动窗口：不是玄学，是指针单调性</h3>
+                <h3>💡 推导：从暴力到最优</h3>
 
-                <p><strong>问题：</strong> 找字符串中<em>无重复字符</em>的最长子串长度。</p>
-
-                <p><strong>从暴力推导：</strong> 枚举所有子串 [l, r]，检查是否有重复 → O(n³) 或 O(n²)。</p>
-
-                <p><strong>关键观察：</strong></p>
+                <h4>一、对撞双指针 — 利用有序性排除搜索空间</h4>
                 <div class="derive-step">
                     <div class="derive-num">1</div>
-                    <div class="derive-body">
-                        固定右端 <code>r</code>，最优左端 <code>l*(r)</code> 是使 <code>[l,r]</code> 合法的最左位置。
-                    </div>
+                    <div class="derive-body">当 <code>nums[l] + nums[r] &lt; target</code>，nums[l] 和所有 ≤ r 的右端配对都不够大——l 必须右移。</div>
                 </div>
                 <div class="derive-step">
                     <div class="derive-num">2</div>
-                    <div class="derive-body">
-                        当 <code>r</code> 从 <code>r</code> 移到 <code>r+1</code> 时，新字符 <code>s[r+1]</code> 加入窗口。如果它与窗口内某个字符重复，<code>l*(r+1)</code> 只会 <strong>>=</strong> <code>l*(r)</code>，永远不会左移！
-                    </div>
+                    <div class="derive-body">当 <code>nums[l] + nums[r] &gt; target</code>，nums[r] 和所有 ≥ l 的左端配对都太大——r 必须左移。</div>
                 </div>
                 <div class="derive-step">
                     <div class="derive-num">3</div>
-                    <div class="derive-body">
-                        因此 <code>l</code> 是单调不减的。<strong>两个单调递增的指针</strong>，总共最多移动 <strong>2n</strong> 步 → O(n)。
-                    </div>
+                    <div class="derive-body">每步恰好排除一个元素，l 单调递增、r 单调递减，合计最多 n 步 → O(n)。</div>
                 </div>
-
                 <div class="intuition-box">
-                    <strong>为什么是 O(n)（摊销分析）：</strong> <code>right</code> 从 0 走到 n-1，共 n 步。<code>left</code> 只向右走，从 0 到最多 n-1，共最多 n 步。两个指针合计最多 2n 步，每步 O(1)，故总复杂度 O(n)。
+                    <strong>核心洞察：</strong>对撞双指针的正确性来源于<strong>每次移动都永久排除了一个不可能的候选</strong>。l 不需要回头，因为 nums[l] 配上任何未来更小的 r 只会让和更小。
                 </div>
-
                 <div class="think-block">
-                    <div class="q">🤔 滑动窗口的 while 收缩 vs if 收缩有什么区别？</div>
+                    <div class="q">🤔 为什么 l 不需要回头？</div>
+                    <details>
+                        <summary>展开答案</summary>
+                        <p>假设某刻 nums[l] + nums[r] &lt; target，l 右移。原来的 l 还能成为答案吗？不可能——因为 nums[l] 配上任何比 r 更小的右端（未来的 r）只会让和更小。排除是永久的。这就是"单调性"：随着 r 减小，l 的下界只需单调增大。</p>
+                    </details>
+                </div>
+<pre class="ascii-art">
+  对撞双指针移动过程 (nums = [1, 3, 5, 7, 9], target = 8)
+
+  ┌───┬───┬───┬───┬───┐
+  │ 1 │ 3 │ 5 │ 7 │ 9 │
+  └───┴───┴───┴───┴───┘
+    ▲                 ▲     l=0, r=4: 1+9=10 &gt; 8 → r--
+    l                 r
+
+  ┌───┬───┬───┬───┬───┐
+  │ 1 │ 3 │ 5 │ 7 │ 9 │
+  └───┴───┴───┴───┴───┘
+    ▲           ▲           l=0, r=3: 1+7=8 = target ✓
+    l           r
+</pre>
+
+                <h4>二、滑动窗口 — 指针单调性的推广</h4>
+                <p><strong>问题：</strong>找字符串中<em>无重复字符</em>的最长子串长度。</p>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body">固定右端 r，最优左端 l*(r) 是使 [l,r] 合法的最小 l。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body">当 r → r+1 时新字符加入可能重复，因此 l*(r+1) ≥ l*(r)——left 只增不减。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">3</div>
+                    <div class="derive-body">两个单调递增指针合计最多 2n 步 → 摊还 O(n)。</div>
+                </div>
+                <div class="intuition-box">
+                    <strong>窗口何时收缩？</strong>当窗口违反约束（出现重复、和超限等），用 <code>while</code> 持续收缩 left 直到恢复合法。固定大小窗口用 <code>if</code> 一次只缩一步。
+                </div>
+                <div class="think-block">
+                    <div class="q">🤔 while 收缩 vs if 收缩的区别？</div>
                     <details>
                         <summary>展开答案</summary>
                         <ul>
-                            <li><strong>用 while：</strong>每次 right 扩展后，持续收缩直到窗口重新合法。适合"窗口需要满足约束才停止收缩"的问题（如最多 k 个不同字符）。</li>
-                            <li><strong>用 if：</strong>每次 right 扩展后，最多收缩一次（维护窗口大小恒为 k）。适合固定窗口大小的问题。</li>
-                            <li>无重复子串用 <code>while</code>，因为加入一个新字符可能需要 left 跳过多个位置。</li>
+                            <li><strong>while</strong>：right 扩展后持续收缩直到合法。适合"最多 k 种字符"等可变窗口。</li>
+                            <li><strong>if</strong>：每次只收缩一步，维持恒定窗口大小。</li>
+                            <li>无重复子串用 while，因为一个新字符可能要 left 跳过多个位置。</li>
                         </ul>
                     </details>
                 </div>
-            </div>
 
-            <!-- 3. 前缀和的推导 -->
-            <div class="knowledge-card kc-amber">
-                <h3>💡 前缀和：空间换时间的最简范例</h3>
-
-                <p><strong>问题：</strong> 给定数组，反复查询区间 [l, r] 的元素之和。</p>
-
+                <h4>三、前缀和 — 空间换时间的最简范例</h4>
                 <div class="derive-step">
                     <div class="derive-num">1</div>
-                    <div class="derive-body">
-                        朴素方法：每次 for 循环 l 到 r，O(n) 每次查询，m 次查询 = O(mn)。
-                    </div>
+                    <div class="derive-body">区间查询：每次 for 循环 l→r 求和，O(n)/次。m 次查询 = O(mn)。</div>
                 </div>
                 <div class="derive-step">
                     <div class="derive-num">2</div>
-                    <div class="derive-body">
-                        预处理思想：先花 O(n) 时间，把"前 i 个元素的和"存下来。
-                        <code>pre[i] = nums[0] + nums[1] + ... + nums[i-1]</code>
-                    </div>
+                    <div class="derive-body">预计算 <code>pre[i] = nums[0] + ... + nums[i-1]</code>，O(n) 建表。</div>
                 </div>
                 <div class="derive-step">
                     <div class="derive-num">3</div>
-                    <div class="derive-body">
-                        区间和变为相减：<code>sum[l,r] = pre[r+1] - pre[l]</code>，O(1) 查询。
-                    </div>
+                    <div class="derive-body">区间和 = <code>pre[r+1] - pre[l]</code>，O(1)/次。</div>
                 </div>
-                <div class="derive-step">
-                    <div class="derive-num">4</div>
-                    <div class="derive-body">
-                        <strong>为什么 pre[0] = 0？</strong> 设 l = 0（从头开始的区间），需要 <code>pre[r+1] - pre[0]</code>。若没有 pre[0] = 0，则需要特判 l=0。有了 pre[0]=0，所有区间统一公式，无需特判。这是一个 <strong>哨兵值（sentinel）</strong> 技巧。
-                    </div>
-                </div>
+<pre class="ascii-art">
+  前缀和映射关系 (nums = [3, 1, 4, 1, 5])
 
+  index:  0   1   2   3   4
+  nums: [ 3 | 1 | 4 | 1 | 5 ]
+
+  pre:  [ 0 | 3 | 4 | 8 | 9 | 14 ]
+  index: 0   1   2   3   4   5
+
+  sum([1,3]) = pre[4] - pre[1] = 9 - 3 = 6
+                                 ← 1+4+1=6 ✓
+</pre>
                 <div class="think-block">
-                    <div class="q">🤔 前缀和数组长 n+1 还是 n？</div>
+                    <div class="q">🤔 为什么 pre[0] = 0（哨兵值）？</div>
                     <details>
                         <summary>展开答案</summary>
-                        <p>长 <strong>n+1</strong>，下标从 0 到 n。<code>pre[0] = 0</code>（哨兵），<code>pre[i]</code> 表示前 i 个元素之和。</p>
-                        <p>错误版本：<code>pre = [0] * n</code> + 用 <code>pre[i] = pre[i-1] + nums[i]</code>。当 i=0 时 <code>pre[-1]</code> 在 Python 中是最后一个元素，逻辑错误。</p>
-                        <p>正确版本：<code>pre = [0] * (n+1)</code>，<code>for i in range(1, n+1): pre[i] = pre[i-1] + nums[i-1]</code>。</p>
+                        <p>当 l=0 时 sum([0,r]) = pre[r+1] - pre[0]。若没有 pre[0]=0 就需要特判。哨兵值让所有区间统一一个公式。</p>
                     </details>
+                </div>
+
+                <h4>四、二分查找 — 有序数据的对数级搜索</h4>
+                <div class="derive-step">
+                    <div class="derive-num">1</div>
+                    <div class="derive-body">有序数组中，每次比较中点可排除一半。$T(n) = T(n/2) + O(1) \Rightarrow O(\log n)$。</div>
+                </div>
+                <div class="derive-step">
+                    <div class="derive-num">2</div>
+                    <div class="derive-body"><strong>左闭右闭</strong> [l,r]：<code>while l &lt;= r</code>，<code>l = mid+1</code> 或 <code>r = mid-1</code>。<br><strong>左闭右开</strong> [l,r)：<code>while l &lt; r</code>，<code>l = mid+1</code> 或 <code>r = mid</code>。</div>
+                </div>
+                <div class="intuition-box">
+                    <strong>核心洞察：</strong>二分的本质不是"有序数组查找"，而是<strong>在具有单调性的决策空间中缩小范围</strong>。很多"看不出二分"的题（如"最小化最大值"）都可以二分答案。
                 </div>
             </div>
 
-            <!-- 4. 互动演示：滑动窗口 -->
-            <div class="knowledge-card kc-purple">
-                <h3>🎮 互动演示：无重复最长子串（LeetCode 3）</h3>
-                <p style="font-size:0.9rem; color:var(--subtle-text)">字符串 <strong>"abcbbc"</strong>，点击 Step 逐步推进，观察 left/right 指针与窗口状态。</p>
+            <!-- ═══ 层 4：模板代码 ═══ -->
+            <div class="knowledge-card kc-blue">
+                <h3>💻 模板代码</h3>
+                <h4>Python</h4>
+<pre><code class="language-python"># ─── 滑动窗口通用模板 ───
+def sliding_window(s: str) -&gt; int:
+    left = 0                             # [why] 窗口左端，单调不减
+    window: dict[str, int] = {}          # [why] 维护窗口内字符频率
+    result = 0                           # [why] 记录最优答案
 
+    for right in range(len(s)):          # [why] right 扫描全串
+        c = s[right]
+        window[c] = window.get(c, 0) + 1 # [why] 纳入右端新字符
+
+        while window[c] &gt; 1:             # [why] 窗口违规 → 收缩
+            lc = s[left]
+            window[lc] -= 1
+            if window[lc] == 0:
+                del window[lc]           # [why] 彻底移出窗口
+            left += 1
+
+        result = max(result, right - left + 1)  # [why] 合法窗口更新
+    return result
+
+# ─── 前缀和模板 ───
+def build_prefix(nums: list[int]) -&gt; list[int]:
+    n = len(nums)
+    pre = [0] * (n + 1)                 # [why] 长 n+1，pre[0]=0 哨兵
+    for i in range(1, n + 1):
+        pre[i] = pre[i-1] + nums[i-1]   # [why] 递推
+    return pre
+# 查询 sum([l,r]) = pre[r+1] - pre[l]
+
+# ─── 对撞双指针 ───
+def two_sum_sorted(nums: list[int], target: int) -&gt; list[int]:
+    l, r = 0, len(nums) - 1             # [why] 从两端出发
+    while l &lt; r:
+        s = nums[l] + nums[r]
+        if   s == target: return [l, r]
+        elif s &lt; target:  l += 1         # [why] 和太小，增大左端
+        else:             r -= 1         # [why] 和太大，减小右端
+    return []
+
+# ─── 二分查找（左闭右闭）───
+def binary_search(nums: list[int], target: int) -&gt; int:
+    l, r = 0, len(nums) - 1             # [why] 左闭右闭区间
+    while l &lt;= r:                        # [why] 区间非空就继续
+        mid = l + (r - l) // 2           # [why] 防溢出写法
+        if   nums[mid] == target: return mid
+        elif nums[mid] &lt; target:  l = mid + 1  # [why] 排除左半
+        else:                     r = mid - 1  # [why] 排除右半
+    return -1</code></pre>
+                <details>
+                    <summary>C++ 版本</summary>
+<pre><code class="language-cpp">#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;unordered_map&gt;
+using namespace std;
+
+// ─── 滑动窗口 ───
+int slidingWindow(const string&amp; s) {
+    int left = 0, result = 0;
+    unordered_map&lt;char, int&gt; window;
+    for (int right = 0; right &lt; (int)s.size(); ++right) {
+        window[s[right]]++;               // [why] 纳入右端
+        while (window[s[right]] &gt; 1) {    // [why] 收缩至合法
+            window[s[left]]--;
+            left++;
+        }
+        result = max(result, right - left + 1);
+    }
+    return result;
+}
+
+// ─── 前缀和 ───
+vector&lt;long long&gt; buildPrefix(const vector&lt;int&gt;&amp; nums) {
+    int n = nums.size();
+    vector&lt;long long&gt; pre(n + 1, 0);     // ⚠️ 用 long long 防溢出
+    for (int i = 1; i &lt;= n; ++i)
+        pre[i] = pre[i-1] + nums[i-1];
+    return pre;
+}
+
+// ─── 二分查找 ───
+int binarySearch(const vector&lt;int&gt;&amp; nums, int target) {
+    int l = 0, r = (int)nums.size() - 1;
+    while (l &lt;= r) {
+        int mid = l + (r - l) / 2;       // [why] 防 int 溢出
+        if      (nums[mid] == target) return mid;
+        else if (nums[mid] &lt; target)  l = mid + 1;
+        else                          r = mid - 1;
+    }
+    return -1;
+}</code></pre>
+                </details>
+                <details>
+                    <summary>Rust 版本</summary>
+<pre><code class="language-rust">use std::collections::HashMap;
+
+/// 滑动窗口 — 最长无重复子串
+fn sliding_window(s: &amp;str) -&gt; usize {
+    let bytes = s.as_bytes();
+    let (mut left, mut result) = (0usize, 0usize);
+    let mut window: HashMap&lt;u8, usize&gt; = HashMap::new();
+    for right in 0..bytes.len() {
+        *window.entry(bytes[right]).or_insert(0) += 1;
+        while window[&amp;bytes[right]] &gt; 1 {       // [why] 收缩
+            let lc = bytes[left];
+            *window.get_mut(&amp;lc).unwrap() -= 1;
+            if window[&amp;lc] == 0 { window.remove(&amp;lc); }
+            left += 1;
+        }
+        result = result.max(right - left + 1);
+    }
+    result
+}
+
+/// 二分查找（左闭右闭）
+fn binary_search(nums: &amp;[i32], target: i32) -&gt; Option&lt;usize&gt; {
+    if nums.is_empty() { return None; }  // [why] 防 usize 下溢
+    let (mut l, mut r) = (0i64, nums.len() as i64 - 1);
+    while l &lt;= r {
+        let mid = (l + (r - l) / 2) as usize;
+        match nums[mid].cmp(&amp;target) {
+            std::cmp::Ordering::Equal   =&gt; return Some(mid),
+            std::cmp::Ordering::Less    =&gt; l = mid as i64 + 1,
+            std::cmp::Ordering::Greater =&gt; r = mid as i64 - 1,
+        }
+    }
+    None
+}</code></pre>
+                </details>
+            </div>
+
+            <!-- ═══ 层 5：复杂度分析表 ═══ -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度分析表</h3>
+                <table>
+                    <tr><th>技巧</th><th>最优时间</th><th>最坏时间</th><th>空间</th><th>为什么</th></tr>
+                    <tr><td>对撞双指针</td><td>O(n)</td><td>O(n)</td><td>O(1)</td><td>两指针各单向走到底，合计 ≤ n 步</td></tr>
+                    <tr><td>同向双指针</td><td>O(n)</td><td>O(n)</td><td>O(1)</td><td>slow/fast 各自最多走 n 步</td></tr>
+                    <tr><td>滑动窗口</td><td>O(n)</td><td>O(n)</td><td>O(|Σ|)</td><td>left/right 各单调递增，总 ≤ 2n 步；|Σ| 为字符集大小</td></tr>
+                    <tr><td>前缀和·建表</td><td>O(n)</td><td>O(n)</td><td>O(n)</td><td>一次遍历，每步 O(1) 递推</td></tr>
+                    <tr><td>前缀和·查询</td><td>O(1)</td><td>O(1)</td><td>—</td><td>两次数组访问相减</td></tr>
+                    <tr><td>差分数组·更新</td><td>O(1)</td><td>O(1)</td><td>O(n)</td><td>只修改两端点，O(n) 前缀和还原</td></tr>
+                    <tr><td>二分查找</td><td>O(1)</td><td>O(log n)</td><td>O(1)</td><td>每次排除一半，最多 ⌈log₂n⌉ 轮</td></tr>
+                </table>
+            </div>
+
+            <!-- ═══ 层 6：核心性质 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 核心性质与定理</h3>
+                <p><strong>性质 1 — 对撞双指针正确性：</strong>在递增数组中，若 nums[l]+nums[r] &lt; target，则对所有 r'≤r 也成立。因此 l 可以永久右移。<br><em>证明：</em>nums[r'] ≤ nums[r]，故 nums[l]+nums[r'] ≤ nums[l]+nums[r] &lt; target。</p>
+                <p><strong>性质 2 — 滑动窗口摊还 O(n)：</strong>left 是 right 的单调函数，right 走 n 步，left 至多走 n 步，总操作 ≤ 2n。</p>
+                <p><strong>性质 3 — 前缀和恒等式：</strong>$\displaystyle\sum_{k=l}^{r}\text{nums}[k] = \text{pre}[r+1] - \text{pre}[l]$，其中 $\text{pre}[0]=0$（哨兵）。</p>
+                <p><strong>性质 4 — 二分查找循环不变量：</strong>若目标值存在于数组中，它始终位于维护的区间 [l, r] 内。每次迭代区间长度至少减半，最多 ⌈log₂n⌉ 次。</p>
+            </div>
+
+            <!-- ═══ 层 7：典型例题 ═══ -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 典型例题</h3>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.3);">基础</span> 移动零（LeetCode 283）— 同向双指针</summary>
+                    <p><strong>题意：</strong>将数组所有 0 移到末尾，保持非零元素顺序，原地操作。</p>
+                    <p><strong>思路：</strong>slow 标记下一个非零元素应放的位置；fast 扫描寻找非零元素。</p>
+<pre><code class="language-python">def moveZeroes(nums: list[int]) -&gt; None:
+    slow = 0
+    for fast in range(len(nums)):
+        if nums[fast] != 0:
+            nums[slow], nums[fast] = nums[fast], nums[slow]  # [why] 交换保持非零顺序
+            slow += 1</code></pre>
+                    <p><strong>变种：</strong>若不要求保持顺序 → 对撞双指针，遇 0 与末尾交换。</p>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.3);">基础</span> 无重复字符最长子串（LeetCode 3）— 滑动窗口</summary>
+                    <p><strong>题意：</strong>字符串中无重复字符的最长子串长度。</p>
+                    <p><strong>思路：</strong>频率字典 + while 收缩。right 每扩一位，若重复就收缩 left。</p>
+<pre><code class="language-python">def lengthOfLongestSubstring(s: str) -&gt; int:
+    window: dict[str, int] = {}
+    left = 0; ans = 0
+    for right, ch in enumerate(s):
+        window[ch] = window.get(ch, 0) + 1
+        while window[ch] &gt; 1:             # [why] 有重复 → 收缩
+            window[s[left]] -= 1
+            if window[s[left]] == 0: del window[s[left]]
+            left += 1
+        ans = max(ans, right - left + 1)
+    return ans</code></pre>
+                    <p><strong>变种：</strong>记录最新位置法 <code>left = max(left, char_pos[ch]+1)</code>，left 直接跳跃。</p>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(251,191,36,.15); color:#fbbf24; border-color:rgba(251,191,36,.3);">中级</span> 子数组和为 K（LeetCode 560）— 前缀和 + 哈希</summary>
+                    <p><strong>题意：</strong>和为 k 的连续子数组个数（可含负数）。</p>
+                    <p><strong>推导：</strong>子数组 [i+1,j] 和 = pre[j]-pre[i] = k，即需查找多少个 pre[i] = pre[j]-k。</p>
+<pre><code class="language-python">def subarraySum(nums: list[int], k: int) -&gt; int:
+    count = 0; pre_sum = 0
+    freq: dict[int, int] = {0: 1}         # [why] 空前缀 pre[0]=0
+    for num in nums:
+        pre_sum += num
+        count += freq.get(pre_sum - k, 0)  # [why] 先查再更新
+        freq[pre_sum] = freq.get(pre_sum, 0) + 1
+    return count</code></pre>
+                </details>
+                <details>
+                    <summary><span class="prereq-tag" style="background:rgba(248,113,113,.15); color:#f87171; border-color:rgba(248,113,113,.3);">高级</span> 接雨水（LeetCode 42）— 对撞双指针</summary>
+                    <p><strong>题意：</strong>柱状图能接多少雨水。</p>
+                    <p><strong>思路：</strong>维护 left_max / right_max，短板侧决定水量。</p>
+<pre><code class="language-python">def trap(height: list[int]) -&gt; int:
+    l, r = 0, len(height) - 1
+    l_max = r_max = 0; water = 0
+    while l &lt; r:
+        if height[l] &lt; height[r]:
+            l_max = max(l_max, height[l])
+            water += l_max - height[l]     # [why] 短板决定水位
+            l += 1
+        else:
+            r_max = max(r_max, height[r])
+            water += r_max - height[r]
+            r -= 1
+    return water</code></pre>
+                    <p><strong>变种对比：</strong>前缀最大值法 O(n)/O(n)；单调栈 O(n)/O(n)；对撞双指针是唯一 O(1) 空间方案。</p>
+                </details>
+            </div>
+
+            <!-- ═══ 层 8：技术对比表 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 技术对比表</h3>
+                <table>
+                    <tr><th>技术</th><th>适用场景</th><th>优势</th><th>局限</th><th>典型题目</th></tr>
+                    <tr><td>对撞双指针</td><td>有序数组两端搜索</td><td>O(1) 空间</td><td>需数组有序</td><td>两数之和 II、接雨水</td></tr>
+                    <tr><td>同向双指针</td><td>原地过滤/压缩</td><td>O(1) 空间，一遍</td><td>无法处理非连续子序列</td><td>移动零、删除重复</td></tr>
+                    <tr><td>滑动窗口</td><td>连续子串/子数组极值</td><td>O(n) 时间</td><td>需单调性成立</td><td>最长无重复子串</td></tr>
+                    <tr><td>前缀和</td><td>区间查询密集</td><td>O(1) 查询</td><td>O(n) 预处理空间</td><td>子数组和等于 K</td></tr>
+                    <tr><td>二分查找</td><td>有序/单调决策空间</td><td>O(log n) 搜索</td><td>需明确判定函数</td><td>搜索插入位置</td></tr>
+                </table>
+                <p style="font-size:0.85rem; margin-top:0.6rem; color:var(--subtle-text)">
+                    <strong>选择经验：</strong>"有序+两端"→对撞；"原地过滤"→同向；"连续区间+约束"→滑窗；"多次区间和"→前缀和；"单调判定"→二分。
+                </p>
+            </div>
+
+            <!-- ═══ 层 9：易错点 ═══ -->
+            <div class="knowledge-card kc-red">
+                <h3>🔴 易错点与陷阱</h3>
+                <p><strong>① 窗口收缩条件写反 → 死循环</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 条件反了</p>
+<pre><code class="language-python">while len(window) &lt;= k:
+    left += 1   # 永远进不来或死循环</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 超出才收缩</p>
+<pre><code class="language-python">while len(window) &gt; k:
+    window[s[left]] -= 1
+    left += 1</code></pre>
+                    </div>
+                </div>
+                <p><strong>② 前缀和数组长度少 1</strong>（Python 特有：<code>pre[-1]</code> 不报错却返回最后元素）</p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ pre 长度为 n</p>
+<pre><code class="language-python">pre = [0] * n
+for i in range(n):
+    pre[i] = pre[i-1] + nums[i]
+# i=0 时 pre[-1] = pre[n-1]！</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ pre 长度 n+1</p>
+<pre><code class="language-python">pre = [0] * (n + 1)
+for i in range(1, n + 1):
+    pre[i] = pre[i-1] + nums[i-1]</code></pre>
+                    </div>
+                </div>
+                <p><strong>③ 对撞双指针同时移动两个指针</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 两个都动 → 漏掉答案</p>
+<pre><code class="language-python">if nums[l]+nums[r] &lt; target:
+    l += 1; r -= 1</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 每次只动一个</p>
+<pre><code class="language-python">if   s &lt; target: l += 1
+elif s &gt; target: r -= 1</code></pre>
+                    </div>
+                </div>
+                <p><strong>④ C++ 二分 mid 溢出</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ (l+r) 可能溢出 int</p>
+<pre><code class="language-cpp">int mid = (l + r) / 2;</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 防溢出写法</p>
+<pre><code class="language-cpp">int mid = l + (r - l) / 2;</code></pre>
+                    </div>
+                </div>
+                <p><strong>⑤ Rust usize 下溢 panic</strong></p>
+                <div class="code-compare">
+                    <div class="wrong">
+                        <p>❌ 空数组时 0usize - 1 panic</p>
+<pre><code class="language-rust">let mut r: usize = nums.len() - 1;</code></pre>
+                    </div>
+                    <div class="right">
+                        <p>✅ 提前判空或用 i64</p>
+<pre><code class="language-rust">if nums.is_empty() { return None; }
+let mut r = nums.len() - 1;</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ 层 10：互动演示 ═══ -->
+            <div class="knowledge-card kc-purple">
+                <h3>🎮 互动演示：滑动窗口（无重复最长子串）</h3>
+                <p style="font-size:0.9rem; color:var(--subtle-text)">字符串 <strong>"abcbbc"</strong>，点击按钮逐步推进，观察 left/right 指针与窗口状态。</p>
                 <div class="demo-container">
                     <div class="demo-array" id="sw-array"></div>
                     <div style="height:22px"></div>
                     <div class="demo-controls">
-                        <button id="sw-prev" onclick="swPrev()" disabled>← 上一步</button>
-                        <button id="sw-next" onclick="swNext()">下一步 →</button>
-                        <button onclick="swReset()">重置</button>
+                        <button id="sw-prev" disabled>⏮ Prev</button>
+                        <button id="sw-next">⏭ Next</button>
+                        <button id="sw-reset">🔄 Reset</button>
                         <span style="margin-left:auto; font-size:0.82rem; color:#64748b" id="sw-step-label">步骤 0 / ?</span>
                     </div>
                     <div class="demo-info" id="sw-info">
@@ -257,275 +592,47 @@ while l < r:
                         窗口 = <span class="highlight" id="sw-win">{}</span> &nbsp;|&nbsp;
                         ans = <span class="highlight" id="sw-ans">0</span>
                     </div>
-                    <div class="demo-log" id="sw-log">点击"下一步"开始演示…</div>
+                    <div class="demo-log" id="sw-log">点击 Next 开始演示…</div>
                 </div>
-
                 <p style="font-size:0.85rem; color:var(--subtle-text); margin-top:0.5rem">
                     <span style="color:#fcd34d">■</span> left指针 &nbsp;
                     <span style="color:#6ee7b7">■</span> right指针 &nbsp;
                     <span style="color:#c7d2fe">■</span> 窗口内 &nbsp;
-                    <span style="color:#c4b5fd">■</span> 同一格（left=right）
-                </p>
-
-                <!-- 前缀和互动 -->
-                <h3 style="margin-top:1.5rem">🎮 互动演示：前缀和区间查询</h3>
-                <p style="font-size:0.9rem; color:var(--subtle-text)">nums = [3, 1, 4, 1, 5, 9, 2, 6]，点击两个格子设置查询区间 [l, r]。</p>
-                <div class="demo-container">
-                    <div class="pre-demo">
-                        <div class="pre-row"><div class="pre-label">nums[]</div><div id="pre-nums"></div></div>
-                        <div class="pre-row"><div class="pre-label">pre[]</div><div id="pre-pres"></div></div>
-                    </div>
-                    <div class="demo-info" id="pre-info" style="margin-top:0.5rem">
-                        点击 nums 行的格子选择查询区间（先点左端 l，再点右端 r）
-                    </div>
-                    <div class="demo-log" id="pre-log">未选择区间</div>
-                </div>
-            </div>
-
-            <!-- 5. 核心定义 / 模板 -->
-            <div class="knowledge-card kc-blue">
-                <h3>🔵 模板代码（带完整注释）</h3>
-
-                <p><strong>左闭右开区间约定：</strong> <code>[left, right)</code>，left 含 right 不含。初始化 <code>right=n</code>，条件 <code>left &lt; right</code>。好处：区间长度恒为 <code>right - left</code>，空区间时 <code>left == right</code>。</p>
-
-                <p><strong>滑动窗口通用模板：</strong></p>
-<pre><code class="language-python">def sliding_window(s):
-    left = 0
-    window = {}          # 记录窗口内字符频率
-    result = 0
-
-    for right in range(len(s)):
-        # ① 扩展右边界，纳入 s[right]
-        c = s[right]
-        window[c] = window.get(c, 0) + 1
-
-        # ② 当窗口不满足条件，收缩左边界
-        while 窗口违规():          # 具体条件因题而异
-            lc = s[left]
-            window[lc] -= 1
-            if window[lc] == 0:
-                del window[lc]
-            left += 1
-
-        # ③ 此时 [left, right] 是合法窗口，更新答案
-        result = max(result, right - left + 1)
-
-    return result
-</code></pre>
-
-                <p><strong>前缀和模板：</strong></p>
-<pre><code class="language-python">n = len(nums)
-pre = [0] * (n + 1)           # 长 n+1，pre[0]=0 是哨兵
-for i in range(1, n + 1):
-    pre[i] = pre[i-1] + nums[i-1]
-
-# 查询闭区间 [l, r]（0-indexed）的和：
-query = pre[r + 1] - pre[l]   # O(1)
-</code></pre>
-
-                <p><strong>对撞双指针（有序数组两数之和）：</strong></p>
-<pre><code class="language-python">l, r = 0, len(nums) - 1
-while l < r:
-    s = nums[l] + nums[r]
-    if s == target:   return [l, r]
-    elif s < target:  l += 1    # 和太小，左指针右移（增大和）
-    else:             r -= 1    # 和太大，右指针左移（减小和）
-</code></pre>
-            </div>
-
-            <!-- 6. 复杂度速查 + 证明 -->
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查（含原因）</h3>
-                <table>
-                    <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-                    <tr><td>对撞双指针</td><td>O(n)</td><td>O(1)</td><td>两指针各单向走到底，合计 ≤ n 步</td></tr>
-                    <tr><td>同向双指针</td><td>O(n)</td><td>O(1)</td><td>slow/fast 各自最多走 n 步</td></tr>
-                    <tr><td>滑动窗口</td><td>O(n)</td><td>O(|字符集|)</td><td>left/right 各单调递增，总 ≤ 2n 步</td></tr>
-                    <tr><td>前缀和建表</td><td>O(n)</td><td>O(n)</td><td>一次遍历，每步 O(1) 递推</td></tr>
-                    <tr><td>前缀和查询</td><td>O(1)</td><td>—</td><td>两次数组访问相减</td></tr>
-                    <tr><td>差分数组更新</td><td>O(1)</td><td>O(n)</td><td>只修改两端点，O(n) 前缀和还原</td></tr>
-                </table>
-            </div>
-
-            <!-- 7. 典型例题 -->
-            <div class="knowledge-card kc-green">
-                <h3>🟢 典型例题详解</h3>
-
-                <details>
-                    <summary>例题1：移动零（LeetCode 283）— 同向双指针</summary>
-                    <p><strong>题意：</strong> 将数组中所有 0 移到末尾，保持非 0 元素相对顺序，原地操作。</p>
-                    <p><strong>推导思路：</strong></p>
-                    <p>想象 <code>slow</code> 是"下一个非 0 元素应该放在哪里"的游标。<code>fast</code> 扫描全数组寻找非 0 元素。每找到一个，就填入 <code>slow</code> 位置，<code>slow</code> 右移。最后 <code>slow</code> 之后的位置全填 0。</p>
-<pre><code class="language-python">def moveZeroes(nums):
-    slow = 0
-    for fast in range(len(nums)):
-        if nums[fast] != 0:
-            nums[slow] = nums[fast]   # 把非0元素"压缩"到前面
-            slow += 1
-    for i in range(slow, len(nums)):
-        nums[i] = 0                   # 后面全填0
-</code></pre>
-                    <p><strong>变种对比：</strong></p>
-                    <ul>
-                        <li>若可以改变元素相对顺序（对撞）：遇到 0 就与末尾交换，r 左移。</li>
-                        <li>若要计数移动次数：比较 <code>slow != fast</code> 时才交换（比覆写少一步）。</li>
-                    </ul>
-                </details>
-
-                <details>
-                    <summary>例题2：无重复字符最长子串（LeetCode 3）— 滑动窗口</summary>
-                    <p><strong>题意：</strong> 找字符串中无重复字符的最长子串长度。</p>
-                    <p><strong>两种实现对比：</strong></p>
-                    <div class="code-compare">
-                        <div class="wrong">
-                            <p style="color:#94a3b8">实现一：频率字典 + while 收缩</p>
-<pre><code class="language-python">window = {}
-left = 0; ans = 0
-for right, ch in enumerate(s):
-    window[ch] = window.get(ch,0)+1
-    while window[ch] > 1:    # 出现重复
-        window[s[left]] -= 1
-        left += 1
-    ans = max(ans, right-left+1)</code></pre>
-                        </div>
-                        <div class="right">
-                            <p style="color:#94a3b8">实现二：记录最新位置（更快）</p>
-<pre><code class="language-python">char_pos = {}
-left = 0; ans = 0
-for right, ch in enumerate(s):
-    if ch in char_pos and char_pos[ch] >= left:
-        left = char_pos[ch] + 1  # left直接跳过
-    char_pos[ch] = right
-    ans = max(ans, right-left+1)</code></pre>
-                        </div>
-                    </div>
-                    <p>实现二更快：left 直接跳到重复字符后一位，而不是逐个移动。</p>
-                </details>
-
-                <details>
-                    <summary>例题3：子数组和为 K（LeetCode 560）— 前缀和 + 哈希</summary>
-                    <p><strong>题意：</strong> 找和为 k 的子数组个数（允许负数）。</p>
-                    <p><strong>关键推导：</strong></p>
-                    <p>子数组 [i+1, j] 的和 = <code>pre[j] - pre[i] = k</code>，即 <code>pre[i] = pre[j] - k</code>。</p>
-                    <p>所以当我们扫到 <code>j</code>（当前前缀和为 <code>pre[j]</code>），只需查找之前有多少个前缀和等于 <code>pre[j] - k</code>。用哈希表 O(1) 查找。</p>
-<pre><code class="language-python">def subarraySum(nums, k):
-    count = 0
-    pre_sum = 0
-    freq = {0: 1}               # 前缀和0出现了1次（空前缀）
-    for num in nums:
-        pre_sum += num
-        count += freq.get(pre_sum - k, 0)   # 找有多少个之前的pre等于 pre_sum-k
-        freq[pre_sum] = freq.get(pre_sum, 0) + 1
-    return count
-</code></pre>
-                    <p><strong>注意：</strong> 必须先查询再更新，防止使用当前元素自身。</p>
-                </details>
-
-                <details>
-                    <summary>例题4（变种）：最小长度子数组和 ≥ s（LeetCode 209）</summary>
-                    <p><strong>与 LeetCode 3 的区别：</strong> 不是找"无重复"，而是找"和≥s"的最短。</p>
-                    <p><strong>为什么仍然可以用滑动窗口：</strong> 窗口的"合法条件"变为 sum ≥ s，一旦满足就尝试收缩 left 以最小化长度。单调性依然成立（right 右移不会让已经合法的答案失效）。</p>
-<pre><code class="language-python">def minSubArrayLen(target, nums):
-    l = 0; total = 0; ans = float('inf')
-    for r in range(len(nums)):
-        total += nums[r]
-        while total >= target:           # 满足条件才收缩
-            ans = min(ans, r - l + 1)
-            total -= nums[l]
-            l += 1
-    return ans if ans != float('inf') else 0</code></pre>
-                </details>
-            </div>
-
-            <!-- 8. 变种对比 -->
-            <div class="knowledge-card kc-cyan">
-                <h3>🔷 三类指针技术对比</h3>
-                <table>
-                    <tr><th>技术</th><th>指针方向</th><th>前提</th><th>适用问题</th></tr>
-                    <tr><td>对撞双指针</td><td>← 和 → 对向</td><td>数组有序</td><td>两数之和、回文判断、容器盛水</td></tr>
-                    <tr><td>同向双指针（快慢）</td><td>→ 和 →（速度不同）</td><td>无</td><td>移除元素、链表环检测、奇偶排列</td></tr>
-                    <tr><td>滑动窗口</td><td>→ 和 →（维护区间）</td><td>单调性成立</td><td>最长/最短子串、区间最值、固定窗口</td></tr>
-                </table>
-                <p style="font-size:0.85rem; margin-top:0.6rem; color:var(--subtle-text)">
-                    <strong>判断用哪个的经验：</strong> 看到"有序数组 + 两个端点"→对撞；看到"原地过滤/压缩"→同向；看到"连续子数组/子串 + 某个窗口属性"→滑动窗口。
+                    <span style="color:#c4b5fd">■</span> left=right 重合
                 </p>
             </div>
 
-            <!-- 9. 易错点 -->
-            <div class="knowledge-card kc-red">
-                <h3>🔴 易错点</h3>
-
-                <p><strong>① 窗口收缩条件写反导致死循环</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（条件反了）</p>
-<pre><code class="language-python">while len(window) <= k:
-    left += 1   # 永远进不来</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（超出才收缩）</p>
-<pre><code class="language-python">while len(window) > k:
-    window[s[left]] -= 1
-    left += 1</code></pre>
-                    </div>
-                </div>
-
-                <p><strong>② 前缀和数组长度少 1</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（缺 pre[0]）</p>
-<pre><code class="language-python">pre = [0] * n
-for i in range(n):
-    pre[i] = pre[i-1] + nums[i]
-# i=0时 pre[-1]是最后一个元素！</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（长 n+1）</p>
-<pre><code class="language-python">pre = [0] * (n + 1)
-for i in range(1, n + 1):
-    pre[i] = pre[i-1] + nums[i-1]</code></pre>
-                    </div>
-                </div>
-
-                <p><strong>③ 对撞双指针同时移动两个指针</strong></p>
-                <div class="code-compare">
-                    <div class="wrong">
-                        <p>❌ 错误（两个都动）</p>
-<pre><code class="language-python">if nums[l]+nums[r] < target:
-    l += 1; r -= 1   # 漏掉答案</code></pre>
-                    </div>
-                    <div class="right">
-                        <p>✅ 正确（只动一个）</p>
-<pre><code class="language-python">if   s < target: l += 1
-elif s > target: r -= 1</code></pre>
-                    </div>
-                </div>
-
-                <p><strong>④ 忘记初始化 freq = {0: 1}</strong>（前缀和 + 哈希题）</p>
-                <p style="font-size:0.9rem">前缀和从头到位置 j 的和恰好等于 k 时，需要有"空前缀"（pre[0]=0）对应的记录，否则漏计。</p>
-            </div>
-
-            <!-- 10. 竞赛拓展 -->
+            <!-- ═══ 层 11：竞赛拓展 ═══ -->
             <div class="knowledge-card kc-cyan">
                 <h3>🔷 竞赛拓展</h3>
-
-                <p><strong>单调队列解决滑窗最值（LeetCode 239）：</strong> 用双端队列维护窗口内单调递减序列，O(n) 求固定窗口大小 k 的最大值。</p>
+                <p><strong>单调队列（滑窗最值）：</strong>O(n) 求固定窗口大小 k 的最大值（LeetCode 239）。双端队列维护窗口内单调递减序列。</p>
+                <details>
+                    <summary>代码模板</summary>
 <pre><code class="language-python">from collections import deque
-def maxSlidingWindow(nums, k):
-    dq = deque()   # 存下标，队首始终是当前窗口最大值
-    result = []
+def maxSlidingWindow(nums: list[int], k: int) -&gt; list[int]:
+    dq: deque[int] = deque()            # [why] 存下标
+    result: list[int] = []
     for i, num in enumerate(nums):
-        while dq and dq[0] < i - k + 1: dq.popleft()   # 超出窗口
-        while dq and nums[dq[-1]] < num: dq.pop()       # 维护单调递减
+        while dq and dq[0] &lt; i - k + 1: dq.popleft()   # [why] 超出窗口
+        while dq and nums[dq[-1]] &lt; num: dq.pop()       # [why] 维护单调
         dq.append(i)
-        if i >= k - 1: result.append(nums[dq[0]])
+        if i &gt;= k - 1: result.append(nums[dq[0]])
     return result</code></pre>
-
-                <p><strong>差分数组区间更新：</strong> <code>diff[l] += val; diff[r+1] -= val</code>，最后前缀和还原，O(1) 区间操作。适合"批量区间加减"问题（如多次区间涨价后查最终价格）。</p>
-
-                <p><strong>离散化：</strong> 数据范围 10⁹ 但元素个数仅 n ≤ 10⁵ 时，将值映射到 [0, n-1] 的连续下标，配合前缀和或线段树使用。</p>
+                </details>
+                <p><strong>差分数组：</strong><code>diff[l] += val; diff[r+1] -= val</code>，前缀和还原。O(1) 区间更新。</p>
+                <p><strong>离散化：</strong>值域 10⁹ 但元素仅 n ≤ 10⁵ 时，映射到 [0, n-1] 连续下标，配合 BIT / 线段树使用。</p>
             </div>
+
+            <!-- ═══ 层 12：工业实战 ═══ -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🏭 工业实战</h3>
+                <p><strong>NumPy SIMD 向量化：</strong>NumPy 底层使用连续内存数组，借助 CPU 的 SSE/AVX SIMD 指令一次处理 4~8 个元素。<code>np.sum(arr[l:r])</code> 被编译为向量化机器码，比 Python for 循环快 100 倍以上。这正是"数组连续内存"的工业级回报。</p>
+                <p><strong>Linux 内核 Ring Buffer：</strong>网络收发包使用环形缓冲区，本质是固定大小数组 + head/tail 双指针。生产者（NIC 驱动）写入 tail，消费者（内核协议栈）从 head 读取。指针取模实现循环。这是滑动窗口思想在 OS 核心路径中的直接应用。</p>
+                <p><strong>Redis ZSET：</strong>底层使用跳表 + 哈希表。<code>ZRANGEBYSCORE</code> 范围查询本质是跳表上的双指针扫描。当需"按分数区间取 TopK"时，等价于有序数组区间查询问题。</p>
+            </div>
+
         </section>
+
 
         <section class="card" data-quiz data-module="arrays">
 <h2>练习题（Practice）</h2>
@@ -631,125 +738,59 @@ def maxSlidingWindow(nums, k):
 
     <script src="../assets/js/app.js"></script>
     <script>hljs.highlightAll();</script>
-    <script>
-    // ===== 滑动窗口互动演示 =====
-    (function(){
-        const S = "abcbbc";
-        const steps = [];
-        // 预计算所有步骤
-        let left = 0, window = {}, ans = 0;
-        steps.push({ left:0, right:-1, window:{}, ans:0, log:"初始状态：left=0, right=-1, 窗口为空。", action:'init' });
-        for(let right=0; right<S.length; right++){
-            const ch = S[right];
-            window[ch] = (window[ch]||0)+1;
-            const preLeft = left;
-            let shrink = false;
-            while(window[ch] > 1){
-                const lc = S[left];
-                window[lc]--;
-                if(!window[lc]) delete window[lc];
-                left++;
-                shrink = true;
-            }
-            ans = Math.max(ans, right - left + 1);
-            const w2 = Object.assign({}, window);
-            let log;
-            if(shrink){
-                log = `right=${right} 纳入 '${ch}'（出现重复）→ left 从 ${preLeft} 收缩到 ${left}。窗口: [${S.slice(left,right+1)}]  ans=${ans}`;
-            } else {
-                log = `right=${right} 纳入 '${ch}'（无重复）→ left 不动（${left}）。窗口: [${S.slice(left,right+1)}]  ans=${ans}`;
-            }
-            steps.push({ left, right, window:w2, ans, log, action: shrink?'shrink':'expand' });
+<script>
+// ===== 滑动窗口互动演示 =====
+(function(){
+    const S = "abcbbc";
+    const steps = [];
+    let left = 0, window = {}, ans = 0;
+    steps.push({ left:0, right:-1, window:{}, ans:0, log:"初始状态：left=0, right=-1, 窗口为空。", action:'init' });
+    for(let right=0; right<S.length; right++){
+        const ch = S[right];
+        window[ch] = (window[ch]||0)+1;
+        const preLeft = left;
+        let shrink = false;
+        while(window[ch] > 1){
+            const lc = S[left]; window[lc]--; if(!window[lc]) delete window[lc]; left++; shrink = true;
         }
-        steps.push({ left, right:S.length-1, window:Object.assign({},window), ans, log:`✅ 遍历完毕，最长无重复子串长度 = ${ans}`, action:'done' });
-
-        let cur = 0;
-        function render(){
-            const st = steps[cur];
-            const arr = document.getElementById('sw-array');
-            arr.innerHTML = '';
-            for(let i=0;i<S.length;i++){
-                const cell = document.createElement('div');
-                cell.className = 'demo-cell';
-                cell.textContent = S[i];
-                const isLeft = i===st.left, isRight = i===st.right;
-                const inWin = i>=st.left && i<=st.right && st.right>=0;
-                if(st.right >= 0 && isLeft && isRight) cell.classList.add('both-ptr');
-                else if(isLeft && st.right>=0) cell.classList.add('left-ptr');
-                else if(isRight) cell.classList.add('right-ptr');
-                else if(inWin) cell.classList.add('in-window');
-                if(isLeft && st.right>=0){ const lb=document.createElement('div'); lb.className='demo-ptr-label'; lb.textContent='left'; lb.style.color='#f59e0b'; cell.appendChild(lb); }
-                if(isRight && st.right>=0){ const rb=document.createElement('div'); rb.className='demo-ptr-label'; rb.style.bottom=isLeft?'-34px':'-18px'; rb.textContent='right'; rb.style.color='#10b981'; cell.appendChild(rb); }
-                arr.appendChild(cell);
-            }
-            document.getElementById('sw-l').textContent = st.left;
-            document.getElementById('sw-r').textContent = st.right;
-            document.getElementById('sw-win').textContent = JSON.stringify(st.window);
-            document.getElementById('sw-ans').textContent = st.ans;
-            document.getElementById('sw-step-label').textContent = `步骤 ${cur} / ${steps.length-1}`;
-            const logEl = document.getElementById('sw-log');
-            logEl.innerHTML = `<span class="log-new">${st.log}</span>`;
-            document.getElementById('sw-prev').disabled = cur===0;
-            document.getElementById('sw-next').disabled = cur===steps.length-1;
+        ans = Math.max(ans, right - left + 1);
+        const w2 = Object.assign({}, window);
+        let log = shrink
+            ? `right=${right} 纳入 '${ch}'（重复）→ left 从 ${preLeft} 收缩到 ${left}。窗口: [${S.slice(left,right+1)}]  ans=${ans}`
+            : `right=${right} 纳入 '${ch}'（无重复）→ left=${left}。窗口: [${S.slice(left,right+1)}]  ans=${ans}`;
+        steps.push({ left, right, window:w2, ans, log, action: shrink?'shrink':'expand' });
+    }
+    steps.push({ left, right:S.length-1, window:Object.assign({},window), ans, log:`✅ 完毕，最长无重复子串长度 = ${ans}`, action:'done' });
+    let cur = 0;
+    function render(){
+        const st = steps[cur];
+        const arr = document.getElementById('sw-array'); if(!arr) return;
+        arr.innerHTML = '';
+        for(let i=0;i<S.length;i++){
+            const cell = document.createElement('div'); cell.className = 'demo-cell'; cell.textContent = S[i];
+            const isLeft = i===st.left, isRight = i===st.right, inWin = i>=st.left && i<=st.right && st.right>=0;
+            if(st.right>=0 && isLeft && isRight) cell.classList.add('both-ptr');
+            else if(isLeft && st.right>=0) cell.classList.add('left-ptr');
+            else if(isRight) cell.classList.add('right-ptr');
+            else if(inWin) cell.classList.add('in-window');
+            if(isLeft && st.right>=0){ const lb=document.createElement('div'); lb.className='demo-ptr-label'; lb.textContent='left'; lb.style.color='#f59e0b'; cell.appendChild(lb); }
+            if(isRight && st.right>=0){ const rb=document.createElement('div'); rb.className='demo-ptr-label'; rb.style.bottom=isLeft?'-34px':'-18px'; rb.textContent='right'; rb.style.color='#10b981'; cell.appendChild(rb); }
+            arr.appendChild(cell);
         }
-        window.swNext=function(){ if(cur<steps.length-1){ cur++; render(); } };
-        window.swPrev=function(){ if(cur>0){ cur--; render(); } };
-        window.swReset=function(){ cur=0; render(); };
-        render();
-    })();
-
-    // ===== 前缀和互动演示 =====
-    (function(){
-        const nums = [3,1,4,1,5,9,2,6];
-        const n = nums.length;
-        const pre = [0];
-        for(let i=0;i<n;i++) pre.push(pre[i]+nums[i]);
-        let selL=-1, selR=-1, pickCount=0;
-
-        function renderPre(){
-            const numsDiv=document.getElementById('pre-nums');
-            const presDiv=document.getElementById('pre-pres');
-            numsDiv.innerHTML=''; presDiv.innerHTML='';
-            for(let i=0;i<n;i++){
-                const c=document.createElement('div');
-                c.className='pre-cell'; c.textContent=nums[i];
-                c.style.cursor='pointer';
-                if(selL<=i && i<=selR && selR>=0) c.classList.add('query-range');
-                if(i===selL) c.classList.add('query-l');
-                if(i===selR) c.classList.add('query-r');
-                c.onclick=(function(idx){ return function(){
-                    if(pickCount===0||pickCount===2){ selL=idx; selR=-1; pickCount=1; }
-                    else if(pickCount===1){
-                        if(idx<selL){ selL=idx; selR=-1; pickCount=1; }
-                        else { selR=idx; pickCount=2; }
-                    }
-                    renderPre();
-                }; })(i);
-                numsDiv.appendChild(c);
-            }
-            // pre row: n+1 cells
-            for(let i=0;i<=n;i++){
-                const c=document.createElement('div');
-                c.className='pre-cell'; c.textContent=pre[i];
-                c.style.fontSize='0.8rem';
-                if(i===selL) c.classList.add('query-l');
-                if(i===selR+1) c.classList.add('query-r');
-                presDiv.appendChild(c);
-            }
-            const logEl=document.getElementById('pre-log');
-            if(selR>=0){
-                const sum=pre[selR+1]-pre[selL];
-                logEl.innerHTML=`<span style="color:#6ee7b7">sum([${selL},${selR}]) = pre[${selR+1}] - pre[${selL}] = ${pre[selR+1]} - ${pre[selL]} = <strong>${sum}</strong></span>`;
-                document.getElementById('pre-info').textContent=`查询区间 [${selL}, ${selR}]，公式：pre[r+1] - pre[l]`;
-            } else if(selL>=0){
-                logEl.textContent='已选 l='+selL+'，再点一格选 r（右端，须 >= l）';
-                document.getElementById('pre-info').textContent='点击右端 r…';
-            } else {
-                logEl.textContent='未选择区间';
-            }
-        }
-        renderPre();
-    })();
-    </script>
+        document.getElementById('sw-l').textContent = st.left;
+        document.getElementById('sw-r').textContent = st.right;
+        document.getElementById('sw-win').textContent = JSON.stringify(st.window);
+        document.getElementById('sw-ans').textContent = st.ans;
+        document.getElementById('sw-step-label').textContent = `步骤 ${cur} / ${steps.length-1}`;
+        document.getElementById('sw-log').innerHTML = `<span class="log-new">${st.log}</span>`;
+        document.getElementById('sw-prev').disabled = cur===0;
+        document.getElementById('sw-next').disabled = cur===steps.length-1;
+    }
+    document.getElementById('sw-prev').addEventListener('click', function(){ if(cur>0){ cur--; render(); } });
+    document.getElementById('sw-next').addEventListener('click', function(){ if(cur<steps.length-1){ cur++; render(); } });
+    document.getElementById('sw-reset').addEventListener('click', function(){ cur=0; render(); });
+    render();
+})();
+</script>
 </body>
 </html>

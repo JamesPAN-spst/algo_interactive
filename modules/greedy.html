@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>贪心算法模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
@@ -15,6 +17,8 @@
         .kc-red { border-left: 3px solid #f43f5e; }
         .kc-cyan { border-left: 3px solid #06b6d4; }
         .kc-purple { border-left: 3px solid #8b5cf6; }
+        .kc-amber { border-left: 3px solid #f59e0b; }
+        .kc-gray { border-left: 3px solid #64748b; }
         .knowledge-card h3 { margin-top: 0; font-size: 1.05rem; }
         .knowledge-card table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
         .knowledge-card table th, .knowledge-card table td { border: 1px solid #334155; padding: 0.5rem 0.8rem; text-align: left; }
@@ -56,123 +60,490 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
+    <!-- ====== 层0 引子 ====== -->
     <div class="knowledge-card kc-gray">
-        <h3>⚙️ 前置知识</h3>
-        <span class="prereq-tag">排序算法</span>
-        <span class="prereq-tag">局部最优思考</span>
-        <p>贪心算法（Greedy）的核心疑问永远是：“何时我能信任一个短视的贪心选择？”它没有动态规划那样通过全方面尝试并记忆化保底，贪心是一条路走到黑，只有严格证明其拥有“贪心选择性质”时才可用。</p>
+        <h3>🪙 层0 · 引子</h3>
+        <p>手头一堆不同面额的硬币，怎么用<strong>最少数量</strong>凑出某个金额？直觉告诉你"先用大面额"，这就是<strong>贪心（Greedy）</strong>的朴素想法——每步只做局部最优选择，期望拼出全局最优。但问题来了：这招什么时候靠谱，什么时候翻车？这就是本模块要回答的问题。</p>
     </div>
 
+    <!-- ====== 层1 前置知识 ====== -->
+    <div class="knowledge-card kc-gray">
+        <h3>⚙️ 层1 · 前置知识</h3>
+        <span class="prereq-tag">排序算法</span>
+        <span class="prereq-tag">优先队列 / 堆</span>
+        <span class="prereq-tag">递归基础</span>
+        <p>贪心算法几乎总要配合<strong>排序</strong>（确定贪心顺序）或<strong>优先队列</strong>（动态维护最优候选）。部分贪心构造过程（如 Huffman 树）还涉及递归思想。如果对这些还不熟悉，建议先学习对应模块。</p>
+    </div>
+
+    <!-- ====== 层2 动机 ====== -->
     <div class="knowledge-card kc-amber">
-        <h3>💡 推导：交换论证法（Exchange Argument）证明贪心</h3>
-
-        <div class="intuition-box">
-            <strong>核心思想：</strong>要证明贪心产生的解 $G$ 是最优的，我们可以假设存在一个最优解 $O$。如果我们将 $O$ 逐步调整（往往是交换两个决策位置），直到变成 $G$，且在这个过程中“结果没有变坏”，那么 $G$ 的得分一定不差于最优解 $O$，即证明了贪心就是神！
+        <h3>💡 层2 · 动机：暴力 vs 贪心</h3>
+        <div class="naive-vs-smart">
+            <div class="naive">
+                <div class="label" style="color:#f43f5e;">暴力枚举</div>
+                <p>枚举所有子集 / 组合，检查每种方案是否合法并取最优。</p>
+                <p><strong>时间：O(2ⁿ)</strong> — 指数爆炸，不可用。</p>
+            </div>
+            <div class="smart">
+                <div class="label" style="color:#10b981;">贪心策略</div>
+                <p>按某个排序标准依次选择，只走一遍。</p>
+                <p><strong>时间：O(n log n)</strong>（排序） 或 O(n)（线性扫描）。</p>
+            </div>
         </div>
+        <div class="think-block">
+            <div class="q">⚠️ 但贪心不总是对的！</div>
+            <p>面额 {1, 3, 4}，凑 6 元：贪心选 4 → 1 → 1 = <strong>3 枚</strong>；但最优是 3 + 3 = <strong>2 枚</strong>。贪心在非标准面额下失败，因为它不满足"贪心选择性质"。<br>教训：<strong>每次使用贪心前必须验证正确性</strong>（交换论证 / 反例排除）。</p>
+        </div>
+    </div>
 
-        <h4>区间调度问题 (Interval Scheduling)</h4>
+    <!-- ====== 层3 推导 ====== -->
+    <div class="knowledge-card kc-amber">
+        <h3>📐 层3 · 推导</h3>
+
+        <h4>3.1 交换论证法通用框架</h4>
+        <div class="intuition-box">
+            <strong>核心思路：</strong>假设存在最优解 O，贪心解为 G。逐步将 O 中与 G 不同的决策"交换"成 G 的决策，证明每次交换都<strong>不会使结果变差</strong>，从而 G 的质量 ≥ O，即 G 也是最优的。
+        </div>
         <div class="derive-step">
             <div class="derive-num">1</div>
-            <div class="derive-body">
-                <strong>策略提出：</strong>有多个区间要尽量多地选择且不重叠。我们提出贪心策略：<strong>总是选择结束时间最早</strong> 的区间。
-            </div>
+            <div class="derive-body"><strong>提出策略：</strong>明确贪心的排序 / 选择标准。</div>
         </div>
         <div class="derive-step">
             <div class="derive-num">2</div>
-            <div class="derive-body">
-                <strong>交换论证：</strong>假设某最优解 $O$ 选取的第一个区间不是结束最早的区间 $A$，而是区间 $B$。因为 $A$ 结束得比 $B$ 还要早，如果我们在 $O$ 中用 $A$ 替换掉 $B$，$A$ 绝不可能和 $O$ 中的后续区间冲突（因为腾出的空白时间更多了）。这证明了“早结束”的替换操作<strong>永远不会使能容纳的区间变少</strong>。贪心成立。
-            </div>
+            <div class="derive-body"><strong>假设差异：</strong>设最优解 O 在某步选了 b 而非贪心选择 a。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">3</div>
+            <div class="derive-body"><strong>执行交换：</strong>在 O 中把 b 替换成 a，证明新解 O' 仍然合法且不差于 O。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">4</div>
+            <div class="derive-body"><strong>归纳推广：</strong>逐步替换所有差异，O 最终变成 G，证毕。</div>
+        </div>
+
+        <h4>3.2 区间调度：按结束时间排序</h4>
+        <p><strong>问题：</strong>选最多互不重叠区间。<strong>策略：</strong>总选结束时间最早的。</p>
+        <div class="derive-step">
+            <div class="derive-num">1</div>
+            <div class="derive-body"><strong>交换论证：</strong>若 O 第一个选的是 B（结束晚），贪心选 A（结束早）。用 A 替换 B，因 A.end ≤ B.end，后续区间不受影响，方案数 ≥ 原来。</div>
+        </div>
+        <div class="derive-step">
+            <div class="derive-num">2</div>
+            <div class="derive-body"><strong>逐步替换所有差异位置，贪心解 = 最优解。</strong></div>
+        </div>
+<pre class="ascii-art">
+时间轴 ──────────────────────────────────────────►
+  A: ██████               ← end=3, 最早结束 ✅ 选
+  B:   ███████████         ← end=5, 被 A 替换
+  C:            ████████   ← end=8, 不冲突 ✅ 选
+  D:       █████████████   ← end=9, 冲突 ✗ 跳过
+结果：选 A, C = 2 个区间（最优）
+</pre>
+
+        <h4>3.3 Huffman 编码：贪心构建最优前缀编码</h4>
+        <p>每次从候选中取<strong>频率最小的两个</strong>节点合并为新节点。频率低 → 深度深 → 编码长，这最小化总编码长度。</p>
+<pre class="ascii-art">
+频率: a=5  b=9  c=12  d=13  e=16  f=45
+
+第1轮: 合并 a(5)+b(9) → [14]
+第2轮: 合并 c(12)+d(13) → [25]
+第3轮: 合并 [14]+e(16) → [30]
+第4轮: 合并 [25]+[30] → [55]
+第5轮: 合并 f(45)+[55] → [100]
+
+         [100]
+        /     \
+     f(45)   [55]
+            /    \
+         [25]   [30]
+        / \    /   \
+     c(12) d(13) [14] e(16)
+                 / \
+              a(5) b(9)
+</pre>
+
+        <h4>3.4 Jump Game：最远可达位置追踪</h4>
+        <p><strong>策略：</strong>维护变量 <code>farthest</code>，遍历时若当前位置 i &gt; farthest 则不可达；否则更新 farthest = max(farthest, i + nums[i])。</p>
+        <div class="intuition-box">
+            <strong>为什么正确？</strong>如果能到位置 i，则 i 之前所有位置也可达（可以少跳），所以能到达的位置形成一段连续前缀。只需追踪前缀的右端点。
         </div>
 
         <div class="think-block">
-            <div class="q">Q: 为什么按“开始时间最早”贪心是错的？</div>
+            <div class="q">Q: 为什么按"开始时间最早"进行区间调度贪心是错的？</div>
             <details>
                 <summary>查看答疑</summary>
-                因为一个包含全天的超长区间开始得很早，如果你贪心地选了它，它就会霸占这一整天，导致你错过了中间的许多短区间任务。贪心必须兼顾“不影响后续决策”，结束早意味着把更多的时间让给了未来。
+                一个横跨全天的超长区间开始最早，贪心地选它会霸占所有时间，错过中间的许多短区间。"结束早"才能把最多时间让给未来。
             </details>
         </div>
-        
+
         <div class="think-block">
-            <div class="q">Q: 我怎么在笔试面试中证明我的贪心是正确的？</div>
+            <div class="q">Q: 面试中如何快速验证贪心正确性？</div>
             <details>
                 <summary>查看答疑</summary>
-                严格的数学证明可能来不及。实用的套路是：1. 提出贪心（按某个排序）。2. “强行换位思考”：如果我不这么选，选了别的，情况会变好吗？3. 寻找反例：随手画几组极端数据，如果找不到反例，且感觉满足“交换不亏”，通常就可以大胆写了。
+                实用三步：1. 提出策略（排序标准）；2. 换位思考——不这么选，结果能更好吗？3. 画极端数据找反例。找不到反例 + 交换不亏 → 大胆写。
             </details>
         </div>
     </div>
 
+    <!-- ====== 层4 代码 ====== -->
     <div class="knowledge-card kc-blue">
-        <h3>💻 模板代码：跳跃游戏与区间调度</h3>
-<pre><code class="language-python"># 1. 区间调度问题 (最多互不重叠区间数)
-def max_non_overlapping_intervals(intervals):
-    if not intervals: return 0
-    # 核心：按结束时间排序
-    intervals.sort(key=lambda x: x[1])
-    count = 1
-    end = intervals[0][1]
-    
-    for i in range(1, len(intervals)):
-        if intervals[i][0] >= end: # 如果不重叠
-            count += 1
-            end = intervals[i][1]  # 更新可用时间的边界
-    return count
+        <h3>💻 层4 · 代码模板</h3>
 
-# 2. 跳跃游戏 (能否到达数组末尾)
+        <h4>4.1 区间调度</h4>
+<pre><code class="language-python"># Python — 区间调度（最多互不重叠区间数）
+def max_non_overlapping(intervals):
+    if not intervals: return 0
+    intervals.sort(key=lambda x: x[1])  # 按结束时间排序
+    count, end = 1, intervals[0][1]
+    for s, e in intervals[1:]:
+        if s &gt;= end:        # 不冲突 → 选
+            count += 1
+            end = e
+    return count
+</code></pre>
+        <details>
+            <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">// C++ — 区间调度
+int maxNonOverlapping(vector&lt;vector&lt;int&gt;&gt;&amp; intervals) {
+    sort(intervals.begin(), intervals.end(),
+         [](auto&amp; a, auto&amp; b){ return a[1] &lt; b[1]; });
+    int count = 1, end = intervals[0][1];
+    for (int i = 1; i &lt; (int)intervals.size(); ++i) {
+        if (intervals[i][0] &gt;= end) {
+            ++count;
+            end = intervals[i][1];
+        }
+    }
+    return count;
+}
+</code></pre>
+<pre><code class="language-rust">// Rust — 区间调度
+fn max_non_overlapping(intervals: &amp;mut Vec&lt;[i32; 2]&gt;) -&gt; i32 {
+    intervals.sort_by_key(|v| v[1]);
+    let (mut count, mut end) = (1, intervals[0][1]);
+    for iv in &amp;intervals[1..] {
+        if iv[0] &gt;= end {
+            count += 1;
+            end = iv[1];
+        }
+    }
+    count
+}
+</code></pre>
+        </details>
+
+        <h4>4.2 Huffman 编码</h4>
+<pre><code class="language-python"># Python — Huffman 编码
+import heapq
+
+def huffman(freq):
+    """freq: dict {char: frequency}, 返回编码 dict"""
+    heap = [[f, [ch, ""]] for ch, f in freq.items()]
+    heapq.heapify(heap)
+    while len(heap) &gt; 1:
+        lo = heapq.heappop(heap)
+        hi = heapq.heappop(heap)
+        for pair in lo[1:]:
+            pair[1] = '0' + pair[1]
+        for pair in hi[1:]:
+            pair[1] = '1' + pair[1]
+        heapq.heappush(heap, [lo[0] + hi[0]] + lo[1:] + hi[1:])
+    return {ch: code for ch, code in sorted(heap[0][1:], key=lambda x: x[1])}
+</code></pre>
+        <details>
+            <summary>C++ 版本</summary>
+<pre><code class="language-cpp">// C++ — Huffman（简化：只算最小加权路径长度）
+#include &lt;queue&gt;
+using namespace std;
+long long huffmanCost(vector&lt;int&gt;&amp; freq) {
+    priority_queue&lt;long long, vector&lt;long long&gt;, greater&lt;&gt;&gt; pq(freq.begin(), freq.end());
+    long long cost = 0;
+    while (pq.size() &gt; 1) {
+        long long a = pq.top(); pq.pop();
+        long long b = pq.top(); pq.pop();
+        cost += a + b;
+        pq.push(a + b);
+    }
+    return cost;
+}
+</code></pre>
+        </details>
+
+        <h4>4.3 Jump Game</h4>
+<pre><code class="language-python"># Python — LC 55 Jump Game
 def canJump(nums):
     farthest = 0
     for i in range(len(nums)):
-        # 如果当前位置已经走不到了
-        if i > farthest:
+        if i &gt; farthest:
             return False
-        # 贪心：时刻维护我们能到达的最远跳跃边界
         farthest = max(farthest, i + nums[i])
-        if farthest >= len(nums) - 1:
+        if farthest &gt;= len(nums) - 1:
             return True
-    return farthest >= len(nums) - 1
+    return farthest &gt;= len(nums) - 1
 </code></pre>
-        <table>
-            <tr><th>技巧</th><th>时间</th><th>空间</th><th>为什么</th></tr>
-            <tr><td>基于排序的贪心</td><td>O(N log N)</td><td>O(1)/O(N)</td><td>主要耗时在于对数据集合的排序。</td></tr>
-            <tr><td>一遍扫描贪心(如 Jump Game)</td><td>O(N)</td><td>O(1)</td><td>状态转移不依赖历史或全局，仅依靠常数个边界指针线性扫描。</td></tr>
-        </table>
-    </div>
-
-    <div class="knowledge-card kc-green">
-        <h3>🟢 典型例题变种比对</h3>
         <details>
-            <summary>变种：如果我们要用最少的箭射爆所有气球呢？</summary>
-            <p><strong>其实也是区间重叠问题：</strong> 一支箭实际上选定了一个 $X$ 坐标，它能穿透所有覆盖该坐标的区间。贪心策略：将气球按右边界排序，每次在当前尚未引爆的气球的“最右侧”射出一支箭，这样能有最大的机会引爆右侧靠后的气球。与区间调度逻辑一致！</p>
+            <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">// C++ — Jump Game
+bool canJump(vector&lt;int&gt;&amp; nums) {
+    int farthest = 0;
+    for (int i = 0; i &lt; (int)nums.size(); ++i) {
+        if (i &gt; farthest) return false;
+        farthest = max(farthest, i + nums[i]);
+        if (farthest &gt;= (int)nums.size() - 1) return true;
+    }
+    return true;
+}
+</code></pre>
+<pre><code class="language-rust">// Rust — Jump Game
+fn can_jump(nums: &amp;[i32]) -&gt; bool {
+    let mut farthest: usize = 0;
+    for (i, &amp;n) in nums.iter().enumerate() {
+        if i &gt; farthest { return false; }
+        farthest = farthest.max(i + n as usize);
+        if farthest &gt;= nums.len() - 1 { return true; }
+    }
+    true
+}
+</code></pre>
         </details>
     </div>
 
+    <!-- ====== 层5 复杂度表 ====== -->
+    <div class="knowledge-card kc-blue">
+        <h3>📊 层5 · 复杂度总结</h3>
+        <table>
+            <tr><th>算法 / 技巧</th><th>时间</th><th>空间</th><th>说明</th></tr>
+            <tr><td>排序型贪心（区间调度等）</td><td>O(n log n)</td><td>O(1) ~ O(n)</td><td>瓶颈在排序</td></tr>
+            <tr><td>线性扫描贪心（Jump Game）</td><td>O(n)</td><td>O(1)</td><td>常数指针一遍扫</td></tr>
+            <tr><td>Huffman 编码</td><td>O(n log n)</td><td>O(n)</td><td>堆操作 × (n−1) 次合并</td></tr>
+            <tr><td>加油站（LC 134）</td><td>O(n)</td><td>O(1)</td><td>前缀和 + 一次遍历</td></tr>
+            <tr><td>分数背包</td><td>O(n log n)</td><td>O(1)</td><td>按性价比排序后线性装载</td></tr>
+        </table>
+    </div>
+
+    <!-- ====== 层6 性质 ====== -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🔬 层6 · 贪心的两大核心性质</h3>
+        <p><strong>① 贪心选择性质（Greedy-Choice Property）：</strong>存在一个最优解包含贪心策略做出的第一步选择。换言之，做局部最优不会让你错失全局最优。</p>
+        <p><strong>② 最优子结构（Optimal Substructure）：</strong>做完一步贪心选择后，剩余子问题的最优解 + 当前选择 = 原问题最优解。（与 DP 共享此性质，但 DP 通常不具备贪心选择性质。）</p>
+        <div class="intuition-box">
+            <strong>拟阵理论（Matroid Theory）：</strong>若问题的可行解集合满足"拟阵"公理（遗传性 + 交换性），则按权重降序贪心一定最优。Kruskal MST 就是图拟阵上的贪心。此处仅作展望，细节参见《算法导论》第16章。
+        </div>
+    </div>
+
+    <!-- ====== 层7 例题 ====== -->
+    <div class="knowledge-card kc-green">
+        <h3>🟢 层7 · 典型例题</h3>
+        <table>
+            <tr><th>题目</th><th>核心贪心策略</th><th>复杂度</th></tr>
+            <tr>
+                <td><strong>LC 435 无重叠区间</strong></td>
+                <td>按结束时间排序，统计需删除的区间数 = 总数 − 最多不重叠数</td>
+                <td>O(n log n)</td>
+            </tr>
+            <tr>
+                <td><strong>LC 55 Jump Game</strong></td>
+                <td>维护 farthest 可达位置，线性扫描</td>
+                <td>O(n)</td>
+            </tr>
+            <tr>
+                <td><strong>LC 134 加油站</strong></td>
+                <td>若总油 ≥ 总耗，一定有解；找前缀累积余量最小点的下一个位置即起点</td>
+                <td>O(n)</td>
+            </tr>
+        </table>
+        <details>
+            <summary>LC 435 核心代码</summary>
+<pre><code class="language-python"># LC 435 — 最少移除区间数使无重叠
+def eraseOverlapIntervals(intervals):
+    intervals.sort(key=lambda x: x[1])
+    count, end = 0, float('-inf')
+    for s, e in intervals:
+        if s &gt;= end:
+            end = e
+        else:
+            count += 1  # 冲突 → 移除当前（保留结束早的）
+    return count
+</code></pre>
+        </details>
+        <details>
+            <summary>LC 134 核心代码</summary>
+<pre><code class="language-python"># LC 134 — 加油站
+def canCompleteCircuit(gas, cost):
+    if sum(gas) &lt; sum(cost): return -1
+    tank, start = 0, 0
+    for i in range(len(gas)):
+        tank += gas[i] - cost[i]
+        if tank &lt; 0:        # 从 start 出发走不到 i+1
+            start = i + 1   # 新起点
+            tank = 0
+    return start
+</code></pre>
+        </details>
+    </div>
+
+    <!-- ====== 层8 对比 ====== -->
+    <div class="knowledge-card kc-cyan">
+        <h3>⚖️ 层8 · 贪心 vs DP vs 回溯</h3>
+        <table>
+            <tr><th></th><th>贪心</th><th>动态规划</th><th>回溯</th></tr>
+            <tr>
+                <td><strong>决策方式</strong></td>
+                <td>每步取局部最优，不回头</td>
+                <td>枚举所有子问题，记忆化</td>
+                <td>试探 + 剪枝，可回退</td>
+            </tr>
+            <tr>
+                <td><strong>正确性保证</strong></td>
+                <td>需证明贪心选择性质</td>
+                <td>最优子结构 + 重叠子问题</td>
+                <td>穷举，始终正确</td>
+            </tr>
+            <tr>
+                <td><strong>典型复杂度</strong></td>
+                <td>O(n log n) 或 O(n)</td>
+                <td>O(n²) ~ O(n·W)</td>
+                <td>O(2ⁿ) ~ O(n!)</td>
+            </tr>
+            <tr>
+                <td><strong>适用场景</strong></td>
+                <td>区间调度、Huffman、分数背包</td>
+                <td>0-1背包、编辑距离、LCS</td>
+                <td>排列、组合、N皇后</td>
+            </tr>
+            <tr>
+                <td><strong>失败信号</strong></td>
+                <td>能找到反例 / 无法证明</td>
+                <td>无重叠子问题</td>
+                <td>不需要最优只需可行</td>
+            </tr>
+        </table>
+        <div class="intuition-box">
+            <strong>判断准则：</strong>优先考虑贪心（最快）→ 找反例 → 反例存在则退回 DP → DP 状态空间太大则回溯 + 剪枝。
+        </div>
+    </div>
+
+    <!-- ====== 层9 易错 ====== -->
     <div class="knowledge-card kc-red">
-        <h3>🔴 易错点分析</h3>
+        <h3>🔴 层9 · 易错点</h3>
+
+        <h4>❌ 易错1：贪心适用性误判</h4>
         <div class="code-compare">
             <div class="wrong">
-                <p>❌ 错误的贪心标准</p>
-<pre><code class="language-python"># 按开始时间排序试图做区间调度
-intervals.sort(key=lambda x: x[0])
-# ... 这是错的，因为可能有一个区间覆盖所有时间
+                <p>❌ 非标准面额用贪心</p>
+<pre><code class="language-python"># 面额 [1,3,4], 凑 6
+# 贪心：4+1+1 = 3 枚 ← 错！
+coins = [4, 3, 1]
+coins.sort(reverse=True)
+count, remain = 0, 6
+for c in coins:
+    count += remain // c
+    remain %= c
 </code></pre>
             </div>
             <div class="right">
-                <p>✅ 正确的贪心标准</p>
-<pre><code class="language-python"># 总是给未来的选择留出最大的空间
-intervals.sort(key=lambda x: x[1])
+                <p>✅ 应使用 DP</p>
+<pre><code class="language-python"># DP 完全背包：3+3 = 2 枚
+dp = [float('inf')] * 7
+dp[0] = 0
+for c in [1, 3, 4]:
+    for x in range(c, 7):
+        dp[x] = min(dp[x], dp[x-c]+1)
+# dp[6] = 2
+</code></pre>
+            </div>
+        </div>
+
+        <h4>❌ 易错2：排序方向搞反</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 按开始时间排序做区间调度</p>
+<pre><code class="language-python">intervals.sort(key=lambda x: x[0])
+# [0,100] 排第一，霸占所有时间
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 按结束时间排序</p>
+<pre><code class="language-python">intervals.sort(key=lambda x: x[1])
+# 结束越早 → 给后续留越多空间
+</code></pre>
+            </div>
+        </div>
+
+        <h4>❌ 易错3：Jump Game 忘记判不可达</h4>
+        <div class="code-compare">
+            <div class="wrong">
+                <p>❌ 不检查 i &gt; farthest</p>
+<pre><code class="language-python">for i in range(len(nums)):
+    farthest = max(farthest, i + nums[i])
+    # 如果中间断了也继续更新 ← 错
+</code></pre>
+            </div>
+            <div class="right">
+                <p>✅ 先检查可达性</p>
+<pre><code class="language-python">for i in range(len(nums)):
+    if i &gt; farthest: return False
+    farthest = max(farthest, i + nums[i])
 </code></pre>
             </div>
         </div>
     </div>
 
+    <!-- ====== 层10 演示容器 ====== -->
     <div class="knowledge-card kc-purple">
-        <h3>🔗 互动演示：区间调度贪心选择过程</h3>
+        <h3>🔗 层10 · 互动演示：区间调度贪心选择过程</h3>
         <div class="demo-container" id="greedyDemo"></div>
     </div>
 
+    <!-- ====== 层11 竞赛拓展 ====== -->
     <div class="knowledge-card kc-cyan">
-        <h3>🔷 竞赛拓展</h3>
-        <p><strong>Huffman 编码：</strong> 经典的高级贪心。为什么合并频率最小的两个节点是对的？因为深度越深，编码越长，频率最低的叶子理应呆在最底部。由于每次合并都缩小了集合大小，可用优先队列（最小堆）来实现 O(N log N) 的编码构建。</p>
-        <p><strong>贪心与 DP 的界限 (找零钱问题)：</strong> 经典的硬币如果面额是 1, 5, 10, 25 (日常硬币)，由于各面额之间倍数关系良好（即“拟阵”结构），贪心每次找最大的是最优的；但如果面额是 1, 3, 4，找 6 块钱贪心会得出 4+1+1 (3枚)，而最佳答案是 3+3 (2枚)。此时贪心失效，必须退回背包 DP。</p>
+        <h3>🏆 层11 · 竞赛拓展</h3>
+        <h4>分数背包（Fractional Knapsack）</h4>
+        <p>物品可以切割（取一部分），按<strong>单位价值（value/weight）降序</strong>排序后依次装入，直到背包满。贪心一定最优——切割使得每次选择不会浪费容量。</p>
+<pre><code class="language-python"># 分数背包 — O(n log n)
+def fractional_knapsack(capacity, items):
+    """items: list of (value, weight)"""
+    items.sort(key=lambda x: x[0]/x[1], reverse=True)
+    total = 0
+    for v, w in items:
+        if capacity &gt;= w:
+            total += v
+            capacity -= w
+        else:
+            total += v * (capacity / w)
+            break
+    return total
+</code></pre>
+        <h4>Matroids 与加权贪心</h4>
+        <p>若可行子集构成拟阵（满足遗传性、交换性），按权重降序贪心加入元素（不破坏独立性则选）一定得到最大权独立集。经典应用：<strong>Kruskal MST</strong>（图拟阵）、任务截止日调度（调度拟阵）。深入理论参见 CLRS 第16章。</p>
+    </div>
+
+    <!-- ====== 层12 工业应用 ====== -->
+    <div class="knowledge-card kc-cyan">
+        <h3>🏭 层12 · 工业应用</h3>
+        <table>
+            <tr><th>场景</th><th>贪心策略</th><th>说明</th></tr>
+            <tr>
+                <td><strong>gzip / zlib 压缩</strong></td>
+                <td>Huffman 编码</td>
+                <td>DEFLATE 算法的核心组件，用 LZ77 + Huffman 两步压缩</td>
+            </tr>
+            <tr>
+                <td><strong>磁盘调度 SSTF</strong></td>
+                <td>最短寻道时间优先</td>
+                <td>磁头每次移动到最近的请求磁道，减少总寻道距离（贪心，可能饥饿）</td>
+            </tr>
+            <tr>
+                <td><strong>CDN 节点选择</strong></td>
+                <td>就近分配</td>
+                <td>将用户请求路由到延迟最低的边缘节点，本质是贪心匹配</td>
+            </tr>
+            <tr>
+                <td><strong>TCP 拥塞控制</strong></td>
+                <td>AIMD（加性增乘性减）</td>
+                <td>每个 RTT 窗口+1（贪心增长），丢包则减半（快速退让）</td>
+            </tr>
+        </table>
     </div>
 </section>
 

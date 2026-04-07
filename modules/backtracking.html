@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <title>回溯算法模块</title>
     <style>
         .knowledge-card { margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 8px; background: var(--card-bg, #1e2330); }
@@ -71,274 +73,357 @@
         <section class="card">
             <h2>知识点总结提纲（Knowledge / Connaissances）</h2>
 
-            <!-- 0. 前置知识 -->
+            <!-- Layer 0: 引子 -->
+            <div class="knowledge-card kc-gray">
+                <h3>🎯 出发点</h3>
+                <p>数独已经填了一半，怎么让程序自动填完？</p>
+                <p style="color:var(--subtle-text); font-size:0.9rem">人类方法：试填一个数字，发现矛盾就擦掉重来。程序也可以这样做——这就是<strong>回溯</strong>的核心思想：<em>尝试 → 检查 → 发现不对就撤销，换一条路继续</em>。</p>
+            </div>
+
+            <!-- Layer 1: 前置知识 -->
             <div class="knowledge-card kc-gray">
                 <h3>📋 前置知识</h3>
-                <span class="prereq-tag">Python 递归</span>
-                <span class="prereq-tag">函数调用栈</span>
-                <span class="prereq-tag">DFS 基础</span>
-                <span class="prereq-tag">列表的引用 vs 拷贝</span>
+                <span class="prereq-tag">递归 &amp; 函数调用栈</span>
+                <span class="prereq-tag">树的遍历（DFS）</span>
+                <span class="prereq-tag">集合 / 位运算基础</span>
                 <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">
-                    <strong>关键前置：</strong>回溯依赖"可撤销的状态变更"。如果你对 <code>path.append(x)</code> 之后 <code>path.pop()</code> 能恢复原状还不确定，先用 Python 手动试一下再继续。
+                    <strong>关键前置：</strong>回溯依赖"可撤销的状态变更"。Python：<code>path.append(x)</code> → <code>path.pop()</code>；C++：<code>push_back</code> / <code>pop_back</code>；位运算：<code>state |= (1 &lt;&lt; i)</code> / <code>state &amp;= ~(1 &lt;&lt; i)</code>。
                 </p>
             </div>
 
-            <!-- 1. 什么是回溯？从暴力枚举说起 -->
+            <!-- Layer 2: 动机 -->
             <div class="knowledge-card kc-amber">
-                <h3>💡 回溯是什么？本质是「有撤销机制的 DFS」</h3>
-
-                <p>许多问题的暴力解法是：<strong>枚举所有可能的答案，检查每个是否合法</strong>。</p>
-                <p>问题：对于全排列 [1,2,3]，有 3! = 6 种答案，枚举并不难。但对于 N 皇后（N=15），暴力方法要枚举 N^N ≈ 4千亿种情况，完全不可行。</p>
-                <p><strong>回溯的改进：</strong>不先生成完整答案再验证，而是在<em>构建过程中</em>实时检查约束，一旦发现当前路径已经违规，<strong>立即停止向下搜索，回退到上一个决策点</strong>，尝试另一条路。</p>
-
+                <h3>💡 动机：暴力枚举 vs 回溯剪枝</h3>
+                <p><strong>暴力方法：</strong>先生成所有可能的答案，再逐一检查合法性。</p>
+                <p>对于全排列 [1,2,3]，只有 3! = 6 种，枚举很轻松。但 N 皇后（N=15），暴力需枚举 N<sup>N</sup> ≈ 4000 亿种——完全不可行。</p>
                 <div class="intuition-box">
+                    <strong>回溯的改进：</strong>不先生成完整答案再验证，而是在<em>构建过程中实时检查约束</em>。一旦当前路径已违规，<strong>立即停止</strong>向下搜索、回退到上一决策点，尝试另一条路。<br><br>
                     <strong>回溯 = DFS + 剪枝 + 撤销</strong><br>
-                    DFS：按某种顺序逐层做选择，递归到底。<br>
-                    剪枝：在递归之前判断当前选择是否合法，不合法就跳过。<br>
-                    撤销：递归返回后恢复状态，让下一个选择可以从相同起点出发。
+                    &nbsp;&nbsp;DFS：按某种顺序逐层做选择，递归到底。<br>
+                    &nbsp;&nbsp;剪枝：递归之前判断当前选择是否合法，不合法就跳过。<br>
+                    &nbsp;&nbsp;撤销：递归返回后恢复状态，让下一个选择可以从相同起点出发。
                 </div>
+            </div>
+
+            <!-- Layer 3: 推导 -->
+            <div class="knowledge-card kc-amber">
+                <h3>💡 推导：搜索树模型</h3>
 
                 <div class="derive-step">
                     <div class="derive-num">1</div>
                     <div class="derive-body">
-                        <strong>为什么要撤销？</strong> 想象你有一块公共黑板 <code>path</code>，每次做选择就在上面写字。写完进入下一层，回来时<strong>必须擦掉</strong>，否则下一个分支会看到脏数据。这就是 <code>path.pop()</code> 的意义。
+                        <strong>选择 → 探索 → 回退</strong>：把每次"做一个决策"看作搜索树的一条边。做选择 = 走一条边到子节点；探索 = 在子树中递归；回退 = 沿原边返回父节点，恢复状态后尝试兄弟节点。
                     </div>
                 </div>
                 <div class="derive-step">
                     <div class="derive-num">2</div>
                     <div class="derive-body">
-                        <strong>为什么要拷贝结果？</strong> <code>result.append(path)</code> 只追加了一个引用，后续 <code>path.pop()</code> 会同时修改已收集的结果。必须用 <code>path[:]</code> 或 <code>list(path)</code> 做浅拷贝。
-                    </div>
-                </div>
-                <div class="derive-step">
-                    <div class="derive-num">3</div>
-                    <div class="derive-body">
-                        <strong>为什么剪枝有效？</strong> 每次剪掉一个分支，就消除了该分支下所有子节点——指数级削减。N 皇后从 N^N 降到近似 N!，就是因为每行只放一个皇后、同列/对角线直接跳过。
+                        <strong>宽度 = 每层可选择数，深度 = 决策步数</strong>。排列：宽度从 n 递减到 1，深度 = n；子集：每个元素选/不选，宽度 = 2，深度 = n；组合 C(n,k)：宽度递减，深度 = k。
                     </div>
                 </div>
 
-                <div class="think-block">
-                    <div class="q">🤔 如果把 path.pop() 删掉，代码还会运行但结果错误，为什么？</div>
-                    <details>
-                        <summary>展开答案</summary>
-                        <p>因为 <code>path</code> 是共享的列表对象。删掉 <code>pop()</code> 后，每次递归返回时 <code>path</code> 保留了上一层的选择。比如选了 1 → 2，返回后 path 还是 [1,2]，接着选 3 时变成 [1,2,3]，但下一个本应是从 1 → 3 出发的 [1,3]，却因为没有撤销而基于 [1,2] 继续——产生 [1,2,3]（重复）或 [1,2,...未撤销残余...] 等错误结果。</p>
-                    </details>
-                </div>
+                <p><strong>全排列 [1,2,3] 的搜索树：</strong></p>
+<div class="ascii-art">                         []
+              ┌──────────┼──────────┐
+             [1]        [2]        [3]
+           ┌──┴──┐   ┌──┴──┐   ┌──┴──┐
+         [1,2] [1,3] [2,1] [2,3] [3,1] [3,2]
+           │     │     │     │     │     │
+        [1,2,3][1,3,2][2,1,3][2,3,1][3,1,2][3,2,1]  ← 6 个叶节点 = 6 个排列
+</div>
+
+                <p><strong>N 皇后冲突检测 + 剪枝示意</strong>（4 皇后为例）：</p>
+<div class="ascii-art">     列:  0   1   2   3
+  行0:  Q   .   .   .     ← 放入 (0,0)
+  行1:  ×   ×   Q   .     ← (1,0) 同列×, (1,1) 对角×, 选 (1,2)
+  行2:  ×   ×   ×   ×     ← 所有位置被攻击！回溯 ↩
+  ─────────────────────
+  冲突检测 O(1)：
+    同列:        col ∈ cols_set
+    主对角线(\): (row − col) ∈ diag1_set
+    副对角线(/): (row + col) ∈ diag2_set
+  三个 set，查询均 O(1)，比扫描棋盘 O(n) 快得多。
+</div>
 
                 <div class="think-block">
-                    <div class="q">🤔 回溯和 DP 有什么根本区别？什么情况下优先选 DP？</div>
+                    <div class="q">🤔 子集 vs 组合的搜索树有什么区别？</div>
                     <details>
                         <summary>展开答案</summary>
-                        <ul>
-                            <li><strong>DP：</strong>有重叠子问题 + 最优子结构，只求最优值（数量/最大/最小），不需要所有具体方案。通过记忆化避免重复计算。</li>
-                            <li><strong>回溯：</strong>需要枚举所有方案、约束复杂无法分解为子问题、n 很小（通常 n ≤ 20）。</li>
-                            <li><strong>经验：</strong>看到"所有组合/排列/子集"→回溯；看到"最多几种方式"或"最短路径"→优先想 DP 或 BFS。</li>
-                        </ul>
+                        <p><strong>子集</strong>：每个元素有"选/不选"两条分支，树是满二叉树，深度 = n，叶节点 2<sup>n</sup> 个，<em>每个节点（含中间节点）都可以是一个合法子集</em>。</p>
+                        <p><strong>组合 C(n,k)</strong>：也是子集树的变种，但加了约束"恰好选 k 个"。<em>只有深度 = k 的叶节点</em>才是合法结果，且可剪枝：剩余元素不够凑齐 k 个时提前返回。</p>
+<div class="ascii-art">子集树（3 元素）:            组合树 C(3,2):
+        {}                          {}
+      /    \                      / | \
+    {1}    {}                   {1} {2} {3}
+    / \   / \                    |    |
+ {1,2}{1}{2} {}               {1,2}{1,3}{2,3}
+  ...                         只保留长度=2的路径
+</div>
                     </details>
                 </div>
             </div>
 
-            <!-- 2. 三类问题的 start 控制 -->
-            <div class="knowledge-card kc-amber">
-                <h3>💡 三类问题的关键差异：start 和 used 的不同</h3>
-                <p>回溯题 80% 属于三类：子集、组合、排列。它们的框架几乎一样，关键在"避免重复的方式"不同。</p>
-                <table>
-                    <tr><th>类型</th><th>去重方式</th><th>递归传参</th><th>典型题</th></tr>
-                    <tr><td>子集 / 组合</td><td>从 <code>start</code> 开始，不往回走</td><td><code>backtrack(start+1, ...)</code></td><td>LeetCode 78, 77</td></tr>
-                    <tr><td>排列（无重复）</td><td><code>used[]</code> 数组标记</td><td><code>backtrack(0, ...)</code>（每次从头）</td><td>LeetCode 46</td></tr>
-                    <tr><td>含重复元素</td><td>先排序 + 同层跳过</td><td>组合用 start+1；排列用 used[i-1]</td><td>LeetCode 40, 47</td></tr>
-                    <tr><td>可重复使用</td><td>start 不加 1，允许停留</td><td><code>backtrack(i, ...)</code>（不是 i+1）</td><td>LeetCode 39</td></tr>
-                </table>
-
-                <div class="think-block">
-                    <div class="q">🤔 含重复元素时，为什么先排序、再跳过 nums[i]==nums[i-1]？</div>
-                    <details>
-                        <summary>展开答案</summary>
-                        <p>排序把相同元素聚在一起。同一层递归中，如果 <code>nums[i] == nums[i-1]</code> 且 <code>nums[i-1]</code> 没有被使用（<code>used[i-1]==False</code>），说明以 <code>nums[i-1]</code> 为起点的所有组合已经被之前的分支枚举过了，以 <code>nums[i]</code> 为起点会产生完全相同的子树——跳过。</p>
-                        <p>如果 <code>used[i-1]==True</code>，说明 <code>nums[i-1]</code> 已在当前路径中，两者不同层，不构成重复，不应跳过。</p>
-                    </details>
-                </div>
-            </div>
-
-            <!-- 3. 核心模板 -->
+            <!-- Layer 4: 代码模板 -->
             <div class="knowledge-card kc-blue">
-                <h3>🔵 通用框架（含完整注释）</h3>
-<pre><code class="language-python">def backtrack(path, start, choices):
-    # ① 终止条件：路径已满足目标
-    if 满足结束条件:
-        result.append(path[:])   # 必须深拷贝！path 会被后续修改
-        return
+                <h3>🔵 代码模板</h3>
 
-    for i in range(start, len(choices)):
-        # ② 剪枝：提前排除不合法的选择
-        if 不合法(choices[i]):
-            continue
-        # ③ 做选择
-        path.append(choices[i])
-        mark_used(i)
-        # ④ 进入下一层（start 的传值是三类问题的关键区别）
-        backtrack(path, i + 1, choices)   # 组合：i+1；排列：0；可重用：i
-        # ⑤ 撤销选择（回溯的核心：让状态回到进入本层之前）
-        path.pop()
-        unmark_used(i)
-</code></pre>
-
-                <p><strong>N 皇后中的剪枝优化（集合替代数组）：</strong></p>
-<pre><code class="language-python">cols  = set()    # 已占用的列
-diag1 = set()    # 主对角线：row-col 相同的格子在同一条
-diag2 = set()    # 副对角线：row+col 相同的格子在同一条
-
-# 检查 (row, col) 是否安全：
-if col in cols or (row-col) in diag1 or (row+col) in diag2:
-    continue     # 被攻击，跳过
-</code></pre>
-                <p style="font-size:0.85rem; color:var(--subtle-text)">用集合判断冲突 O(1)，比扫描整个棋盘 O(n) 快得多。</p>
-            </div>
-
-            <!-- 4. 互动演示：全排列搜索树 -->
-            <div class="knowledge-card kc-purple">
-                <h3>🎮 互动演示：全排列 [1,2,3] 的搜索树</h3>
-                <p style="font-size:0.9rem; color:var(--subtle-text)">点击"下一步"逐步推进 DFS。<span style="color:#fcd34d">黄色</span>= 当前路径，<span style="color:#a78bfa">紫色</span>= 已完成结果，<span style="color:#fb923c">橙色</span>= 回溯。</p>
-                <div class="demo-container">
-                    <svg id="bt-tree-svg" height="320" viewBox="0 0 640 320"></svg>
-                    <div class="demo-controls">
-                        <button id="bt-prev" onclick="btPrev()" disabled>← 上一步</button>
-                        <button id="bt-next" onclick="btNext()">下一步 →</button>
-                        <button onclick="btReset()">重置</button>
-                        <span style="margin-left:auto; font-size:0.82rem; color:#64748b" id="bt-step-label">步骤 0</span>
-                    </div>
-                    <div class="path-display" id="bt-path-display">当前路径：[]</div>
-                    <div class="demo-log" id="bt-log">点击"下一步"开始…</div>
-                    <div style="margin-top:0.6rem; font-size:0.82rem; color:#64748b">已收集结果：</div>
-                    <div class="bt-result-list" id="bt-results"></div>
-                </div>
-            </div>
-
-            <!-- 5. 复杂度 -->
-            <div class="knowledge-card kc-blue">
-                <h3>📊 复杂度速查（含分析方法）</h3>
-                <p style="font-size:0.9rem"><strong>分析方法：</strong> 时间 = 搜索树节点数 × 每节点操作数。节点数 = 枚举的状态数（即不被剪枝消除的节点），每节点操作 = 路径构造、约束检查、拷贝等。</p>
-                <table>
-                    <tr><th>问题</th><th>时间</th><th>结果数</th><th>分析</th></tr>
-                    <tr><td>全排列（n 个不同）</td><td>O(n × n!)</td><td>n!</td><td>n! 个叶节点，每个用 O(n) 拷贝</td></tr>
-                    <tr><td>组合 C(n,k)</td><td>O(k × C(n,k))</td><td>C(n,k)</td><td>C(n,k) 个结果，每个长 k</td></tr>
-                    <tr><td>所有子集</td><td>O(n × 2ⁿ)</td><td>2ⁿ</td><td>2ⁿ 个子集，每个拷贝均摊 O(n)</td></tr>
-                    <tr><td>N 皇后</td><td>O(n!)</td><td>≤ n!</td><td>列/对角线剪枝大幅削减，上界 n!</td></tr>
-                    <tr><td>数独</td><td>O(9^m)（m=空格数）</td><td>1</td><td>约束传播实际非常快</td></tr>
-                    <tr><td>括号生成（n 对）</td><td>O(4ⁿ/√n)</td><td>Catalan(n)</td><td>Catalan 数 ≈ 4ⁿ/(n^1.5 × √π)</td></tr>
-                </table>
-            </div>
-
-            <!-- 6. 典型例题 -->
-            <div class="knowledge-card kc-green">
-                <h3>🟢 典型例题详解</h3>
-
-                <details>
-                    <summary>例题1：全排列（LeetCode 46）</summary>
-                    <p><strong>推导：</strong> 第一个位置有 n 种选择，第二个有 n-1 种（已用一个），以此类推。用 <code>used[]</code> 标记哪些已在路径中。</p>
+                <p><strong>① 全排列（LC 46）</strong></p>
 <pre><code class="language-python">def permute(nums):
-    result = []
-    used = [False] * len(nums)
-
-    def backtrack(path):
-        if len(path) == len(nums):
-            result.append(path[:])   # 拷贝！
+    res, n = [], len(nums)
+    used = [False] * n
+    def bt(path):
+        if len(path) == n:
+            res.append(path[:])      # 必须拷贝
             return
-        for i in range(len(nums)):
-            if used[i]: continue     # 跳过已用的
+        for i in range(n):
+            if used[i]: continue
             used[i] = True
             path.append(nums[i])
-            backtrack(path)
+            bt(path)
             path.pop()               # 撤销
-            used[i] = False          # 恢复标记
-
-    backtrack([])
-    return result
-</code></pre>
-                    <p><strong>变种（LeetCode 47，含重复元素）：</strong> 排序后，同层中若 <code>nums[i]==nums[i-1] and not used[i-1]</code> 则跳过。</p>
+            used[i] = False
+    bt([])
+    return res</code></pre>
+                <details>
+                    <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">// C++ — 全排列
+class Solution {
+public:
+    vector&lt;vector&lt;int&gt;&gt; res;
+    void bt(vector&lt;int&gt;&amp; nums, vector&lt;int&gt;&amp; path, vector&lt;bool&gt;&amp; used) {
+        if (path.size() == nums.size()) { res.push_back(path); return; }
+        for (int i = 0; i &lt; (int)nums.size(); i++) {
+            if (used[i]) continue;
+            used[i] = true;
+            path.push_back(nums[i]);
+            bt(nums, path, used);
+            path.pop_back();
+            used[i] = false;
+        }
+    }
+    vector&lt;vector&lt;int&gt;&gt; permute(vector&lt;int&gt;&amp; nums) {
+        vector&lt;int&gt; path;
+        vector&lt;bool&gt; used(nums.size(), false);
+        bt(nums, path, used);
+        return res;
+    }
+};</code></pre>
+<pre><code class="language-rust">// Rust — 全排列
+impl Solution {
+    pub fn permute(nums: Vec&lt;i32&gt;) -&gt; Vec&lt;Vec&lt;i32&gt;&gt; {
+        let mut res = vec![];
+        let mut used = vec![false; nums.len()];
+        let mut path = vec![];
+        Self::bt(&amp;nums, &amp;mut path, &amp;mut used, &amp;mut res);
+        res
+    }
+    fn bt(nums: &amp;[i32], path: &amp;mut Vec&lt;i32&gt;, used: &amp;mut Vec&lt;bool&gt;, res: &amp;mut Vec&lt;Vec&lt;i32&gt;&gt;) {
+        if path.len() == nums.len() { res.push(path.clone()); return; }
+        for i in 0..nums.len() {
+            if used[i] { continue; }
+            used[i] = true;
+            path.push(nums[i]);
+            Self::bt(nums, path, used, res);
+            path.pop();
+            used[i] = false;
+        }
+    }
+}</code></pre>
                 </details>
 
+                <p><strong>② N 皇后（LC 51）</strong></p>
+<pre><code class="language-python">def solveNQueens(n):
+    res = []
+    cols, d1, d2 = set(), set(), set()
+    board = [['.']*n for _ in range(n)]
+    def bt(row):
+        if row == n:
+            res.append([''.join(r) for r in board])
+            return
+        for c in range(n):
+            if c in cols or (row-c) in d1 or (row+c) in d2:
+                continue
+            board[row][c] = 'Q'
+            cols.add(c); d1.add(row-c); d2.add(row+c)
+            bt(row + 1)
+            board[row][c] = '.'
+            cols.discard(c); d1.discard(row-c); d2.discard(row+c)
+    bt(0)
+    return res</code></pre>
                 <details>
-                    <summary>例题2：组合总和（LeetCode 39）—— 可重复使用</summary>
-                    <p><strong>关键：</strong> 元素可重复使用，所以递归时传 <code>i</code> 而不是 <code>i+1</code>。</p>
-                    <p><strong>剪枝：</strong> 排序后，若当前元素已超过 remaining，后面更大的也超，break。</p>
-<pre><code class="language-python">def combinationSum(candidates, target):
-    result = []
-    candidates.sort()
+                    <summary>C++ 位运算版本</summary>
+<pre><code class="language-cpp">// C++ — N 皇后（位运算剪枝）
+class Solution {
+public:
+    int n;
+    vector&lt;string&gt; board;
+    vector&lt;vector&lt;string&gt;&gt; res;
+    void bt(int row, int cols, int d1, int d2) {
+        if (row == n) { res.push_back(board); return; }
+        int avail = ((1 &lt;&lt; n) - 1) &amp; ~(cols | d1 | d2);
+        while (avail) {
+            int bit = avail &amp; (-avail);           // 最低可用位
+            int col = __builtin_ctz(bit);
+            board[row][col] = 'Q';
+            bt(row+1, cols|bit, (d1|bit)&lt;&lt;1, (d2|bit)&gt;&gt;1);
+            board[row][col] = '.';
+            avail ^= bit;
+        }
+    }
+    vector&lt;vector&lt;string&gt;&gt; solveNQueens(int n) {
+        this-&gt;n = n;
+        board.assign(n, string(n, '.'));
+        bt(0, 0, 0, 0);
+        return res;
+    }
+};</code></pre>
+                </details>
 
-    def backtrack(start, path, remaining):
-        if remaining == 0:
-            result.append(path[:])
+                <p><strong>③ 子集（LC 78）</strong></p>
+<pre><code class="language-python">def subsets(nums):
+    res = []
+    def bt(start, path):
+        res.append(path[:])          # 每个节点都是合法子集
+        for i in range(start, len(nums)):
+            path.append(nums[i])
+            bt(i + 1, path)          # i+1：不回头
+            path.pop()
+    bt(0, [])
+    return res</code></pre>
+
+                <p><strong>④ 组合总和（LC 39，元素可重复使用）</strong></p>
+<pre><code class="language-python">def combinationSum(candidates, target):
+    res = []
+    candidates.sort()
+    def bt(start, path, remain):
+        if remain == 0:
+            res.append(path[:])
             return
         for i in range(start, len(candidates)):
-            if candidates[i] > remaining: break   # 剪枝
+            if candidates[i] &gt; remain: break    # 排序后剪枝
             path.append(candidates[i])
-            backtrack(i, path, remaining - candidates[i])   # 注意：i 不是 i+1
+            bt(i, path, remain - candidates[i]) # i 不是 i+1：允许重用
             path.pop()
-
-    backtrack(0, [], target)
-    return result
-</code></pre>
-                    <p><strong>复杂度：</strong> O(N^(T/M))，T 为 target，M 为最小候选值。</p>
-                </details>
-
+    bt(0, [], target)
+    return res</code></pre>
                 <details>
-                    <summary>例题3：N 皇后（LeetCode 51）—— 多约束剪枝</summary>
-                    <p><strong>关键洞察：</strong> 每行恰好放一个皇后（按行 DFS），将 N×N 的搜索空间从 N^N 降到 N!。</p>
-                    <p><strong>对角线检测：</strong> 同一主对角线（\）上所有格 (r,c) 满足 r-c 相同；副对角线（/）满足 r+c 相同。</p>
-<pre><code class="language-python">def solveNQueens(n):
-    result = []
-    cols = set(); diag1 = set(); diag2 = set()
-    board = [['.']*n for _ in range(n)]
-
-    def backtrack(row):
-        if row == n:
-            result.append([''.join(r) for r in board])
-            return
-        for col in range(n):
-            if col in cols or (row-col) in diag1 or (row+col) in diag2:
-                continue
-            board[row][col] = 'Q'
-            cols.add(col); diag1.add(row-col); diag2.add(row+col)
-            backtrack(row + 1)
-            board[row][col] = '.'
-            cols.discard(col); diag1.discard(row-col); diag2.discard(row+col)
-
-    backtrack(0)
-    return result
-</code></pre>
-                </details>
-
-                <details>
-                    <summary>例题4：括号生成（LeetCode 22）—— 自然约束</summary>
-                    <p><strong>约束推导：</strong> 合法括号串需满足：任意前缀中左括号数 ≥ 右括号数。所以：
-                    <ul>
-                        <li>左括号数 <code>open &lt; n</code> 时可以加 <code>(</code></li>
-                        <li>右括号数 <code>close &lt; open</code> 时可以加 <code>)</code></li>
-                        <li>这两个约束天然保证合法性，不需要回头检验</li>
-                    </ul>
-                    </p>
-<pre><code class="language-python">def generateParenthesis(n):
-    result = []
-    def backtrack(s, open, close):
-        if len(s) == 2*n:
-            result.append(s); return
-        if open < n:
-            backtrack(s+'(', open+1, close)
-        if close < open:
-            backtrack(s+')', open, close+1)
-    backtrack('', 0, 0)
-    return result
-</code></pre>
-                    <p>这里不需要 pop，因为字符串是不可变的，<code>s+'('</code> 创建新对象，不修改 <code>s</code>。</p>
+                    <summary>C++ / Rust 版本</summary>
+<pre><code class="language-cpp">// C++ — 组合总和
+class Solution {
+public:
+    vector&lt;vector&lt;int&gt;&gt; res;
+    void bt(vector&lt;int&gt;&amp; c, int start, vector&lt;int&gt;&amp; path, int remain) {
+        if (remain == 0) { res.push_back(path); return; }
+        for (int i = start; i &lt; (int)c.size(); i++) {
+            if (c[i] &gt; remain) break;
+            path.push_back(c[i]);
+            bt(c, i, path, remain - c[i]);
+            path.pop_back();
+        }
+    }
+    vector&lt;vector&lt;int&gt;&gt; combinationSum(vector&lt;int&gt;&amp; c, int target) {
+        sort(c.begin(), c.end());
+        vector&lt;int&gt; path;
+        bt(c, 0, path, target);
+        return res;
+    }
+};</code></pre>
+<pre><code class="language-rust">// Rust — 组合总和
+impl Solution {
+    pub fn combination_sum(mut candidates: Vec&lt;i32&gt;, target: i32) -&gt; Vec&lt;Vec&lt;i32&gt;&gt; {
+        candidates.sort();
+        let mut res = vec![];
+        let mut path = vec![];
+        Self::bt(&amp;candidates, 0, &amp;mut path, target, &amp;mut res);
+        res
+    }
+    fn bt(c: &amp;[i32], start: usize, path: &amp;mut Vec&lt;i32&gt;, remain: i32, res: &amp;mut Vec&lt;Vec&lt;i32&gt;&gt;) {
+        if remain == 0 { res.push(path.clone()); return; }
+        for i in start..c.len() {
+            if c[i] &gt; remain { break; }
+            path.push(c[i]);
+            Self::bt(c, i, path, remain - c[i], res);
+            path.pop();
+        }
+    }
+}</code></pre>
                 </details>
             </div>
 
-            <!-- 7. 易错点 -->
+            <!-- Layer 5: 复杂度表 -->
+            <div class="knowledge-card kc-blue">
+                <h3>📊 复杂度速查</h3>
+                <table>
+                    <tr><th>问题</th><th>时间</th><th>结果数</th><th>分析</th></tr>
+                    <tr><td>全排列（n 个不同）</td><td>O(n · n!)</td><td>n!</td><td>n! 个叶节点 × O(n) 拷贝</td></tr>
+                    <tr><td>组合 C(n,k)</td><td>O(k · C(n,k))</td><td>C(n,k)</td><td>C(n,k) 个结果 × 长度 k</td></tr>
+                    <tr><td>所有子集</td><td>O(n · 2<sup>n</sup>)</td><td>2<sup>n</sup></td><td>2<sup>n</sup> 个子集 × 均摊 O(n)</td></tr>
+                    <tr><td>N 皇后</td><td>O(n!)</td><td>≤ n!</td><td>列/对角线剪枝，上界 n!</td></tr>
+                    <tr><td>数独（m 个空格）</td><td>O(9<sup>m</sup>)</td><td>1</td><td>约束传播实际极快</td></tr>
+                    <tr><td>组合总和</td><td>O(N<sup>T/M</sup>)</td><td>—</td><td>T=target, M=最小候选</td></tr>
+                </table>
+                <p style="font-size:0.85rem; color:var(--subtle-text)"><strong>分析方法：</strong>时间 = 搜索树节点数 × 每节点操作。节点数 = 不被剪枝消除的状态数；每节点操作 = 路径拷贝 + 约束检查。</p>
+            </div>
+
+            <!-- Layer 6: 性质 -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 性质：搜索树的宽度与深度</h3>
+                <table>
+                    <tr><th>类型</th><th>搜索树宽度（每层选择数）</th><th>搜索树深度（决策层数）</th></tr>
+                    <tr><td>排列</td><td>第 d 层宽度 = n − d（递减）</td><td>n</td></tr>
+                    <tr><td>子集</td><td>2（选 / 不选）</td><td>n</td></tr>
+                    <tr><td>组合 C(n,k)</td><td>≤ n − start（递减）</td><td>k</td></tr>
+                    <tr><td>N 皇后</td><td>≤ n（列数，被剪枝削减）</td><td>n</td></tr>
+                </table>
+                <p style="font-size:0.9rem">结果数 = 所有从根到目标深度的路径数。搜索树节点总数 ≈ 宽度<sup>深度</sup>（上界），剪枝可大幅降低实际节点数。</p>
+            </div>
+
+            <!-- Layer 7: 例题 -->
+            <div class="knowledge-card kc-green">
+                <h3>🟢 例题精讲</h3>
+
+                <details>
+                    <summary>LC 46 · 全排列</summary>
+                    <p><strong>思路：</strong>第一个位置有 n 种选择，第二个 n−1 种……用 <code>used[]</code> 标记已选元素，每层排除已选的，递归到底收集结果。</p>
+                    <p><strong>变种 LC 47（含重复元素）：</strong>先排序，同层中若 <code>nums[i]==nums[i-1] and not used[i-1]</code> 则跳过——防止同层重复分支产生相同排列。</p>
+                </details>
+                <details>
+                    <summary>LC 51 · N 皇后</summary>
+                    <p><strong>关键洞察：</strong>每行恰好放一个皇后 → 按行 DFS，搜索空间从 N<sup>N</sup> 降到 N!。用三个集合 (cols, diag1, diag2) 实现 O(1) 冲突检测。</p>
+                    <p><strong>对角线性质：</strong>同一 <code>\</code> 对角线上 <code>row−col</code> 相等；同一 <code>/</code> 对角线上 <code>row+col</code> 相等。</p>
+                </details>
+                <details>
+                    <summary>LC 78 · 子集</summary>
+                    <p><strong>框架：</strong>每个节点都是一个合法子集（不需要 base case 判断），进入递归就先收集 <code>path[:]</code>。<code>start</code> 保证不回头，避免重复。</p>
+                    <p><strong>变种 LC 90（含重复元素）：</strong>排序后 <code>if i &gt; start and nums[i] == nums[i-1]: continue</code> 跳过同层重复。</p>
+                </details>
+                <details>
+                    <summary>LC 39 · 组合总和</summary>
+                    <p><strong>关键：</strong>元素可重复使用 → 递归传 <code>i</code> 而不是 <code>i+1</code>。排序后一旦 <code>candidates[i] &gt; remain</code> 就 break——后面更大的也没必要试了。</p>
+                    <p><strong>变种 LC 40（不可重复使用、含重复元素）：</strong>传 <code>i+1</code> 且排序 + 同层跳过。</p>
+                </details>
+            </div>
+
+            <!-- Layer 8: 对比 -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 对比：排列 vs 组合 vs 子集</h3>
+                <table>
+                    <tr><th>特征</th><th>排列</th><th>组合 C(n,k)</th><th>子集</th></tr>
+                    <tr><td>去重方式</td><td><code>used[]</code> 数组</td><td><code>start</code> 递增</td><td><code>start</code> 递增</td></tr>
+                    <tr><td>递归传参</td><td>每次从 0 开始</td><td><code>i + 1</code></td><td><code>i + 1</code></td></tr>
+                    <tr><td>结果收集</td><td>长度 = n 时收集</td><td>长度 = k 时收集</td><td>每个节点都收集</td></tr>
+                    <tr><td>含重复元素</td><td>排序 + <code>used[i-1]</code></td><td>排序 + 同层跳过</td><td>排序 + 同层跳过</td></tr>
+                    <tr><td>可重复使用</td><td>—</td><td>传 <code>i</code>（不是 <code>i+1</code>）</td><td>—</td></tr>
+                    <tr><td>搜索树宽度</td><td>n→1 递减</td><td>递减</td><td>固定为 2</td></tr>
+                    <tr><td>典型题</td><td>LC 46, 47</td><td>LC 77, 39, 40</td><td>LC 78, 90</td></tr>
+                </table>
+            </div>
+
+            <!-- Layer 9: 易错 -->
             <div class="knowledge-card kc-red">
                 <h3>🔴 易错点</h3>
 
-                <p><strong>① 遗漏撤销（最常见）</strong></p>
+                <p><strong>① 忘记回溯（最常见）</strong></p>
                 <div class="code-compare">
                     <div class="wrong">
                         <p>❌ 忘记 pop / unmark</p>
@@ -359,12 +444,12 @@ used[i] = False        # 恢复</code></pre>
                     </div>
                 </div>
 
-                <p><strong>② 收集结果时未拷贝</strong></p>
+                <p><strong>② 收集结果时未拷贝（list 引用问题）</strong></p>
                 <div class="code-compare">
                     <div class="wrong">
-                        <p>❌ 直接引用（所有结果共享同一对象）</p>
+                        <p>❌ 追加引用（所有结果共享同一对象）</p>
 <pre><code class="language-python">result.append(path)
-# 后续 path.pop() 会改变已收集的结果</code></pre>
+# 后续 path.pop() 会改变已收集的结果！</code></pre>
                     </div>
                     <div class="right">
                         <p>✅ 浅拷贝</p>
@@ -373,45 +458,59 @@ used[i] = False        # 恢复</code></pre>
                     </div>
                 </div>
 
-                <p><strong>③ 子集/组合 start 传错导致重复</strong></p>
+                <p><strong>③ 重复元素跳过逻辑写错</strong></p>
                 <div class="code-compare">
                     <div class="wrong">
-                        <p>❌ 每次从 0 开始（产生重复）</p>
-<pre><code class="language-python">backtrack(0, path)     # 导致[1,2]和[2,1]都被收集</code></pre>
+                        <p>❌ 条件写反（漏掉 not used[i-1]）</p>
+<pre><code class="language-python"># 排列含重复：错误写法
+if i > 0 and nums[i] == nums[i-1]:
+    continue  # 跳过太多，丢失合法排列</code></pre>
                     </div>
                     <div class="right">
-                        <p>✅ 从 i+1 开始（防止重复）</p>
-<pre><code class="language-python">backtrack(i+1, path)   # 不往回走</code></pre>
+                        <p>✅ 同层去重（仅跳过同层重复）</p>
+<pre><code class="language-python"># 排列含重复：正确写法
+if i > 0 and nums[i] == nums[i-1] and not used[i-1]:
+    continue  # 同层已用过相同值，跳过</code></pre>
                     </div>
                 </div>
-
-                <p><strong>④ 剪枝条件放错位置（应在循环内、递归前）</strong></p>
-<pre><code class="language-python"># ❌ 放在外面：只剪了一次
-if candidates[start] > remaining: return
-
-# ✅ 放在循环内：对每个候选都检查
-for i in range(start, len(candidates)):
-    if candidates[i] > remaining: break   # 有序时可以break</code></pre>
+                <p style="font-size:0.85rem; color:var(--subtle-text)"><strong>④ 组合/子集中 start 传错：</strong>传 0 而非 i+1 会导致 [1,2] 和 [2,1] 都被收集。</p>
             </div>
 
-            <!-- 8. 竞赛拓展 -->
+            <!-- Layer 10: 演示容器 -->
+            <div class="knowledge-card kc-purple" id="btDemo">
+                <h3>🎮 互动演示：全排列 [1,2,3] 的搜索树</h3>
+                <p style="font-size:0.9rem; color:var(--subtle-text)">点击"下一步"逐步推进 DFS。<span style="color:#fcd34d">黄色</span>= 当前路径，<span style="color:#a78bfa">紫色</span>= 已完成结果，<span style="color:#fb923c">橙色</span>= 回溯。</p>
+                <div class="demo-container">
+                    <svg id="bt-tree-svg" height="320" viewBox="0 0 640 320"></svg>
+                    <div class="demo-controls">
+                        <button id="bt-prev" onclick="btPrev()" disabled>← 上一步</button>
+                        <button id="bt-next" onclick="btNext()">下一步 →</button>
+                        <button onclick="btReset()">重置</button>
+                        <span style="margin-left:auto; font-size:0.82rem; color:#64748b" id="bt-step-label">步骤 0</span>
+                    </div>
+                    <div class="path-display" id="bt-path-display">当前路径：[]</div>
+                    <div class="demo-log" id="bt-log">点击"下一步"开始…</div>
+                    <div style="margin-top:0.6rem; font-size:0.82rem; color:#64748b">已收集结果：</div>
+                    <div class="bt-result-list" id="bt-results"></div>
+                </div>
+            </div>
+
+            <!-- Layer 11: 竞赛 -->
             <div class="knowledge-card kc-cyan">
                 <h3>🔷 竞赛拓展</h3>
-                <p><strong>Dancing Links（DLX）：</strong> 精确覆盖问题的高效解法。用双向链表表示稀疏约束矩阵，选中/撤销某行都是 O(1) 指针操作（而非矩阵遍历）。实践中比朴素回溯快 10-100x。适合数独、精确覆盖等问题。</p>
-                <p><strong>迭代加深 IDDFS：</strong> 深度上限从 1 逐渐增大，每次做 DFS。兼顾 BFS 找最短路径和 DFS 低空间的优点。适合最小步数/最少操作类问题。</p>
-                <p><strong>记忆化回溯（转 DP）：</strong> 若回溯中存在大量重复子状态（相同参数→相同结果），可加 <code>@lru_cache</code> 或手动 memo。前提：状态必须可哈希、无副作用。</p>
-<pre><code class="language-python">from functools import lru_cache
-
-@lru_cache(maxsize=None)
-def backtrack(start, remaining):   # 参数必须可哈希（不含列表）
-    if remaining == 0: return 1
-    count = 0
-    for i in range(start, n):
-        if candidates[i] <= remaining:
-            count += backtrack(i, remaining - candidates[i])
-    return count</code></pre>
-                <p><strong>启发式剪枝：</strong> 预估当前分支在最优情况下能得到的最好结果，若不如当前已知最优解则剪枝（branch and bound）。</p>
+                <p><strong>Dancing Links（DLX）：</strong>精确覆盖问题的高效解法。用双向十字链表表示稀疏约束矩阵，选中/撤销某行都是 O(1) 指针操作。实践中比朴素回溯快 10–100×，数独/精确覆盖的标准竞赛技巧。</p>
+                <p><strong>IDA*（迭代加深 A*）：</strong>深度上限从 1 逐渐增大，每轮做 DFS + 启发函数剪枝。兼顾 BFS 找最短路径和 DFS 低空间的优点。适合最小步数类题目（如 15-puzzle）。</p>
+                <p><strong>记忆化回溯 → DP 桥梁：</strong>若回溯中存在大量重复子状态（相同参数→相同结果），可加 <code>@lru_cache</code> 或手动 memo。前提：状态可哈希、无副作用。</p>
             </div>
+
+            <!-- Layer 12: 工业应用 -->
+            <div class="knowledge-card kc-cyan">
+                <h3>🔷 工业应用</h3>
+                <p><strong>SAT Solver（布尔可满足性）：</strong>现代 SAT 求解器（如 MiniSat、CaDiCaL）的核心是 DPLL/CDCL 算法——本质上是对变量赋值的回溯搜索 + 学习冲突子句进行剪枝。广泛应用于硬件验证、软件测试、密码分析。</p>
+                <p><strong>编译器寄存器分配：</strong>经典的图着色寄存器分配可建模为回溯/约束求解问题——为每个变量分配寄存器（颜色），约束是同时活跃的变量不能用同一寄存器。</p>
+                <p><strong>拼图 AI / 游戏求解：</strong>数独求解器、数独生成器、俄罗斯方块 AI、扫雷自动推理等均依赖回溯 + 约束传播。工业级数独求解器通常结合了裸对/隐对等人类技巧与 DLX 回溯。</p>
+            </div>
+
         </section>
 
         <section class="card" data-quiz data-module="backtracking">
