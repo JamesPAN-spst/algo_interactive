@@ -79,13 +79,13 @@
         <h3>🎯 引子：为什么 <code>n &amp; (n-1)</code> 能判断 2 的幂？</h3>
         <p>2 的幂（1, 2, 4, 8, 16…）在二进制中只有<strong>一个 1</strong>：<code>10000…0</code>。</p>
         <p>如果 <code>n</code> 恰好只有一个 1，那 <code>n-1</code> 借位后把该位变 0、右侧全变 1，AND 恰好得 0。</p>
-        <div class="ascii-art">n   = 0b 0001 0000     (=16, 只有一个1)
+        <pre class="ascii-art">n   = 0b 0001 0000     (=16, 只有一个1)
 n-1 = 0b 0000 1111
 n &amp; (n-1) = 0b 0000 0000  → 结果为 0 ➜ 是 2 的幂
 
 n   = 0b 0001 0100     (=20, 有两个1)
 n-1 = 0b 0001 0011
-n &amp; (n-1) = 0b 0001 0000  → 结果非 0 ➜ 不是 2 的幂</div>
+n &amp; (n-1) = 0b 0001 0000  → 结果非 0 ➜ 不是 2 的幂</pre>
         <p style="margin-top:0.8rem; font-size:0.9rem; color:var(--subtle-text)">这个技巧背后是<strong>二进制借位</strong>的规律——学完本模块你将完全掌握它的来龙去脉。</p>
     </div>
 
@@ -98,9 +98,9 @@ n &amp; (n-1) = 0b 0001 0000  → 结果非 0 ➜ 不是 2 的幂</div>
         <p style="margin-top:0.8rem"><strong>二进制表示：</strong> 十进制 13 = 1×2³ + 1×2² + 0×2¹ + 1×2⁰ = <code>0b1101</code>。每一位叫 bit，最低位（bit 0）在最右侧。</p>
 
         <p><strong>补码（Two's complement）：</strong> n 位有符号整数中，<code>-x</code> 的表示 = <code>~x + 1</code>（按位取反再加 1）。</p>
-        <div class="ascii-art">x  = 0b 0000 0101  (= 5)
+        <pre class="ascii-art">x  = 0b 0000 0101  (= 5)
 ~x = 0b 1111 1010
--x = ~x+1 = 0b 1111 1011  (= -5, 8位补码)</div>
+-x = ~x+1 = 0b 1111 1011  (= -5, 8位补码)</pre>
         <p>这是 <code>x &amp; (-x)</code> = lowbit 等技巧的数学基础。</p>
 
         <p><strong>Python 特殊性：</strong> Python 整数是<em>无限精度</em>的（无溢出），<code>~x = -x-1</code>（总是负数）。模拟 32 位运算需要 <code>&amp; 0xFFFFFFFF</code> 掩码截断。</p>
@@ -216,7 +216,7 @@ n &amp; (n-1) = 0b 0001 0000  → 结果非 0 ➜ 不是 2 的幂</div>
 
         <p><strong>Brian Kernighan 算法：统计 1 的个数</strong></p>
         <p>核心：每次 <code>n &amp;= n-1</code> 消去一个 1，循环次数 = popcount(n)。</p>
-        <div class="ascii-art">n = 0b 1011 0100  (popcount = 4)
+        <pre class="ascii-art">n = 0b 1011 0100  (popcount = 4)
 
 第1轮: n &amp; (n-1)
   n   = 1011 0100
@@ -238,7 +238,7 @@ n &amp; (n-1) = 0b 0001 0000  → 结果非 0 ➜ 不是 2 的幂</div>
   n-1 = 0111 1111
   &amp;   = 0000 0000   ← 消去了 bit7 的 1    count=4
 
-n=0 → 停止，共 4 轮 = 4 个 1  ✓</div>
+n=0 → 停止，共 4 轮 = 4 个 1  ✓</pre>
 
         <div class="think-block">
             <div class="q">🤔 位掩码与集合映射：mask = 0b1011 对应哪个子集？枚举它的所有子集有几个？</div>

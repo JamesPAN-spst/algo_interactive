@@ -112,7 +112,7 @@
             <div class="derive-num">3</div>
             <div class="derive-body">
                 <strong>残差图 + 反向边示意（4 节点：s→a→t, s→b→t, a→b）</strong>
-                <div class="ascii-art">
+                <pre class="ascii-art">
 初始图（容量标注）：             增广① s→a→b→t 推 10：
 
   s ──20──▶ a                 s ──10──▶ a       (20−10=10)
@@ -125,9 +125,9 @@
 
 增广② s→b→(反向a←b)→a→t 推 5：    最终最大流 = 10 + 5 = 15
 
-  反向边让我们"退回"a→b 的 5 单位流量，
+  反向边让我们“退回”a→b 的 5 单位流量，
   改为 a 直接送往 t，b 从 s 直接获取补给。
-                </div>
+                </pre>
             </div>
         </div>
 

@@ -115,7 +115,7 @@
                 <strong>判定：</strong>cross &gt; 0 → 左转（逆时针），cross &lt; 0 → 右转（顺时针），cross = 0 → 共线。
             </div>
         </div>
-        <div class="ascii-art">
+        <pre class="ascii-art">
   叉积方向示意（三点 O, A, B）
 
   cross &gt; 0（左转）       cross &lt; 0（右转）       cross = 0（共线）
@@ -124,7 +124,7 @@
      ↗                        ↗                    ↗
     O ——→ A               O ——→ B               O ——→ B
   B在OA逆时针侧        B在OA顺时针侧         三点在一条线上
-        </div>
+        </pre>
 
         <h4>3.2 Graham Scan 算法</h4>
         <div class="derive-step">
@@ -143,7 +143,7 @@
             <div class="derive-num">4</div>
             <div class="derive-body"><strong>结束：</strong>遍历完所有点后，栈中的点就是凸包顶点（逆时针顺序）。</div>
         </div>
-        <div class="ascii-art">
+        <pre class="ascii-art">
   Graham Scan 过程示例（6 个点）
 
   原始点集:                排序后（极角序）:
@@ -160,7 +160,7 @@
 
   最终凸包: P0 → A → C → D → E
   （B 被弹出：它在凸包内部）
-        </div>
+        </pre>
 
         <h4>3.3 线段相交检测（跨立实验）</h4>
         <div class="think-block">
